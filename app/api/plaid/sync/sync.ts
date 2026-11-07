@@ -11,16 +11,19 @@ export async function syncAll(plaid: PlaidApi, access_token: string) {
   const names = new Map(accounts.map((a) => [a.account_id, a.name]));
   let cursor: string | undefined;
   const added: Parameters<typeof mapPlaidTxn>[0][] = [];
-  for (let attempt = 0; attempt < 12; attempt++) {
+  // Plaid first returns ~30 days, then backfills history. Keep syncing until the full history is in.
+  let status = "";
+  for (let attempt = 0; attempt < 20; attempt++) {
     let hasMore = true;
     while (hasMore) {
       const r = await plaid.transactionsSync({ access_token, cursor, count: 500 });
       added.push(...r.data.added);
       cursor = r.data.next_cursor;
       hasMore = r.data.has_more;
+      status = String((r.data as { transactions_update_status?: string }).transactions_update_status || "");
     }
-    if (added.length) break;
-    await sleep(1500);
+    if (status === "HISTORICAL_UPDATE_COMPLETE" && added.length) break;
+    await sleep(1200);
   }
   const txns = added.map((t) => classify(mapPlaidTxn(t, names.get(t.account_id) || "Account")));
   const balances = accounts

@@ -1,3 +1,4 @@
+export const maxDuration = 45;
 import { cookies } from "next/headers";
 import { notConfigured, plaidClient } from "@/lib/plaid";
 import { syncAll } from "../sync/sync";
