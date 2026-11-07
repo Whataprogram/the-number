@@ -211,7 +211,7 @@ function Home({ r, openLine, setWhy, txns }: { r: NumberResult; openLine: (l: Li
   const per100 = federalEstimate(r.netProfitCents + 10_000).totalTaxCents - r.fed.totalTaxCents;
   const taxLines = r.lines.filter((l) => l.key === "se" || l.key === "income" || l.key === "paid");
 
-  // Box 2: a simulated live feed of new money. Every 30 seconds a job comes in (green) or a business cost goes out (red),
+  // Box 2: a simulated live feed of new money. Every 10 seconds a job comes in (green) or a business cost goes out (red),
   // and the "more you'll owe" counter moves. Nothing else on the page moves.
   type Feed = { id: string; kind: "business_income" | "business_expense"; amountCents: number; description: string; deltaCents: number; time: string };
   const [feed, setFeed] = useState<Feed[]>([]);
@@ -240,7 +240,7 @@ function Home({ r, openLine, setWhy, txns }: { r: NumberResult; openLine: (l: Li
       setFlash(isIn ? "in" : "out"); window.setTimeout(() => setFlash(null), 1200);
     };
     const first = window.setTimeout(tick, 2500);
-    const every = window.setInterval(tick, 30_000);
+    const every = window.setInterval(tick, 10_000);
     return () => { window.clearTimeout(first); window.clearInterval(every); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [r.netProfitCents]);
@@ -293,7 +293,7 @@ function Home({ r, openLine, setWhy, txns }: { r: NumberResult; openLine: (l: Li
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-[11px] text-zinc-500">Demo: new money is simulated and updates every 30 seconds.</p>
+          <p className="mt-4 text-[11px] text-zinc-500">Demo: new money is simulated and updates every 10 seconds.</p>
         </div>
       </section>
 
