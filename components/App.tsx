@@ -366,15 +366,7 @@ function Alerts({ r, go, prefs, setPref }: { r: NumberResult; go: (t: Tab) => vo
   const color = { critical: "var(--red)", warning: "var(--amber)", info: "#ffffff" };
   const Icon = { critical: Octagon, warning: AlertTriangle, info: Bell };
   const action = (id: string): [string, Tab] | null => id === "review" ? ["How estimated taxes work", "learn"] : id === "missed" || id === "next" ? ["How estimated taxes work", "learn"] : id === "below" ? ["See my jars", "home"] : id === "rule" ? ["Why it's wrong", "learn"] : null;
-  const due = new Date(r.next.due + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  const per100 = federalEstimate(r.netProfitCents + 10_000).totalTaxCents - r.fed.totalTaxCents;
   const shown = r.alerts.filter((a) => a.id !== "below" && a.id !== "review");
-  const tips: [string, string][] = [
-    ["Set aside part of every job", `Right now about ${formatUSD(per100)} of every $100 you earn goes to taxes. Moving that into savings when you get paid means the bill is never a surprise.`],
-    [r.missed.length ? "Pay the IRS now, not later" : "Pay a little every month", r.missed.length ? `${r.missed.length} payment${r.missed.length > 1 ? "s" : ""} already passed. Paying ${formatUSD(r.owedSoFarCents)} at irs.gov/payments before ${due} stops the late penalty from growing.` : `Set aside ${formatUSD(r.saveThisMonthCents)} a month and the ${due} payment is already covered.`],
-    ["Keep a separate business profile", "A Cash App or Venmo business profile keeps customer money apart from your own. It makes tax time a lot easier."],
-    ["Keep receipts for business costs", "Gas, supplies and gear lower your profit, so they lower what you owe. A photo of the receipt is enough."],
-  ];
   const [customs, setCustoms] = useState<{ id: string; text: string }[]>([]);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
@@ -446,14 +438,6 @@ function Alerts({ r, go, prefs, setPref }: { r: NumberResult; go: (t: Tab) => vo
                 <button key={k} role="switch" aria-checked={!!prefs[k]} onClick={() => setPref(k, !prefs[k])} className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${prefs[k] ? "border-white bg-white text-black" : "border-zinc-700 text-zinc-300"}`}>{l}</button>
               ))}
             </div>
-          </div>
-          <div className="card p-6">
-            <h2 className="font-display flex items-center gap-2 text-xl font-semibold"><Lightbulb size={18} />Tips for you</h2>
-            <ol className="mt-4 space-y-4">
-              {tips.map(([t, d], i) => (
-                <li key={t} className="flex gap-3"><span className="font-mono text-xs text-zinc-500">0{i + 1}</span><div><div className="text-sm font-semibold">{t}</div><div className="muted mt-0.5 text-sm">{d}</div></div></li>
-              ))}
-            </ol>
           </div>
         </div>
       </div>
