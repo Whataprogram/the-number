@@ -299,84 +299,64 @@ function Home({ r, openLine, setWhy }: { r: NumberResult; openLine: (l: Line) =>
   );
 }
 
-/* ---------- Breakdown: how the Number adds up, as charts ---------- */
-// Color key, used the same way everywhere: gray = your profit, striped = taken off (deductions), white = tax you owe.
-
-const HATCH = { backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,.55) 0 3px, transparent 3px 7px)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.45)" };
-
-function Bar({ value, max, kind, left = 0 }: { value: number; max: number; kind: "profit" | "off" | "tax"; left?: number }) {
-  const w = Math.max(value > 0 ? 1.2 : 0, (value / Math.max(1, max)) * 100);
-  return (
-    <div className="relative mt-1.5 h-2.5 rounded-full bg-white/[0.06]">
-      <div className={`absolute top-0 h-2.5 rounded-full ${kind === "profit" ? "bg-zinc-500" : kind === "tax" ? "bg-white" : ""}`} style={{ left: `${(left / Math.max(1, max)) * 100}%`, width: `${w}%`, ...(kind === "off" ? HATCH : {}) }} />
-    </div>
-  );
-}
+/* ---------- Breakdown: how the Number adds up, in plain steps ---------- */
 
 function Breakdown({ r }: { r: NumberResult }) {
   const f = r.fed;
   const usd = (c: number) => formatUSD(c, { cents: true });
-  const pctOf = (a: number, b: number) => (b > 0 ? `${((a / b) * 100).toFixed(1)}%` : "0%");
   const total = f.se.totalCents + f.incomeTaxCents;
-  const max = Math.max(1, f.netProfitCents);
-  const std = Math.min(f.standardDeductionCents, Math.max(0, f.agiCents));
+  const per100 = f.netProfitCents > 0 ? (total / f.netProfitCents) * 100 : 0;
+  const steps: [string, string, string, number][] = [
+    ["1", "You made", "Money in, minus business costs (your profit)", f.netProfitCents],
+    ["2", "Self-employment tax", "15.3% on most of your profit. It pays your Social Security and Medicare.", f.se.totalCents],
+    ["3", "Income tax", f.incomeTaxCents > 0 ? `The first ${usd(f.netProfitCents - f.taxableIncomeCents)} is tax-free (deductions). The rest is taxed at 10%, then 12%.` : "Your deductions cover all of it, so you owe $0 here.", f.incomeTaxCents],
+  ];
   return (
     <section className="card p-6 sm:p-8">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-display text-2xl font-semibold">How {usd(r.owedSoFarCents)} adds up</h2>
-        <span className="muted text-xs">2026 · sole proprietor · federal</span>
-      </div>
-      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-zinc-400">
-        <span className="flex items-center gap-2"><span className="h-2.5 w-5 rounded-full bg-zinc-500" />Your profit</span>
-        <span className="flex items-center gap-2"><span className="h-2.5 w-5 rounded-full" style={HATCH} />Taken off before tax</span>
-        <span className="flex items-center gap-2"><span className="h-2.5 w-5 rounded-full bg-white" />Tax you owe</span>
+      <h2 className="font-display text-2xl font-semibold">How we got {usd(r.owedSoFarCents)}</h2>
+
+      {/* The one picture: out of every $100 you made */}
+      <div className="mt-6">
+        <div className="flex items-baseline justify-between gap-3 text-sm"><span>Out of every <b>$100</b> you made</span><span><b className="num">${per100.toFixed(2)}</b> goes to taxes</span></div>
+        <div className="mt-2 h-6 overflow-hidden rounded-full border border-white/70 bg-black" role="img" aria-label={`${per100.toFixed(1)} percent of your profit goes to taxes`}>
+          <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${Math.min(100, per100)}%` }} />
+        </div>
+        <div className="mt-1.5 flex justify-between text-xs text-zinc-400"><span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white align-middle" />taxes</span><span><span className="mr-1.5 inline-block h-2 w-2 rounded-full border border-white/70 align-middle" />yours to keep</span></div>
       </div>
 
-      {/* Top: profit vs. tax */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        {([["Your profit", f.netProfitCents, "profit", "money in minus business costs"], ["Self-employment tax", f.se.totalCents, "tax", `${pctOf(f.se.totalCents, f.netProfitCents)} of profit`], ["Federal income tax", f.incomeTaxCents, "tax", `${pctOf(f.incomeTaxCents, f.netProfitCents)} of profit`]] as [string, number, "profit" | "tax", string][]).map(([l, v, k, sub]) => (
-          <div key={l} className="rounded-2xl border border-zinc-800 p-4">
-            <div className="flex items-center gap-2 text-sm text-zinc-300"><span className={`h-2.5 w-2.5 rounded-sm ${k === "profit" ? "bg-zinc-500" : "bg-white"}`} />{l}</div>
-            <div className="font-display num mt-1 text-2xl font-semibold">{usd(v)}</div>
-            <div className="muted text-xs">{sub}</div>
-          </div>
+      {/* Three plain steps */}
+      <ol className="mt-8 divide-y">
+        {steps.map(([n, title, sub, v]) => (
+          <li key={n} className="flex items-center gap-4 py-4">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/70 text-sm font-semibold">{n}</span>
+            <div className="min-w-0 flex-1"><div className="font-medium">{title}</div><div className="muted text-sm">{sub}</div></div>
+            <div className="font-display num shrink-0 text-xl font-semibold">{usd(v)}</div>
+          </li>
         ))}
-      </div>
-      <p className="mt-3 text-sm text-zinc-400">All together: <b className="text-white">{usd(total)}</b>, which is <b className="text-white">{pctOf(total, f.netProfitCents)}</b> of your profit{r.taxPaidCents > 0 && <>, minus {usd(r.taxPaidCents)} already paid</>}. It's not a flat rate: the percentage goes up as you earn more.</p>
+        {r.taxPaidCents > 0 && (
+          <li className="flex items-center gap-4 py-4"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/70 text-sm font-semibold">−</span><div className="flex-1 font-medium">Already paid</div><div className="font-display num text-xl font-semibold">−{usd(r.taxPaidCents)}</div></li>
+        )}
+        <li className="flex items-center gap-4 pt-4">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-sm font-bold text-black">=</span>
+          <div className="flex-1 font-semibold">You owe the IRS</div>
+          <div className="font-display num text-2xl font-semibold">{usd(r.owedSoFarCents)}</div>
+        </li>
+      </ol>
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-2">
-        {/* Self-employment tax */}
-        <div>
-          <h3 className="font-semibold">Self-employment tax · 15.3%</h3>
-          <p className="muted mt-1 text-sm">Social Security + Medicare. A boss would pay half; you're the boss, so you pay both.</p>
-          <ul className="mt-4 space-y-3.5 text-sm">
-            <li><div className="flex justify-between gap-3"><span className="text-zinc-300">Your profit</span><span className="num">{usd(f.netProfitCents)}</span></div><Bar value={f.netProfitCents} max={max} kind="profit" /></li>
-            <li><div className="flex justify-between gap-3"><span className="text-zinc-300">Counted part: 92.35% of profit</span><span className="num">{usd(f.se.netEarningsCents)}</span></div><Bar value={f.se.netEarningsCents} max={max} kind="profit" /></li>
-            <li><div className="flex justify-between gap-3"><span>Social Security: 12.4% of counted part</span><span className="num font-medium">{usd(f.se.socialSecurityCents)}</span></div><Bar value={f.se.socialSecurityCents} max={max} kind="tax" /></li>
-            <li><div className="flex justify-between gap-3"><span>Medicare: 2.9% of counted part</span><span className="num font-medium">{usd(f.se.medicareCents)}</span></div><Bar value={f.se.medicareCents} max={max} kind="tax" /></li>
-            <li className="flex justify-between border-t pt-3 font-semibold"><span>Self-employment tax</span><span className="num">{usd(f.se.totalCents)}</span></li>
-          </ul>
-          {f.se.belowThreshold && <p className="muted mt-2 text-xs">Under $400 counted, so no self-employment tax yet.</p>}
-        </div>
-
-        {/* Income tax */}
-        <div>
-          <h3 className="font-semibold">Federal income tax · 10%, then 12%…</h3>
-          <p className="muted mt-1 text-sm">First we take deductions off your profit. Only what's left is taxed, in brackets.</p>
-          <ul className="mt-4 space-y-3.5 text-sm">
-            <li><div className="flex justify-between gap-3"><span className="text-zinc-300">Your profit</span><span className="num">{usd(f.netProfitCents)}</span></div><Bar value={f.netProfitCents} max={max} kind="profit" /></li>
-            <li><div className="flex justify-between gap-3"><span className="text-zinc-300">− Half of self-employment tax</span><span className="num">{usd(f.halfSeDeductionCents)}</span></div><Bar value={f.halfSeDeductionCents} max={max} kind="off" left={f.netProfitCents - f.halfSeDeductionCents} /></li>
-            <li><div className="flex justify-between gap-3"><span className="text-zinc-300">− Standard deduction {std < f.standardDeductionCents && <span className="muted text-xs">(up to $16,100)</span>}</span><span className="num">{usd(std)}</span></div><Bar value={std} max={max} kind="off" left={Math.max(0, f.agiCents - std)} /></li>
-            <li><div className="flex justify-between gap-3"><span className="text-zinc-300">− Small-business (QBI) deduction, 20%</span><span className="num">{usd(f.qbiDeductionCents)}</span></div><Bar value={f.qbiDeductionCents} max={max} kind="off" left={f.taxableIncomeCents} /></li>
-            <li><div className="flex justify-between gap-3"><span className="font-medium">= Income that gets taxed</span><span className="num font-medium">{usd(f.taxableIncomeCents)}</span></div><Bar value={f.taxableIncomeCents} max={max} kind="profit" /></li>
-            {f.incomeTaxLines.filter((b) => b.amountCents > 0).map((b) => (
-              <li key={b.rateBps}><div className="flex justify-between gap-3"><span>{b.rateBps / 100}% on {usd(b.amountCents)}</span><span className="num font-medium">{usd(b.taxCents)}</span></div><Bar value={b.taxCents} max={max} kind="tax" /></li>
-            ))}
-            <li className="flex justify-between border-t pt-3 font-semibold"><span>Federal income tax</span><span className="num">{usd(f.incomeTaxCents)}</span></li>
-          </ul>
-          {f.taxableIncomeCents === 0 && <p className="muted mt-2 text-xs">Deductions cover all of your profit, so there's no income tax this year. Self-employment tax still applies.</p>}
-        </div>
-      </div>
+      <details className="group mt-6 rounded-2xl border border-zinc-800 p-4 text-sm">
+        <summary className="flex cursor-pointer list-none items-center justify-between font-medium">See the exact math<span className="text-zinc-500 transition group-open:rotate-180">⌄</span></summary>
+        <dl className="mt-3 space-y-1.5 text-zinc-300">
+          {([
+            ["Profit", f.netProfitCents], ["× 92.35% = counted for self-employment tax", f.se.netEarningsCents],
+            ["Social Security 12.4%", f.se.socialSecurityCents], ["Medicare 2.9%", f.se.medicareCents],
+            ["Profit − half of self-employment tax", f.agiCents], ["− standard deduction", -Math.min(f.standardDeductionCents, f.agiCents)],
+            ["− 20% small-business (QBI) deduction", -f.qbiDeductionCents], ["= taxed income", f.taxableIncomeCents],
+            ...f.incomeTaxLines.filter((b) => b.amountCents > 0).map((b) => [`${b.rateBps / 100}% on ${usd(b.amountCents)}`, b.taxCents] as [string, number]),
+          ] as [string, number][]).map(([l, v]) => (
+            <div key={l} className="flex justify-between gap-3"><dt>{l}</dt><dd className="num">{v < 0 ? `−${usd(-v)}` : usd(v)}</dd></div>
+          ))}
+        </dl>
+      </details>
     </section>
   );
 }

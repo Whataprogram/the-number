@@ -43,7 +43,7 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
 
       <main className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-4 pb-[34vh] pt-[7vh] text-center">
         <span className="chip rise mb-6 uppercase tracking-[0.14em] text-zinc-300">For first-time business owners</span>
-        <h1 className="headline font-display rise text-[clamp(2.4rem,6vw,4.5rem)] font-semibold leading-[1]" style={{ textWrap: "balance" as never }}>Know your Number.</h1>
+        <h1 className="headline font-display rise text-[clamp(2.4rem,6vw,4.5rem)] font-semibold leading-[1]" style={{ textWrap: "balance" as never }}>Know how much you owe.</h1>
         <p className="rise mt-5 max-w-2xl text-[clamp(1.2rem,2.4vw,1.6rem)] font-medium leading-snug text-white" style={{ textWrap: "balance" as never }}>
           See exactly what you owe the IRS, and when. Built for first-time business owners.
         </p>
@@ -213,7 +213,7 @@ function PickSheet({ pick, onPick, onClose, busy }: { pick: Pick; onPick: (name:
   // Sandbox test login: anything typed goes through. Nothing typed here is stored or sent anywhere.
   const login = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user.trim() || !pass) return setErr("Type any username and password. It's a test login.");
+    if (!user.trim() || !pass) return setErr("Enter a username and password.");
     setUser(""); setPass(""); onPick(chosen);
   };
   return (
@@ -228,15 +228,13 @@ function PickSheet({ pick, onPick, onClose, busy }: { pick: Pick; onPick: (name:
           </>
         ) : chosen ? (
           <form onSubmit={login} autoComplete="off" noValidate>
-            <h3 className="font-display mt-4 text-2xl font-semibold">Test login · {chosen}</h3>
-            <p className="muted mt-1 text-sm">Sandbox: type any username and password and it goes through.</p>
-            <label className="mt-5 block text-sm font-medium" htmlFor="sb-user">Username</label>
-            <input id="sb-user" className="input mt-1.5" value={user} onChange={(e) => { setUser(e.target.value); setErr(""); }} placeholder="anything" autoComplete="off" />
-            <label className="mt-4 block text-sm font-medium" htmlFor="sb-pass">Password</label>
-            <input id="sb-pass" type="password" className="input mt-1.5" value={pass} onChange={(e) => { setPass(e.target.value); setErr(""); }} placeholder="anything" autoComplete="new-password" />
+            <h3 className="font-display mt-4 text-2xl font-semibold">Sign in · {chosen}</h3>
+            <label className="mt-5 block text-sm font-medium" htmlFor="sb-user">Enter username</label>
+            <input id="sb-user" className="input mt-1.5" value={user} onChange={(e) => { setUser(e.target.value); setErr(""); }} autoComplete="off" />
+            <label className="mt-4 block text-sm font-medium" htmlFor="sb-pass">Enter password</label>
+            <input id="sb-pass" type="password" className="input mt-1.5" value={pass} onChange={(e) => { setPass(e.target.value); setErr(""); }} autoComplete="new-password" />
             {err && <p className="mt-2 text-sm text-zinc-400">{err}</p>}
             <button className="btn btn-primary mt-5 w-full !rounded-xl !py-3.5">Sign in and connect</button>
-            <p className="mt-3 text-[11px] text-zinc-500">Test login only. Don't use a real password. Nothing you type here is saved or sent.</p>
           </form>
         ) : (
           <>
