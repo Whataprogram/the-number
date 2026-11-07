@@ -71,7 +71,7 @@ export default function App() {
       const j = await r.json();
       if (!r.ok) throw new Error(j.error);
       setProfile({ ...DEMO_PROFILE, asOf: new Date().toISOString().slice(0, 10), balances: j.balances });
-      setTxns(scaleBusiness(j.txns, f)); enter(via === "qbo" ? "QuickBooks Sandbox (sample business, pulled through a Plaid Sandbox test bank, amounts randomized each load)" : `Plaid Sandbox · ${bank} (test connection, sample business, amounts randomized each load)`);
+      setTxns(scaleBusiness(j.txns, f)); enter(via === "qbo" ? `QuickBooks Sandbox · ${bank} (sample business, pulled through a Plaid Sandbox test bank, amounts randomized each load)` : `Plaid Sandbox · ${bank} (test connection, sample business, amounts randomized each load)`);
     } catch (e) {
       // Plaid unreachable (Wi-Fi, keys): fall back to the same data from local files so the demo never breaks.
       console.warn("Plaid sample bank unavailable:", (e as Error).message);
@@ -112,7 +112,7 @@ export default function App() {
   if (stage === "landing") return <Landing onStart={() => setStage(account ? (account.plan ? "connect" : "pricing") : "signup")} onSignIn={() => setStage(account ? "connect" : "signup")} onDemo={() => loadSampleBank()} busy={busy === "bank"} />;
   if (stage === "signup") return <SignUp onBack={() => setStage("landing")} onDone={(a) => { setAccount(a); saveAccount(a); setStage("pricing"); }} />;
   if (stage === "pricing") return <Pricing name={account?.name || "friend"} onBack={() => setStage("landing")} onPick={(plan) => { const a = { ...(account as Account), plan }; setAccount(a); saveAccount(a); setStage("connect"); }} />;
-  if (stage === "connect" || !txns || !result) return <Connect onBack={() => setStage("landing")} onPlaidSandbox={loadSampleBank} onQuickBooksSandbox={() => loadSampleBank("QuickBooks", "qbo")} onPlaid={onPlaid} busy={busy} error={error} />;
+  if (stage === "connect" || !txns || !result) return <Connect onBack={() => setStage("landing")} onPlaidSandbox={loadSampleBank} onQuickBooksSandbox={(bank) => loadSampleBank(bank, "qbo")} onPlaid={onPlaid} busy={busy} error={error} />;
 
   const byId = new Map(txns.map((t) => [t.id, t]));
   const openLine = (l: Line) => setWhy({ title: l.label, body: l.why, txns: l.txnIds?.map((i) => byId.get(i)!).filter(Boolean).slice(-6) });
@@ -290,7 +290,91 @@ function Home({ r, openLine, setWhy }: { r: NumberResult; openLine: (l: Line) =>
           </form>
         </div>
       </section>
+
+      <Breakdown r={r} />
     </>
+  );
+}
+
+/* ---------- Breakdown: how the Number adds up, as charts ---------- */
+
+function Breakdown({ r }: { r: NumberResult }) {
+  const f = r.fed;
+  const usd = (c: number) => formatUSD(c, { cents: true });
+  const total = Math.max(1, f.se.totalCents + f.incomeTaxCents);
+  const sePct = (f.se.totalCents / total) * 100;
+  // Income tax: from profit down to the part that's actually taxed.
+  const steps: [string, number, "base" | "minus" | "result"][] = [
+    ["Business profit", f.netProfitCents, "base"],
+    ["Half of self-employment tax", -f.halfSeDeductionCents, "minus"],
+    ["Standard deduction", -Math.min(f.standardDeductionCents, Math.max(0, f.agiCents)), "minus"],
+    ["Small-business (QBI) deduction", -f.qbiDeductionCents, "minus"],
+    ["Income that gets taxed", f.taxableIncomeCents, "result"],
+  ];
+  const max = Math.max(1, f.netProfitCents);
+  let run = 0;
+  return (
+    <section className="card p-6 sm:p-8">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-display text-2xl font-semibold">How {usd(r.owedSoFarCents)} adds up</h2>
+        <span className="muted text-xs">2026 · sole proprietor · federal</span>
+      </div>
+
+      {/* 1. Split of the total */}
+      <div className="mt-6">
+        <div className="flex h-4 overflow-hidden rounded-full bg-white/10" role="img" aria-label={`Self-employment tax ${usd(f.se.totalCents)}, income tax ${usd(f.incomeTaxCents)}`}>
+          <div className="h-full bg-white transition-all duration-700" style={{ width: `${sePct}%` }} />
+          <div className="h-full bg-zinc-500 transition-all duration-700" style={{ width: `${100 - sePct}%` }} />
+        </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div><div className="flex items-center gap-2 text-sm"><span className="h-2.5 w-2.5 rounded-sm bg-white" />Self-employment tax</div><div className="font-display num mt-1 text-2xl font-semibold">{usd(f.se.totalCents)}</div></div>
+          <div><div className="flex items-center gap-2 text-sm"><span className="h-2.5 w-2.5 rounded-sm bg-zinc-500" />Federal income tax</div><div className="font-display num mt-1 text-2xl font-semibold">{usd(f.incomeTaxCents)}</div></div>
+          {r.taxPaidCents > 0 && <div><div className="flex items-center gap-2 text-sm"><span className="h-2.5 w-2.5 rounded-sm border border-zinc-500" />Already paid</div><div className="font-display num mt-1 text-2xl font-semibold">−{usd(r.taxPaidCents)}</div></div>}
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-8 lg:grid-cols-2">
+        {/* 2. Self-employment tax */}
+        <div>
+          <h3 className="font-semibold">Self-employment tax</h3>
+          <p className="muted mt-1 text-sm">Social Security + Medicare. You pay both halves because nobody's withholding for you.</p>
+          <ul className="mt-4 space-y-3 text-sm">
+            {([["Profit", f.netProfitCents, ""], ["× 92.35% (the part that counts)", f.se.netEarningsCents, ""], ["Social Security 12.4%", f.se.socialSecurityCents, "bg-white"], ["Medicare 2.9%", f.se.medicareCents, "bg-white/60"]] as [string, number, string][]).map(([l, v, c]) => (
+              <li key={l}>
+                <div className="flex justify-between gap-3"><span className="text-zinc-300">{l}</span><span className="num font-medium">{usd(v)}</span></div>
+                <div className="mt-1.5 h-2 rounded-full bg-white/10"><div className={`h-2 rounded-full ${c || "bg-zinc-600"}`} style={{ width: `${Math.max(1, (v / max) * 100)}%` }} /></div>
+              </li>
+            ))}
+            <li className="flex justify-between border-t pt-3 font-semibold"><span>Self-employment tax</span><span className="num">{usd(f.se.totalCents)}</span></li>
+          </ul>
+        </div>
+
+        {/* 3. Income tax waterfall */}
+        <div>
+          <h3 className="font-semibold">Federal income tax</h3>
+          <p className="muted mt-1 text-sm">Deductions shrink your profit first. Only what's left gets taxed, in brackets.</p>
+          <ul className="mt-4 space-y-3 text-sm">
+            {steps.map(([l, v, kind]) => {
+              const left = kind === "minus" ? run + v : 0;
+              const width = Math.abs(v);
+              if (kind === "base") run = v; else if (kind === "minus") run += v;
+              return (
+                <li key={l}>
+                  <div className="flex justify-between gap-3"><span className={kind === "result" ? "font-medium" : "text-zinc-300"}>{kind === "minus" ? "− " : ""}{l}</span><span className="num font-medium">{usd(Math.abs(v))}</span></div>
+                  <div className="relative mt-1.5 h-2 rounded-full bg-white/10">
+                    <div className={`absolute top-0 h-2 rounded-full ${kind === "minus" ? "bg-zinc-600" : "bg-white"}`} style={{ left: `${(Math.max(0, left) / max) * 100}%`, width: `${Math.max(width ? 1 : 0, (width / max) * 100)}%` }} />
+                  </div>
+                </li>
+              );
+            })}
+            {f.incomeTaxLines.filter((b) => b.amountCents > 0).map((b) => (
+              <li key={b.rateBps} className="flex justify-between gap-3 text-zinc-300"><span>{b.rateBps / 100}% on {usd(b.amountCents)}</span><span className="num">{usd(b.taxCents)}</span></li>
+            ))}
+            <li className="flex justify-between border-t pt-3 font-semibold"><span>Federal income tax</span><span className="num">{usd(f.incomeTaxCents)}</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
   );
 }
 
