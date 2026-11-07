@@ -6,7 +6,7 @@ import { normalize } from "@/lib/csv";
 import { DEMO_FILES, DEMO_PROFILE } from "@/lib/demo";
 import { computeNumber, type Alert, type Line, type NumberResult } from "@/lib/number";
 import { federalEstimate, formatUSD } from "@/lib/tax";
-import { ASSUMPTIONS, SOURCES } from "@/lib/taxConfig";
+import { ASSUMPTIONS, SOURCES, TAX_2026 } from "@/lib/taxConfig";
 import type { Profile, Txn } from "@/lib/types";
 import { PlaidButton } from "./PlaidButton";
 
@@ -230,6 +230,8 @@ function Dashboard({ r, profile, txns, openLine, setWhy, simulate, parent, goRev
         </div>
       </section>
 
+      <TaxCalendar r={r} />
+
       <section className="grid gap-5 lg:grid-cols-5">
         <div className="card p-5 lg:col-span-3">
           <h2 className="font-display text-xl font-bold">Money in vs. business costs</h2>
@@ -259,6 +261,34 @@ function Dashboard({ r, profile, txns, openLine, setWhy, simulate, parent, goRev
         </ul>
       </section>
     </>
+  );
+}
+
+// The IRS "quarters" aren't quarters: they cover 3, 2, 3 and 4 months. We plan monthly so the lumpy schedule never surprises you.
+function TaxCalendar({ r }: { r: NumberResult }) {
+  const months = [3, 2, 3, 4];
+  return (
+    <section className="card p-5">
+      <h2 className="font-display text-xl font-bold">The IRS "quarters" aren't quarters</h2>
+      <p className="muted mt-1 max-w-2xl text-sm">Estimated taxes are due four times a year, but the periods are lopsided: 3 months, then 2, then 3, then 4. That's how the law has worked for decades, and it trips up anyone with seasonal income. The Number plans it monthly instead, so a short period never sneaks up on you.</p>
+      <ol className="mt-4 grid gap-3 sm:grid-cols-4">
+        {TAX_2026.quarterlyDueDates.map((q, i) => {
+          const missed = r.missed.some((m) => m.due === q.due);
+          const next = r.next.due === q.due;
+          const color = missed ? "var(--red)" : next ? "var(--blue)" : "var(--muted)";
+          return (
+            <li key={q.due} className="rounded-2xl p-4" style={{ background: "var(--card-2)", border: `1px solid ${next ? "var(--blue)" : "var(--line)"}` }}>
+              <div className="flex items-center justify-between text-xs font-semibold"><span>Payment {i + 1}</span><span style={{ color }}>{missed ? "Missed" : next ? "Next up" : "Upcoming"}</span></div>
+              <div className="font-display num mt-1 text-lg font-bold">{q.due}</div>
+              <div className="muted text-xs">Covers {q.covers}</div>
+              <div className="mt-2 flex gap-1" aria-label={`${months[i]} months`}>{Array.from({ length: months[i] }).map((_, k) => <span key={k} className="h-2 flex-1 rounded-full" style={{ background: color, opacity: .8 }} />)}</div>
+              <div className="muted mt-1 text-xs">{months[i]} months of income</div>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-3 text-sm"><b>Your plan:</b> set aside {formatUSD(r.saveThisMonthCents)} a month until {r.next.due}. {r.missed.length > 0 && <span style={{ color: "var(--red)" }}>Earlier payments look missed, so paying now keeps the penalty small.</span>}</p>
+    </section>
   );
 }
 
