@@ -232,7 +232,7 @@ const BANKS = [
 ];
 
 /* A secure-connection window in The Number's own style (not a copy of any company's page). */
-function AppConnect({ app, onClose, onDone }: { app: string; onClose: () => void; onDone: (app: string) => void }) {
+export function AppConnect({ app, onClose, onDone, standalone = false }: { app: string; onClose: () => void; onDone: (app: string) => void; standalone?: boolean }) {
   const [step, setStep] = useState<"consent" | "login" | "sync">("consent");
   const [user, setUser] = useState(""), [pass, setPass] = useState(""), [err, setErr] = useState("");
   const [done, setDone] = useState(0);
@@ -248,14 +248,14 @@ function AppConnect({ app, onClose, onDone }: { app: string; onClose: () => void
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === "Escape" && step !== "sync" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose, step]);
   const login = (e: React.FormEvent) => { e.preventDefault(); if (!user.trim() || !pass) return setErr("Enter a username and password."); setUser(""); setPass(""); setStep("sync"); };
   return (
-    <div className="fixed inset-0 z-40 grid place-items-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={`Connect ${app}`}>
-      <div className="toast w-full max-w-[420px] overflow-hidden rounded-2xl border border-zinc-700 bg-[#0b0b0b] shadow-[0_30px_120px_rgba(0,0,0,.8)]">
-        {/* window chrome */}
-        <div className="flex items-center gap-3 border-b border-zinc-800 bg-[#111] px-4 py-2.5">
+    <div className={standalone ? "grid min-h-screen place-items-center bg-black p-4" : "fixed inset-0 z-40 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"} role="dialog" aria-modal="true" aria-label={`Connect ${app}`}>
+      <div className={`toast w-full max-w-[420px] overflow-hidden bg-[#0b0b0b] ${standalone ? "" : "rounded-2xl border border-zinc-700 shadow-[0_30px_120px_rgba(0,0,0,.8)]"}`}>
+        {/* window chrome (only when shown inside the page; a real pop-up has the browser's own) */}
+        {!standalone && <div className="flex items-center gap-3 border-b border-zinc-800 bg-[#111] px-4 py-2.5">
           <span className="flex gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-zinc-600" /><span className="h-2.5 w-2.5 rounded-full bg-zinc-600" /><span className="h-2.5 w-2.5 rounded-full bg-zinc-600" /></span>
           <span className="flex min-w-0 flex-1 items-center justify-center gap-1.5 truncate rounded-md bg-black/60 px-3 py-1 text-[11px] text-zinc-400"><Lock size={11} />connect.the-number12.vercel.app/{slug}</span>
           <button className="text-xs text-zinc-500 hover:text-white" onClick={onClose} disabled={step === "sync"} aria-label="Close">✕</button>
-        </div>
+        </div>}
         <div className="p-6">
           <div className="flex items-center justify-center gap-3">
             <Logo size={44} />
@@ -363,6 +363,12 @@ function PickSheet({ pick, onPick, onClose, busy }: { pick: Pick; onPick: (name:
 
 export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, error, onBack }: { onPlaidSandbox: (bank: string) => void; onQuickBooksSandbox: (company: string) => void; onPlaid: (d: { txns: Txn[]; balances: Profile["balances"] }) => void; busy: string; error: string; onBack: () => void }) {
   const [pick, setPick] = useState<Pick | null>(null);
+  // The pop-up window tells us when the app is connected.
+  useEffect(() => {
+    const on = (e: MessageEvent) => { if (e.origin === window.location.origin && e.data?.type === "tn-connected") onPlaidSandbox(String(e.data.app)); };
+    window.addEventListener("message", on);
+    return () => window.removeEventListener("message", on);
+  }, [onPlaidSandbox]);
   const live = process.env.NEXT_PUBLIC_PLAID_ENV === "production";
   return (
     <Shell step={2} onBack={onBack}>
@@ -394,7 +400,12 @@ export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, er
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {(["Venmo", "Cash App", "PayPal", "Stripe"] as const).map((app) => (
               <button key={app} className="flex flex-col items-center gap-2 rounded-2xl border border-zinc-800 px-2 py-4 text-sm font-medium hover:border-zinc-500" disabled={!!busy}
-                onClick={() => setPick({ kind: "app", title: app, sub: "", options: [], preset: app })}>
+                onClick={() => {
+                  const slug = app.toLowerCase().replace(/\s+/g, "");
+                  const w = 460, h = 700, left = window.screenX + (window.outerWidth - w) / 2, top = window.screenY + (window.outerHeight - h) / 2;
+                  const pop = window.open(`/connect/${slug}`, "tn-connect", `popup=yes,width=${w},height=${h},left=${left},top=${top}`);
+                  if (!pop) setPick({ kind: "app", title: app, sub: "", options: [], preset: app });
+                }}>
                 <span className="grid h-10 w-10 place-items-center rounded-xl border border-zinc-700 font-display text-base font-bold">{app === "Venmo" ? "V" : app === "Cash App" ? "$" : app === "PayPal" ? "P" : "S"}</span>
                 {app}
               </button>
