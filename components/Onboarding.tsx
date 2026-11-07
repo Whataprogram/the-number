@@ -272,9 +272,7 @@ export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, er
               <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-black"><Landmark size={22} /></span>
               <div><div className="font-semibold">Your bank</div><div className="text-sm text-zinc-400">Chase, Huntington, Fifth Third and 12,000+ more, via Plaid</div></div>
             </div>
-            {live ? <div className="mt-4"><PlaidButton onData={onPlaid} /></div> : (
-              <button className="btn btn-primary mt-4 w-full !rounded-xl !py-3.5" onClick={() => setPick({ kind: "bank", title: "Pick your bank", sub: "Choose where your business money lands.", options: BANKS })}>Connect with Plaid</button>
-            )}
+            <div className="mt-4">{live ? <PlaidButton onData={onPlaid} /> : <PlaidButton onSandbox={onPlaidSandbox} />}</div>
           </div>
           <div className="flex items-center gap-3 text-xs text-zinc-500"><span className="h-px flex-1 bg-zinc-800" />or<span className="h-px flex-1 bg-zinc-800" /></div>
           <div>
@@ -282,8 +280,10 @@ export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, er
               <span className="grid h-12 w-12 place-items-center rounded-2xl border border-zinc-700 font-display text-lg font-bold">qb</span>
               <div><div className="font-semibold">QuickBooks</div><div className="text-sm text-zinc-400">Already use QuickBooks? Connect it in one tap.</div></div>
             </div>
-            <button className="btn btn-ghost mt-4 w-full !rounded-xl !py-3.5" onClick={() => setPick({ kind: "qbo", title: "Pick the bank linked to QuickBooks", sub: "QuickBooks pulls your business transactions from it.", options: BANKS })}>Connect QuickBooks</button>
+            <div className="mt-4"><PlaidButton onSandbox={onQuickBooksSandbox} label="Connect QuickBooks" primary={false} /></div>
           </div>
+          {!live && <p className="rounded-xl border border-zinc-800 px-3 py-2 text-center text-xs text-zinc-400">Sandbox test login: <b className="text-white">user_good</b> / <b className="text-white">pass_good</b></p>}
+          {busy && <p className="text-center text-sm text-zinc-300">Pulling your transactions…</p>}
           {error && <p className="text-sm" style={{ color: "var(--red)" }}>{error}</p>}
         </div>
         <div className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-zinc-500">
