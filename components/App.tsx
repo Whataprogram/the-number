@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowRight, Check, Lightbulb, Lock, ArrowUpRight, Bell, BookOpen, Briefcase, CalendarClock, Download, Eye, EyeOff, GraduationCap, Home as HomeIcon, Info, LogOut, Octagon, Printer, ShoppingBag, Terminal, User, Users, Wallet, X, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Lightbulb, Lock, ArrowUpRight, Bell, BookOpen, Briefcase, CalendarClock, Download, Eye, EyeOff, GraduationCap, Home as HomeIcon, Info, Landmark, LogOut, Octagon, Printer, ShoppingBag, Terminal, User, Users, Wallet, X, Zap } from "lucide-react";
 import { classify } from "@/lib/classify";
 import { latestBalance, normalize } from "@/lib/csv";
 import { DEMO_FILES, DEMO_PROFILE } from "@/lib/demo";
@@ -12,7 +12,7 @@ import { ASSUMPTIONS, SOURCES, TAX_2026, TAX_YEAR } from "@/lib/taxConfig";
 import type { Profile, Txn } from "@/lib/types";
 import { Connect, Landing, Logo, Pricing, SignUp, ThemeToggle, type Account } from "./Onboarding";
 
-type Tab = "home" | "alerts" | "learn";
+type Tab = "home" | "alerts" | "learn" | "profile";
 type Stage = "landing" | "signup" | "pricing" | "connect" | "app";
 type Why = { title: string; body: string; txns?: Txn[] };
 
@@ -117,7 +117,7 @@ export default function App() {
   const byId = new Map(txns.map((t) => [t.id, t]));
   const openLine = (l: Line) => setWhy({ title: l.label, body: l.why, txns: l.txnIds?.map((i) => byId.get(i)!).filter(Boolean).slice(-6) });
   const alertDot = result.alerts.some((a) => a.level !== "info");
-  const NAV: [Tab, typeof HomeIcon, string][] = [["home", HomeIcon, "Home"], ["alerts", Bell, "Alerts"], ["learn", GraduationCap, "Learn"]];
+  const NAV: [Tab, typeof HomeIcon, string][] = [["home", HomeIcon, "Home"], ["alerts", Bell, "Alerts"], ["learn", GraduationCap, "Learn"], ["profile", User, "Profile"]];
 
   return (
     <div className="relative min-h-screen pb-28 sm:pb-10" style={{ paddingLeft: "max(16px, env(safe-area-inset-left))", paddingRight: "max(16px, env(safe-area-inset-right))" }}>
@@ -149,6 +149,7 @@ export default function App() {
         {tab === "home" && <Home r={result} openLine={openLine} setWhy={setWhy} txns={txns} />}
         {tab === "alerts" && <Alerts r={result} go={setTab} prefs={prefs} setPref={setPref} />}
         {tab === "learn" && <Learn r={result} />}
+        {tab === "profile" && <Profile account={account} source={source} plan={PLAN_NAME[account?.plan || "free"]} onReconnect={() => setStage("connect")} onEditInfo={() => setStage("signup")} onSignOut={signOut} />}
         <p className="muted pb-4 pt-2 text-center text-xs">Data: {source}. Educational estimate, not tax advice.</p>
       </main>
 
@@ -299,6 +300,50 @@ function Home({ r, openLine, setWhy, txns }: { r: NumberResult; openLine: (l: Li
 
       <Breakdown r={r} />
     </>
+  );
+}
+
+/* ---------- Profile / settings ---------- */
+
+function Profile({ account, source, plan, onReconnect, onEditInfo, onSignOut }: { account: Account | null; source: string; plan: string; onReconnect: () => void; onEditInfo: () => void; onSignOut: () => void }) {
+  const rows: [string, string][] = [
+    ["Name", account?.name || "You"],
+    ["Email", account?.email || "—"],
+    ["Business", account?.business || "—"],
+    ["Plan", plan],
+  ];
+  return (
+    <section className="mx-auto max-w-3xl space-y-4">
+      <h1 className="font-display text-4xl font-semibold">Profile</h1>
+
+      <div className="card p-6">
+        <div className="flex items-center gap-4">
+          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white text-xl font-bold text-black">{(account?.name || "Y").slice(0, 1).toUpperCase()}</span>
+          <div><div className="font-display text-xl font-semibold">{account?.name || "You"}</div><div className="muted text-sm">{account?.business || "Your business"}</div></div>
+        </div>
+        <dl className="mt-5 grid gap-x-8 sm:grid-cols-2">
+          {rows.map(([k, v]) => <div key={k} className="flex justify-between gap-4 border-b py-2 text-sm"><dt className="muted">{k}</dt><dd className="font-medium">{v}</dd></div>)}
+        </dl>
+        <button className="btn btn-ghost mt-4" onClick={onEditInfo}>Edit my info</button>
+      </div>
+
+      <div className="card p-6">
+        <h2 className="font-display text-xl font-semibold">Connected account</h2>
+        <p className="muted mt-1 text-sm">Where The Number reads your income and business costs.</p>
+        <div className="mt-4 flex items-center gap-3 rounded-2xl border border-zinc-800 bg-black/30 p-4">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-black"><Landmark size={18} /></span>
+          <div className="min-w-0 flex-1"><div className="font-medium">Connected</div><div className="muted truncate text-xs">{source}</div></div>
+          <span className="dot shrink-0" style={{ background: "var(--green)" }} />
+        </div>
+        <button className="btn btn-primary mt-4 w-full" onClick={onReconnect}><ArrowUpRight size={16} />Switch bank, Venmo or QuickBooks</button>
+        <p className="muted mt-2 text-center text-xs">Takes you back to the connect step. Read-only. We never move money.</p>
+      </div>
+
+      <div className="card flex items-center justify-between p-6">
+        <div><div className="font-medium">Sign out</div><div className="muted text-sm">Clears this session on this device.</div></div>
+        <button className="btn btn-ghost" onClick={onSignOut}><LogOut size={15} />Sign out</button>
+      </div>
+    </section>
   );
 }
 
