@@ -151,7 +151,7 @@ export function Pricing({ name, onPick, onBack }: { name: string; onPick: (plan:
     <Shell step={1} onBack={onBack}>
       <div className="mx-auto max-w-6xl py-10 text-center">
         <span className="chip text-zinc-300">No subscriptions. Ever.</span>
-        <h1 className="headline font-display mt-5 text-[clamp(2.4rem,6vw,4.25rem)] font-semibold leading-[1]">Pay once a tax year, {name}.</h1>
+        <h1 className="headline font-display mt-5 text-[clamp(2.4rem,6vw,4.25rem)] font-semibold leading-[1]">Pay once a tax year.</h1>
         <p className="mx-auto mt-4 max-w-xl text-zinc-400">No auto-renew, no surprise charges. One payment covers you from January to the April filing deadline. If it doesn't save you more than it costs, next season is on us.</p>
         <div className="mt-12 grid items-end gap-5 text-left md:grid-cols-3">
           {PLANS.map((p) => (
@@ -182,7 +182,7 @@ export function Connect({ name, onSample, onFiles, onPlaid, busy, error, onBack 
   return (
     <Shell step={2} onBack={onBack}>
       <div className="mx-auto max-w-3xl py-12 text-center">
-        {name && <span className="chip text-zinc-300">Last step, {name}</span>}
+        <span className="chip text-zinc-300">Last step</span>
         <h1 className="headline font-display mt-5 text-[clamp(2.4rem,6vw,4.25rem)] font-semibold leading-[1]">Connect your money.</h1>
         <p className="mx-auto mt-4 max-w-xl text-zinc-400">We read your transactions, sort business from personal, and work out your Number. Read-only. We can't move a cent.</p>
         <div className="glass mx-auto mt-10 max-w-xl p-6 text-left sm:p-8">
