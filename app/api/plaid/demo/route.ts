@@ -15,7 +15,7 @@ export async function POST() {
     const pt = await plaid.sandboxPublicTokenCreate({
       institution_id: "ins_109508", // First Platypus Bank (Plaid test institution)
       initial_products: [Products.Transactions],
-      options: { override_username: "user_custom", override_password: JSON.stringify(config), transactions: { start_date: "2026-01-01", end_date: new Date().toISOString().slice(0, 10) } },
+      options: { override_username: "user_custom", override_password: JSON.stringify(config), transactions: { days_requested: 730, start_date: "2026-01-01", end_date: new Date().toISOString().slice(0, 10) } },
     });
     const ex = await plaid.itemPublicTokenExchange({ public_token: pt.data.public_token });
     cookies().set("plaid_at", ex.data.access_token, { httpOnly: true, secure: true, sameSite: "strict", path: "/", maxAge: 60 * 60 * 6 });
