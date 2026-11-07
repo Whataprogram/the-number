@@ -71,13 +71,14 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
         </p>
         <div className="rise mt-9 w-full max-w-2xl rounded-[28px] border border-white/15 bg-white/[0.04] px-6 py-6 backdrop-blur sm:px-8">
           <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-6 sm:text-left">
-            <div className="font-display num shrink-0 text-[clamp(3.5rem,9vw,5.5rem)] font-semibold leading-none">4.9M</div>
+            <div className="font-display num shrink-0 text-[clamp(3.5rem,9vw,5.5rem)] font-semibold leading-none">15.7M</div>
             <div>
-              <div className="text-lg font-semibold leading-snug">new businesses started in America this year, a record. Their first tax bill is coming.</div>
-              <div className="muted mt-1 text-sm">And 1 in 3 owners don't even know they're supposed to pay the IRS during the year. That's about <b className="text-white">1.6 million</b> new owners who won't see it coming.</div>
+              <div className="text-lg font-semibold leading-snug">IRS penalties last year for unpaid quarterly taxes.</div>
+              <div className="muted mt-1 text-sm">This year a record <b className="text-white">4.9 million</b> Americans started a business, and with <b className="text-white">1 in 3</b> owners not even knowing they owe the IRS every quarter, that's <b className="text-white">1.6 million</b> new owners headed for a bill they never saw coming.</div>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-500 sm:text-left">
+            <a className="underline-offset-2 hover:underline" href="https://galek.tax/insights/data-analysis/irs-penalty-trends" target="_blank" rel="noreferrer">IRS Data Book FY2025</a>
             <a className="underline-offset-2 hover:underline" href="https://sbecouncil.org/2026/10/31/americas-entrepreneurship-surge-continues-nearly-5-million-business-applications-filed-through-september/" target="_blank" rel="noreferrer">Source: U.S. Census Business Formation Statistics, Jan–Sep 2026</a>
             <a className="underline-offset-2 hover:underline" href="https://american.edu/media/news/20230418_CarolineBrucknerTaxLiteracySurvey.cfm" target="_blank" rel="noreferrer">American University Kogod, Small Business Tax Literacy Survey</a>
           </div>
