@@ -13,7 +13,7 @@ import { ASSUMPTIONS, SOURCES, TAX_2026, TAX_YEAR } from "@/lib/taxConfig";
 import type { Profile, Txn } from "@/lib/types";
 import { Connect, Landing, Logo, Pricing, SignUp, ThemeToggle, type Account } from "./Onboarding";
 
-type Tab = "home" | "alerts" | "money" | "learn";
+type Tab = "home" | "alerts" | "learn";
 type Stage = "landing" | "signup" | "pricing" | "connect" | "app";
 type Why = { title: string; body: string; txns?: Txn[] };
 
@@ -120,7 +120,7 @@ export default function App() {
   const byId = new Map(txns.map((t) => [t.id, t]));
   const openLine = (l: Line) => setWhy({ title: l.label, body: l.why, txns: l.txnIds?.map((i) => byId.get(i)!).filter(Boolean).slice(-6) });
   const alertDot = result.alerts.some((a) => a.level !== "info");
-  const NAV: [Tab, typeof HomeIcon, string][] = [["home", HomeIcon, "Home"], ["alerts", Bell, "Alerts"], ["money", Wallet, "Money"], ["learn", GraduationCap, "Learn"]];
+  const NAV: [Tab, typeof HomeIcon, string][] = [["home", HomeIcon, "Home"], ["alerts", Bell, "Alerts"], ["learn", GraduationCap, "Learn"]];
 
   return (
     <div className="relative min-h-screen pb-28 sm:pb-10" style={{ paddingLeft: "max(16px, env(safe-area-inset-left))", paddingRight: "max(16px, env(safe-area-inset-right))" }}>
@@ -151,7 +151,6 @@ export default function App() {
       <main className="relative z-10 mx-auto max-w-6xl space-y-4">
         {tab === "home" && <Home r={result} openLine={openLine} setWhy={setWhy} />}
         {tab === "alerts" && <Alerts r={result} go={setTab} prefs={prefs} setPref={setPref} />}
-        {tab === "money" && <Money r={result} txns={txns} setKind={setKind} profile={profile} />}
         {tab === "learn" && <Learn r={result} />}
         <p className="muted pb-4 pt-2 text-center text-xs">Data: {source}. Educational estimate, not tax advice.</p>
       </main>
@@ -366,23 +365,35 @@ function Breakdown({ r }: { r: NumberResult }) {
 function Alerts({ r, go, prefs, setPref }: { r: NumberResult; go: (t: Tab) => void; prefs: AlertPrefs; setPref: (k: string, v: boolean) => void }) {
   const color = { critical: "var(--red)", warning: "var(--amber)", info: "#ffffff" };
   const Icon = { critical: Octagon, warning: AlertTriangle, info: Bell };
-  const action = (id: string): [string, Tab] | null => id === "review" ? ["Sort them now", "money"] : id === "missed" || id === "next" ? ["How estimated taxes work", "learn"] : id === "below" ? ["See my jars", "home"] : id === "rule" ? ["Why it's wrong", "learn"] : null;
+  const action = (id: string): [string, Tab] | null => id === "review" ? ["How estimated taxes work", "learn"] : id === "missed" || id === "next" ? ["How estimated taxes work", "learn"] : id === "below" ? ["See my jars", "home"] : id === "rule" ? ["Why it's wrong", "learn"] : null;
   const due = new Date(r.next.due + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const per100 = federalEstimate(r.netProfitCents + 10_000).totalTaxCents - r.fed.totalTaxCents;
-  const shown = r.alerts.filter((a) => a.id !== "below");
+  const shown = r.alerts.filter((a) => a.id !== "below" && a.id !== "review");
   const tips: [string, string][] = [
     ["Set aside part of every job", `Right now about ${formatUSD(per100)} of every $100 you earn goes to taxes. Moving that into savings when you get paid means the bill is never a surprise.`],
     [r.missed.length ? "Pay the IRS now, not later" : "Pay a little every month", r.missed.length ? `${r.missed.length} payment${r.missed.length > 1 ? "s" : ""} already passed. Paying ${formatUSD(r.owedSoFarCents)} at irs.gov/payments before ${due} stops the late penalty from growing.` : `Set aside ${formatUSD(r.saveThisMonthCents)} a month and the ${due} payment is already covered.`],
-    ...(r.reviewCount ? [["Sort your mystery payments", `${r.reviewCount} payment${r.reviewCount > 1 ? "s" : ""} could be business or personal. Answering takes about a minute and makes your Number exact.`] as [string, string]] : []),
     ["Keep a separate business profile", "A Cash App or Venmo business profile keeps customer money apart from your own. It makes tax time a lot easier."],
     ["Keep receipts for business costs", "Gas, supplies and gear lower your profit, so they lower what you owe. A photo of the receipt is enough."],
   ];
+  const [customs, setCustoms] = useState<{ id: string; text: string }[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+  useEffect(() => { try { const v = localStorage.getItem("the-number:custom-alerts"); if (v) setCustoms(JSON.parse(v)); } catch { /* fine */ } }, []);
+  const saveCustoms = (c: { id: string; text: string }[]) => { setCustoms(c); try { localStorage.setItem("the-number:custom-alerts", JSON.stringify(c)); } catch { /* fine */ } };
+  const addCustom = (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = draft.trim().slice(0, 80);
+    if (!text) return;
+    const id = `c-${Date.now()}`;
+    saveCustoms([...customs, { id, text }]); setPref(id, true); setDraft(""); setAdding(false);
+  };
   const settings: [string, string, string][] = [
     ["due", "An IRS payment is coming up", "14 days and 3 days before each due date, with the amount."],
     ["late", "A payment is late", "Right after a due date passes, with what to pay."],
     ["paid", "A customer pays me", "Shows how much of it you'll owe in tax."],
     ["weekly", "Weekly recap", "Sundays: what you earned and what you owe now."],
     ["locks", "A tax payment locks in", "When a period ends and the amount you owe is final."],
+    ...customs.map((c) => [c.id, c.text, "Your own alert"] as [string, string, string]),
   ];
   return (
     <section className="mx-auto max-w-5xl space-y-4">
@@ -414,11 +425,21 @@ function Alerts({ r, go, prefs, setPref }: { r: NumberResult; go: (t: Tab) => vo
                   <label className="flex cursor-pointer items-start gap-3 rounded-2xl p-2.5 hover:bg-white/[0.04]">
                     <input type="checkbox" className="peer sr-only" checked={!!prefs[k]} onChange={(e) => setPref(k, e.target.checked)} />
                     <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border transition peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-white ${prefs[k] ? "border-white bg-white text-black" : "border-zinc-600"}`}>{prefs[k] && <Check size={14} strokeWidth={3} />}</span>
-                    <span><span className="block text-sm font-medium">{t}</span><span className="muted block text-xs">{d}</span></span>
+                    <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{t}</span><span className="muted block text-xs">{d}</span></span>
+                    {k.startsWith("c-") && <button type="button" className="shrink-0 text-zinc-600 hover:text-white" aria-label={`Delete ${t}`} onClick={(e) => { e.preventDefault(); saveCustoms(customs.filter((c) => c.id !== k)); }}><X size={14} /></button>}
                   </label>
                 </li>
               ))}
             </ul>
+            {adding ? (
+              <form onSubmit={addCustom} className="mt-3 flex gap-2">
+                <input autoFocus className="input !rounded-full !py-2 text-sm" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="e.g. I owe more than $5,000" maxLength={80} aria-label="Your alert" />
+                <button className="btn btn-primary shrink-0 !px-4 !py-2 text-sm">Add</button>
+                <button type="button" className="btn btn-ghost shrink-0 !px-3 !py-2" aria-label="Cancel" onClick={() => { setAdding(false); setDraft(""); }}><X size={14} /></button>
+              </form>
+            ) : (
+              <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-zinc-700 py-2.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white" onClick={() => setAdding(true)}>+ Add your own alert</button>
+            )}
             <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
               <span className="muted mr-1 self-center text-xs">Send by</span>
               {[["sms", "Text"], ["email", "Email"]].map(([k, l]) => (
@@ -466,76 +487,6 @@ function TxnRow({ t, children }: { t: Txn; children?: React.ReactNode }) {
         <div className="text-right"><div className={`num font-semibold ${isIn ? "text-white" : "text-zinc-300"}`}>{formatUSD(Math.abs(t.amountCents), { cents: true })}</div><div className="muted text-[11px]">{isIn ? "money in" : "money out"}</div></div>
       </div>
     </li>
-  );
-}
-
-function Money({ r, txns, setKind, profile }: { r: NumberResult; txns: Txn[]; setKind: (id: string, k: "business_income" | "personal" | "business_expense") => void; profile: Profile }) {
-  const review = txns.filter((t) => t.kind === "review");
-  const current = review[0];
-  const [filter, setFilter] = useState<"all" | Txn["kind"]>("all");
-  const list = txns.filter((t) => filter === "all" || t.kind === filter).sort((a, b) => (a.date < b.date ? 1 : -1));
-  return (
-    <>
-      <h1 className="font-display text-4xl font-semibold">Money</h1>
-      <section className="grid gap-4 lg:grid-cols-5">
-        <div className="card hero-glow p-6 lg:col-span-2">
-          <h2 className="font-display text-xl font-semibold">Business or personal?</h2>
-          {current ? (
-            <div className="mt-4 rounded-3xl border border-zinc-800 bg-black/40 p-6 text-center">
-              <div className="muted text-xs">{review.length} left · {current.date} · {current.source}</div>
-              <div className="mt-2 text-sm font-medium text-zinc-400">{current.amountCents > 0 ? "You got paid" : "You paid"}</div>
-              <div className="font-display num mt-1 text-5xl font-semibold">{formatUSD(Math.abs(current.amountCents), { cents: true })}</div>
-              <div className="mt-2 text-zinc-300">{`${current.description || "(no note)"}${current.counterparty && current.counterparty !== current.description ? ` · ${current.counterparty}` : ""}`}</div>
-              <div className="muted mt-4 text-sm">Was this for your business, or just for you?</div>
-              {(
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <button className="btn btn-primary" onClick={() => setKind(current.id, current.amountCents > 0 ? "business_income" : "business_expense")}><Briefcase size={16} />Business</button>
-                  <button className="btn btn-ghost" onClick={() => setKind(current.id, "personal")}><User size={16} />Personal</button>
-                </div>
-              )}
-            </div>
-          ) : <p className="mt-3 flex items-center gap-2 text-sm"><span className="dot" style={{ background: "var(--green)" }} />All sorted. Your Number is exact.</p>}
-          <p className="muted mt-4 text-xs">Payment apps expect business money on a business profile. Sorting keeps your books, and your account, legit.</p>
-        </div>
-        <div className="lg:col-span-3"><Cpa r={r} txns={txns} profile={profile} /></div>
-      </section>
-
-
-      <section className="card p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-display text-xl font-semibold">All transactions</h2>
-          <select className="input !w-auto !rounded-full !py-2 text-sm" value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} aria-label="Filter">
-            <option value="all">All ({txns.length})</option>
-            {Object.entries(KIND_LABEL).map(([k, [l]]) => <option key={k} value={k}>{l}</option>)}
-          </select>
-        </div>
-        <ul className="mt-2 divide-y">{list.slice(0, 100).map((t) => <TxnRow key={t.id} t={t} />)}</ul>
-      </section>
-    </>
-  );
-}
-
-function Cpa({ r, txns, profile }: { r: NumberResult; txns: Txn[]; profile: Profile }) {
-  const download = () => {
-    const rows = [["date", "source", "description", "counterparty", "amount", "type", "category"], ...txns.map((t) => [t.date, t.source, t.description, t.counterparty || "", (t.amountCents / 100).toFixed(2), t.kind, t.category || ""])];
-    const csv = rows.map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    const a = document.createElement("a"); a.href = url; a.download = "the-number-cpa-ready-2026.csv"; a.click(); URL.revokeObjectURL(url);
-  };
-  return (
-    <section className="card h-full p-6">
-      <h2 className="font-display text-xl font-semibold">Send to a CPA</h2>
-      <p className="muted text-sm">A clean one-pager so you can graduate to a real accountant without showing up with a shoebox.</p>
-      <dl className="mt-4 grid gap-x-8 sm:grid-cols-2">
-        {([["Business", "Your business"], ["Gross income", formatUSD(r.incomeCents, { cents: true })], ["Business expenses", formatUSD(r.expensesCents, { cents: true })], ["Net profit", formatUSD(r.netProfitCents, { cents: true })], ["Self-employment tax (est.)", formatUSD(r.fed.se.totalCents, { cents: true })], ["Income tax (est.)", formatUSD(r.fed.incomeTaxCents, { cents: true })], ["Estimated payments made", formatUSD(r.taxPaidCents, { cents: true })], ["Unsorted items", String(r.reviewCount)]] as [string, string][]).map(([k, v]) => (
-          <div key={k} className="flex justify-between gap-4 border-b py-2 text-sm" style={{ borderColor: "var(--line)" }}><dt className="muted">{k}</dt><dd className="num font-semibold">{v}</dd></div>
-        ))}
-      </dl>
-      <div className="mt-5 flex flex-wrap gap-2">
-        <button className="btn btn-primary" onClick={download}><Download size={16} />Download CSV</button>
-        <button className="btn btn-ghost" onClick={() => window.print()}><Printer size={16} />Print / save PDF</button>
-      </div>
-    </section>
   );
 }
 
