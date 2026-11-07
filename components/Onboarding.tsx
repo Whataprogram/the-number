@@ -231,13 +231,22 @@ const BANKS = [
   { name: "PNC", note: "pnc.com" }, { name: "Bank of America", note: "bankofamerica.com" }, { name: "Wells Fargo", note: "wellsfargo.com" },
 ];
 
-/* A secure-connection window in The Number's own style (not a copy of any company's page). */
+// Each app gets its own brand color (colors aren't trademarked). We use a simple letter mark, not a copy
+// of any company's real logo or login page.
+const APP_THEME: Record<string, { color: string; initial: string }> = {
+  Venmo: { color: "#008CFF", initial: "V" },
+  "Cash App": { color: "#00C244", initial: "$" },
+  PayPal: { color: "#179BD7", initial: "P" },
+  Stripe: { color: "#635BFF", initial: "S" },
+};
+
+/* A branded connect window, modeled on how aggregator flows look (phone step, permissions), in each app's color. */
 export function AppConnect({ app, onClose, onDone, standalone = false }: { app: string; onClose: () => void; onDone: (app: string) => void; standalone?: boolean }) {
-  const [step, setStep] = useState<"consent" | "login" | "sync">("consent");
-  const [user, setUser] = useState(""), [pass, setPass] = useState(""), [err, setErr] = useState("");
+  const [step, setStep] = useState<"phone" | "consent" | "login" | "sync">("phone");
+  const [phone, setPhone] = useState(""), [user, setUser] = useState(""), [pass, setPass] = useState(""), [err, setErr] = useState("");
   const [done, setDone] = useState(0);
   const slug = app.toLowerCase().replace(/\s+/g, "");
-  const initial = app === "Cash App" ? "$" : app[0];
+  const theme = APP_THEME[app] || { color: "#7c7c85", initial: app[0] };
   const tasks = [`Verifying your ${app} account`, `Reading 2026 payments`, "Sorting business from personal", "Working out what you owe"];
   useEffect(() => {
     if (step !== "sync") return;
@@ -247,6 +256,7 @@ export function AppConnect({ app, onClose, onDone, standalone = false }: { app: 
   useEffect(() => { if (step === "sync" && done === tasks.length) { const t = window.setTimeout(() => onDone(app), 400); return () => window.clearTimeout(t); } }, [done, step, app, onDone, tasks.length]);
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === "Escape" && step !== "sync" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose, step]);
   const login = (e: React.FormEvent) => { e.preventDefault(); if (!user.trim() || !pass) return setErr("Enter a username and password."); setUser(""); setPass(""); setStep("sync"); };
+  const btn = { background: theme.color, color: "#fff" };
   return (
     <div className={standalone ? "grid min-h-screen place-items-center bg-black p-4" : "fixed inset-0 z-40 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"} role="dialog" aria-modal="true" aria-label={`Connect ${app}`}>
       <div className={`toast w-full max-w-[420px] overflow-hidden bg-[#0b0b0b] ${standalone ? "" : "rounded-2xl border border-zinc-700 shadow-[0_30px_120px_rgba(0,0,0,.8)]"}`}>
@@ -256,23 +266,39 @@ export function AppConnect({ app, onClose, onDone, standalone = false }: { app: 
           <span className="flex min-w-0 flex-1 items-center justify-center gap-1.5 truncate rounded-md bg-black/60 px-3 py-1 text-[11px] text-zinc-400"><Lock size={11} />connect.the-number12.vercel.app/{slug}</span>
           <button className="text-xs text-zinc-500 hover:text-white" onClick={onClose} disabled={step === "sync"} aria-label="Close">✕</button>
         </div>}
+        {/* brand color band */}
+        <div className="h-1.5 w-full" style={{ background: theme.color }} />
         <div className="p-6">
           <div className="flex items-center justify-center gap-3">
             <Logo size={44} />
-            <span className="flex gap-1">{[0, 1, 2].map((i) => <span key={i} className={`h-1.5 w-1.5 rounded-full bg-zinc-500 ${step === "sync" ? "live-dot" : ""}`} style={{ animationDelay: `${i * 0.2}s` }} />)}</span>
-            <span className="grid h-11 w-11 place-items-center rounded-[13px] border border-zinc-600 bg-gradient-to-b from-zinc-800 to-black font-display text-xl font-bold">{initial}</span>
+            <span className="flex gap-1">{[0, 1, 2].map((i) => <span key={i} className={`h-1.5 w-1.5 rounded-full ${step === "sync" ? "live-dot" : ""}`} style={{ background: theme.color, animationDelay: `${i * 0.2}s` }} />)}</span>
+            <span className="grid h-11 w-11 place-items-center rounded-[13px] font-display text-xl font-bold text-white shadow-lg" style={{ background: theme.color }}>{theme.initial}</span>
           </div>
-          <div className="mt-2 text-center"><span className="chip text-[10px] text-zinc-400">{app} · Sandbox</span></div>
+          <div className="mt-2 text-center"><span className="chip text-[10px]" style={{ color: theme.color, borderColor: theme.color }}>{app} · Sandbox</span></div>
+
+          {step === "phone" && (
+            <form onSubmit={(e) => { e.preventDefault(); setStep("consent"); }} className="mt-5">
+              <h3 className="font-display text-center text-xl font-semibold leading-snug">The Number uses {app} to connect your account</h3>
+              <label className="mt-6 block text-sm font-medium" htmlFor="ap-phone">Phone number</label>
+              <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-zinc-700 bg-white/[0.04] px-3">
+                <span className="text-sm text-zinc-400">🇺🇸 +1</span>
+                <input id="ap-phone" inputMode="tel" className="w-full bg-transparent py-3 text-sm outline-none" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 000-0000" autoFocus />
+              </div>
+              <p className="muted mt-2 flex items-start gap-2 text-xs"><span className="mt-0.5" style={{ color: theme.color }}>⚡</span>Use your phone number to connect faster next time.</p>
+              <button className="btn mt-6 w-full !rounded-xl !py-3 font-semibold" style={btn}>Continue</button>
+              <button type="button" className="mt-2 w-full py-2 text-sm text-zinc-400 hover:text-white" onClick={() => setStep("consent")}>Continue without phone number</button>
+            </form>
+          )}
 
           {step === "consent" && (
             <>
-              <h3 className="font-display mt-5 text-center text-xl font-semibold">The Number wants to connect to {app}</h3>
+              <h3 className="font-display mt-5 text-center text-xl font-semibold">Share this data with The Number?</h3>
               <ul className="mt-5 space-y-3 text-sm">
-                {[["See your payments", "Money in and out, this tax year"], ["Read only", "We can't send, move or request money"], ["Disconnect anytime", "From your account settings"]].map(([t, d]) => (
-                  <li key={t} className="flex gap-3"><Check size={18} className="mt-0.5 shrink-0" /><span><span className="block font-medium">{t}</span><span className="muted text-xs">{d}</span></span></li>
+                {[["Your payments", "Money in and out, this tax year"], ["Read only", "We can't send, move or request money"], ["Disconnect anytime", "From your account settings"]].map(([t, d]) => (
+                  <li key={t} className="flex gap-3"><Check size={18} className="mt-0.5 shrink-0" style={{ color: theme.color }} /><span><span className="block font-medium">{t}</span><span className="muted text-xs">{d}</span></span></li>
                 ))}
               </ul>
-              <button className="btn btn-primary mt-6 w-full !rounded-xl !py-3" onClick={() => setStep("login")}>Continue</button>
+              <button className="btn mt-6 w-full !rounded-xl !py-3 font-semibold" style={btn} onClick={() => setStep("login")}>Allow</button>
               <button className="mt-2 w-full py-2 text-sm text-zinc-500 hover:text-white" onClick={onClose}>Cancel</button>
             </>
           )}
@@ -285,7 +311,7 @@ export function AppConnect({ app, onClose, onDone, standalone = false }: { app: 
               <label className="mt-4 block text-sm font-medium" htmlFor="ap-pass">Enter password</label>
               <input id="ap-pass" type="password" className="input mt-1.5" value={pass} onChange={(e) => { setPass(e.target.value); setErr(""); }} autoComplete="new-password" />
               {err && <p className="mt-2 text-sm text-zinc-400">{err}</p>}
-              <button className="btn btn-primary mt-5 w-full !rounded-xl !py-3">Sign in</button>
+              <button className="btn mt-5 w-full !rounded-xl !py-3 font-semibold" style={btn}>Sign in</button>
             </form>
           )}
 
@@ -295,12 +321,12 @@ export function AppConnect({ app, onClose, onDone, standalone = false }: { app: 
               <ul className="mt-5 space-y-3 text-sm">
                 {tasks.map((t, i) => (
                   <li key={t} className="flex items-center gap-3">
-                    <span className={`grid h-6 w-6 place-items-center rounded-full border ${i < done ? "border-white bg-white text-black" : "border-zinc-700"}`}>{i < done ? <Check size={14} strokeWidth={3} /> : i === done ? <span className="live-dot h-1.5 w-1.5 rounded-full bg-white" /> : null}</span>
+                    <span className="grid h-6 w-6 place-items-center rounded-full border text-white" style={{ background: i < done ? theme.color : "transparent", borderColor: i < done ? theme.color : "#3f3f46" }}>{i < done ? <Check size={14} strokeWidth={3} /> : i === done ? <span className="live-dot h-1.5 w-1.5 rounded-full" style={{ background: theme.color }} /> : null}</span>
                     <span className={i <= done ? "text-white" : "text-zinc-500"}>{t}</span>
                   </li>
                 ))}
               </ul>
-              <div className="mt-5 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-white transition-all duration-500" style={{ width: `${(done / tasks.length) * 100}%` }} /></div>
+              <div className="mt-5 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full transition-all duration-500" style={{ width: `${(done / tasks.length) * 100}%`, background: theme.color }} /></div>
             </>
           )}
         </div>
