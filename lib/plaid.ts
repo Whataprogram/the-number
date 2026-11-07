@@ -15,7 +15,7 @@ export function plaidClient() {
   }));
 }
 
-export const LINK_CONFIG = { products: [Products.Transactions], country_codes: [CountryCode.Us], language: "en" as const, client_name: "The Number" };
+export const LINK_CONFIG = { products: [Products.Transactions], country_codes: [CountryCode.Us], language: "en" as const, client_name: "The Number", transactions: { days_requested: 730 } };
 
 // Plaid amounts are positive for money leaving the account. We store money in as positive cents.
 export function mapPlaidTxn(t: { transaction_id: string; date: string; name: string; merchant_name?: string | null; amount: number; account_id: string }, accountName: string): Omit<Txn, "kind" | "reason"> {
@@ -23,8 +23,9 @@ export function mapPlaidTxn(t: { transaction_id: string; date: string; name: str
     id: `plaid-${t.transaction_id}`,
     date: t.date,
     source: `Plaid · ${accountName}`,
-    description: t.merchant_name || t.name,
-    counterparty: t.name,
+    // Keep Plaid's original text (it carries notes like "driveway wash"); the merchant name is extra context.
+    description: t.name,
+    counterparty: t.merchant_name || t.name,
     amountCents: toCents((-t.amount).toFixed(2)),
   };
 }
