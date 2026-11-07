@@ -231,6 +231,84 @@ const BANKS = [
   { name: "PNC", note: "pnc.com" }, { name: "Bank of America", note: "bankofamerica.com" }, { name: "Wells Fargo", note: "wellsfargo.com" },
 ];
 
+/* A secure-connection window in The Number's own style (not a copy of any company's page). */
+function AppConnect({ app, onClose, onDone }: { app: string; onClose: () => void; onDone: (app: string) => void }) {
+  const [step, setStep] = useState<"consent" | "login" | "sync">("consent");
+  const [user, setUser] = useState(""), [pass, setPass] = useState(""), [err, setErr] = useState("");
+  const [done, setDone] = useState(0);
+  const slug = app.toLowerCase().replace(/\s+/g, "");
+  const initial = app === "Cash App" ? "$" : app[0];
+  const tasks = [`Verifying your ${app} account`, `Reading 2026 payments`, "Sorting business from personal", "Working out what you owe"];
+  useEffect(() => {
+    if (step !== "sync") return;
+    const t = window.setInterval(() => setDone((d) => d + 1), 650);
+    return () => window.clearInterval(t);
+  }, [step]);
+  useEffect(() => { if (step === "sync" && done === tasks.length) { const t = window.setTimeout(() => onDone(app), 400); return () => window.clearTimeout(t); } }, [done, step, app, onDone, tasks.length]);
+  useEffect(() => { const k = (e: KeyboardEvent) => e.key === "Escape" && step !== "sync" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose, step]);
+  const login = (e: React.FormEvent) => { e.preventDefault(); if (!user.trim() || !pass) return setErr("Enter a username and password."); setUser(""); setPass(""); setStep("sync"); };
+  return (
+    <div className="fixed inset-0 z-40 grid place-items-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={`Connect ${app}`}>
+      <div className="toast w-full max-w-[420px] overflow-hidden rounded-2xl border border-zinc-700 bg-[#0b0b0b] shadow-[0_30px_120px_rgba(0,0,0,.8)]">
+        {/* window chrome */}
+        <div className="flex items-center gap-3 border-b border-zinc-800 bg-[#111] px-4 py-2.5">
+          <span className="flex gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-zinc-600" /><span className="h-2.5 w-2.5 rounded-full bg-zinc-600" /><span className="h-2.5 w-2.5 rounded-full bg-zinc-600" /></span>
+          <span className="flex min-w-0 flex-1 items-center justify-center gap-1.5 truncate rounded-md bg-black/60 px-3 py-1 text-[11px] text-zinc-400"><Lock size={11} />connect.the-number12.vercel.app/{slug}</span>
+          <button className="text-xs text-zinc-500 hover:text-white" onClick={onClose} disabled={step === "sync"} aria-label="Close">✕</button>
+        </div>
+        <div className="p-6">
+          <div className="flex items-center justify-center gap-3">
+            <Logo size={44} />
+            <span className="flex gap-1">{[0, 1, 2].map((i) => <span key={i} className={`h-1.5 w-1.5 rounded-full bg-zinc-500 ${step === "sync" ? "live-dot" : ""}`} style={{ animationDelay: `${i * 0.2}s` }} />)}</span>
+            <span className="grid h-11 w-11 place-items-center rounded-[13px] border border-zinc-600 bg-gradient-to-b from-zinc-800 to-black font-display text-xl font-bold">{initial}</span>
+          </div>
+          <div className="mt-2 text-center"><span className="chip text-[10px] text-zinc-400">{app} · Sandbox</span></div>
+
+          {step === "consent" && (
+            <>
+              <h3 className="font-display mt-5 text-center text-xl font-semibold">The Number wants to connect to {app}</h3>
+              <ul className="mt-5 space-y-3 text-sm">
+                {[["See your payments", "Money in and out, this tax year"], ["Read only", "We can't send, move or request money"], ["Disconnect anytime", "From your account settings"]].map(([t, d]) => (
+                  <li key={t} className="flex gap-3"><Check size={18} className="mt-0.5 shrink-0" /><span><span className="block font-medium">{t}</span><span className="muted text-xs">{d}</span></span></li>
+                ))}
+              </ul>
+              <button className="btn btn-primary mt-6 w-full !rounded-xl !py-3" onClick={() => setStep("login")}>Continue</button>
+              <button className="mt-2 w-full py-2 text-sm text-zinc-500 hover:text-white" onClick={onClose}>Cancel</button>
+            </>
+          )}
+
+          {step === "login" && (
+            <form onSubmit={login} autoComplete="off" noValidate>
+              <h3 className="font-display mt-5 text-center text-xl font-semibold">Sign in to {app}</h3>
+              <label className="mt-5 block text-sm font-medium" htmlFor="ap-user">Enter username</label>
+              <input id="ap-user" className="input mt-1.5" value={user} onChange={(e) => { setUser(e.target.value); setErr(""); }} autoComplete="off" autoFocus />
+              <label className="mt-4 block text-sm font-medium" htmlFor="ap-pass">Enter password</label>
+              <input id="ap-pass" type="password" className="input mt-1.5" value={pass} onChange={(e) => { setPass(e.target.value); setErr(""); }} autoComplete="new-password" />
+              {err && <p className="mt-2 text-sm text-zinc-400">{err}</p>}
+              <button className="btn btn-primary mt-5 w-full !rounded-xl !py-3">Sign in</button>
+            </form>
+          )}
+
+          {step === "sync" && (
+            <>
+              <h3 className="font-display mt-5 text-center text-xl font-semibold">{done >= tasks.length ? "Connected" : `Connecting ${app}…`}</h3>
+              <ul className="mt-5 space-y-3 text-sm">
+                {tasks.map((t, i) => (
+                  <li key={t} className="flex items-center gap-3">
+                    <span className={`grid h-6 w-6 place-items-center rounded-full border ${i < done ? "border-white bg-white text-black" : "border-zinc-700"}`}>{i < done ? <Check size={14} strokeWidth={3} /> : i === done ? <span className="live-dot h-1.5 w-1.5 rounded-full bg-white" /> : null}</span>
+                    <span className={i <= done ? "text-white" : "text-zinc-500"}>{t}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-5 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-white transition-all duration-500" style={{ width: `${(done / tasks.length) * 100}%` }} /></div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PickSheet({ pick, onPick, onClose, busy }: { pick: Pick; onPick: (name: string) => void; onClose: () => void; busy: boolean }) {
   const [chosen, setChosen] = useState(pick.preset || "");
   const [user, setUser] = useState(""), [pass, setPass] = useState(""), [err, setErr] = useState("");
@@ -332,7 +410,8 @@ export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, er
           <span className="flex items-center gap-1.5"><Check size={14} /> Disconnect anytime</span>
         </div>
       </div>
-      {pick && <PickSheet pick={pick} busy={!!busy} onClose={() => setPick(null)} onPick={(n) => (pick.kind === "qbo" ? onQuickBooksSandbox(n) : onPlaidSandbox(n))} />}
+      {pick && pick.kind === "app" && <AppConnect app={pick.preset || "App"} onClose={() => setPick(null)} onDone={(n) => onPlaidSandbox(n)} />}
+      {pick && pick.kind !== "app" && <PickSheet pick={pick} busy={!!busy} onClose={() => setPick(null)} onPick={(n) => (pick.kind === "qbo" ? onQuickBooksSandbox(n) : onPlaidSandbox(n))} />}
     </Shell>
   );
 }
