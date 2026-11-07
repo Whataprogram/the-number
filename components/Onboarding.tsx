@@ -204,7 +204,6 @@ const BANKS = [
   { name: "Chase", note: "chase.com" }, { name: "Huntington", note: "huntington.com" }, { name: "Fifth Third", note: "53.com" },
   { name: "PNC", note: "pnc.com" }, { name: "Bank of America", note: "bankofamerica.com" }, { name: "Wells Fargo", note: "wellsfargo.com" },
 ];
-const COMPANIES = [{ name: "My Lawn & Wash Co.", note: "Sandbox company · sole proprietor" }, { name: "Sample Detailing", note: "Sandbox company · sole proprietor" }];
 
 function PickSheet({ pick, onPick, onClose, busy }: { pick: Pick; onPick: (name: string) => void; onClose: () => void; busy: boolean }) {
   const [chosen, setChosen] = useState("");
@@ -236,6 +235,7 @@ function PickSheet({ pick, onPick, onClose, busy }: { pick: Pick; onPick: (name:
 
 export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, error, onBack }: { onPlaidSandbox: (bank: string) => void; onQuickBooksSandbox: (company: string) => void; onPlaid: (d: { txns: Txn[]; balances: Profile["balances"] }) => void; busy: string; error: string; onBack: () => void }) {
   const [pick, setPick] = useState<Pick | null>(null);
+  const [qbo, setQbo] = useState(false);
   const live = process.env.NEXT_PUBLIC_PLAID_ENV === "production";
   return (
     <Shell step={2} onBack={onBack}>
@@ -257,9 +257,9 @@ export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, er
           <div>
             <div className="flex items-center gap-4">
               <span className="grid h-12 w-12 place-items-center rounded-2xl border border-zinc-700 font-display text-lg font-bold">qb</span>
-              <div><div className="font-semibold">QuickBooks</div><div className="text-sm text-zinc-400">Already use QuickBooks? We read your Profit &amp; Loss.</div></div>
+              <div><div className="font-semibold">QuickBooks</div><div className="text-sm text-zinc-400">Already use QuickBooks? Connect it in one tap.</div></div>
             </div>
-            <button className="btn btn-ghost mt-4 w-full !rounded-xl !py-3.5" onClick={() => setPick({ kind: "qbo", title: "Pick your company", sub: "Choose the QuickBooks company to read.", options: COMPANIES })}>Connect QuickBooks</button>
+            <button className="btn btn-ghost mt-4 w-full !rounded-xl !py-3.5" onClick={() => { setQbo(true); onQuickBooksSandbox("QuickBooks"); }} disabled={!!busy}>{busy && qbo ? "Connecting to QuickBooks…" : "Connect QuickBooks"}</button>
           </div>
           {error && <p className="text-sm" style={{ color: "var(--red)" }}>{error}</p>}
         </div>

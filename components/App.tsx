@@ -8,7 +8,6 @@ import { DEMO_FILES, DEMO_PROFILE } from "@/lib/demo";
 import { computeNumber, type Alert, type Line, type NumberResult } from "@/lib/number";
 import { federalEstimate, formatUSD } from "@/lib/tax";
 import { parseEntry, type Entry } from "@/lib/entry";
-import { plToTxns } from "@/lib/qbo";
 import { randomFactor, scaleBusiness } from "@/lib/scale";
 import { ASSUMPTIONS, SOURCES, TAX_2026, TAX_YEAR } from "@/lib/taxConfig";
 import type { Profile, Txn } from "@/lib/types";
@@ -64,7 +63,7 @@ export default function App() {
 
   function enter(note: string) { setSource(note); setTab("home"); setStage("app"); }
 
-  async function loadSampleBank(bank = "your bank") {
+  async function loadSampleBank(bank = "your bank", via: "plaid" | "qbo" = "plaid") {
     setBusy("bank"); setError("");
     const f = randomFactor();
     try {
@@ -72,7 +71,7 @@ export default function App() {
       const j = await r.json();
       if (!r.ok) throw new Error(j.error);
       setProfile({ ...DEMO_PROFILE, asOf: new Date().toISOString().slice(0, 10), balances: j.balances });
-      setTxns(scaleBusiness(j.txns, f)); enter(`Plaid Sandbox · ${bank} (test connection, sample business, amounts randomized each load)`);
+      setTxns(scaleBusiness(j.txns, f)); enter(via === "qbo" ? "QuickBooks Sandbox (sample business, pulled through a Plaid Sandbox test bank, amounts randomized each load)" : `Plaid Sandbox · ${bank} (test connection, sample business, amounts randomized each load)`);
     } catch (e) {
       // Plaid unreachable (Wi-Fi, keys): fall back to the same data from local files so the demo never breaks.
       console.warn("Plaid sample bank unavailable:", (e as Error).message);
@@ -89,28 +88,6 @@ export default function App() {
     setProfile(DEMO_PROFILE);
     setTxns(scaleBusiness(await sampleTxns(), f));
     enter(note || "Sample statements (Chase + Cash App + Venmo)");
-  }
-
-  async function loadQuickBooksSandbox(company: string) {
-    setBusy("qbo"); setError("");
-    try {
-      const f = randomFactor();
-      const t = scaleBusiness(await sampleTxns(), f).filter((x) => x.date.startsWith(String(TAX_YEAR)));
-      const months = Array.from(new Set(t.map((x) => x.date.slice(0, 7)))).sort();
-      const end = (m: string) => new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0)).toISOString().slice(0, 10);
-      const col = (m: string) => ({ ColTitle: m, MetaData: [{ Name: "StartDate", Value: `${m}-01` }, { Name: "EndDate", Value: end(m) }] });
-      const sum = (m: string, inc: boolean) => (t.filter((x) => x.date.startsWith(m) && (inc ? x.kind === "business_income" || (x.kind === "review" && x.amountCents > 0) : x.kind === "business_expense")).reduce((a, x) => a + Math.abs(x.amountCents), 0) / 100).toFixed(2);
-      const report = {
-        Columns: { Column: [{ ColTitle: "" }, ...months.map(col), { ColTitle: "Total" }] },
-        Rows: { Row: [
-          { group: "Income", Summary: { ColData: [{ value: "Total Income" }, ...months.map((m) => ({ value: sum(m, true) }))] } },
-          { group: "Expenses", Summary: { ColData: [{ value: "Total Expenses" }, ...months.map((m) => ({ value: sum(m, false) }))] } },
-        ] },
-      };
-      const today = new Date().toISOString().slice(0, 10);
-      setProfile({ ...DEMO_PROFILE, asOf: today, bills: [] });
-      setTxns(plToTxns(report, today)); enter(`QuickBooks Sandbox · ${company} (sample company, amounts randomized each load)`);
-    } finally { setBusy(""); }
   }
 
   function onPlaid(data: { txns: Txn[]; balances: Profile["balances"] }) {
@@ -135,7 +112,7 @@ export default function App() {
   if (stage === "landing") return <Landing onStart={() => setStage(account ? (account.plan ? "connect" : "pricing") : "signup")} onSignIn={() => setStage(account ? "connect" : "signup")} onDemo={() => loadSampleBank()} busy={busy === "bank"} />;
   if (stage === "signup") return <SignUp onBack={() => setStage("landing")} onDone={(a) => { setAccount(a); saveAccount(a); setStage("pricing"); }} />;
   if (stage === "pricing") return <Pricing name={account?.name || "friend"} onBack={() => setStage("landing")} onPick={(plan) => { const a = { ...(account as Account), plan }; setAccount(a); saveAccount(a); setStage("connect"); }} />;
-  if (stage === "connect" || !txns || !result) return <Connect onBack={() => setStage("landing")} onPlaidSandbox={loadSampleBank} onQuickBooksSandbox={loadQuickBooksSandbox} onPlaid={onPlaid} busy={busy} error={error} />;
+  if (stage === "connect" || !txns || !result) return <Connect onBack={() => setStage("landing")} onPlaidSandbox={loadSampleBank} onQuickBooksSandbox={() => loadSampleBank("QuickBooks", "qbo")} onPlaid={onPlaid} busy={busy} error={error} />;
 
   const byId = new Map(txns.map((t) => [t.id, t]));
   const openLine = (l: Line) => setWhy({ title: l.label, body: l.why, txns: l.txnIds?.map((i) => byId.get(i)!).filter(Boolean).slice(-6) });
