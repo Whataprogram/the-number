@@ -61,3 +61,15 @@ describe("IRS payment periods", () => {
     expect(after[3].amountCents).toBeGreaterThan(result.quarters[3].amountCents);
   });
 });
+
+import { scaleBusiness } from "../lib/scale";
+describe("randomized sample business", () => {
+  it("keeps what's owed between $2,000 and $99,999 at both ends of the range, and income tax kicks in when bigger", () => {
+    for (const f of [1.2, 4]) {
+      const r = computeNumber(scaleBusiness(load(), f), DEMO_PROFILE);
+      expect(r.owedSoFarCents).toBeGreaterThan(200_000);
+      expect(r.owedSoFarCents).toBeLessThan(9_999_900);
+      if (f === 4) expect(r.fed.incomeTaxCents).toBeGreaterThan(0); // not a flat rate: brackets apply
+    }
+  });
+});

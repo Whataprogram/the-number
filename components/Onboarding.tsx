@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, FileUp, Moon, Sun, Hash, Landmark, Lock, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Check, Moon, Sun, Hash, Landmark, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import type { Profile, Txn } from "@/lib/types";
 import { PlaidButton } from "./PlaidButton";
 
@@ -43,9 +43,9 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
 
       <main className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-4 pb-[34vh] pt-[7vh] text-center">
         <span className="chip rise mb-6 uppercase tracking-[0.14em] text-zinc-300">For first-time business owners</span>
-        <h1 className="headline font-display rise text-[clamp(2.4rem,6vw,4.5rem)] font-semibold leading-[1]" style={{ textWrap: "balance" as never }}>Know what you owe.</h1>
+        <h1 className="headline font-display rise text-[clamp(2.4rem,6vw,4.5rem)] font-semibold leading-[1]" style={{ textWrap: "balance" as never }}>Know your Number.</h1>
         <p className="rise mt-5 max-w-2xl text-[clamp(1.2rem,2.4vw,1.6rem)] font-medium leading-snug text-white" style={{ textWrap: "balance" as never }}>
-          Started a business? You're a sole proprietor, and nobody takes taxes out for you. The Number connects to your bank or QuickBooks and shows exactly what you owe the IRS, and when.
+          See exactly what you owe the IRS, and when. Built for first-time business owners.
         </p>
         <div className="rise mt-9 w-full max-w-2xl rounded-[28px] border border-white/15 bg-white/[0.04] px-6 py-6 backdrop-blur sm:px-8">
           <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-6 sm:text-left">
@@ -198,60 +198,78 @@ export function Pricing({ onPick, onBack }: { name?: string; onPick: (plan: stri
   );
 }
 
-function QuickBooksButton() {
-  const [msg, setMsg] = useState("");
-  const [busy, setBusy] = useState(false);
-  async function go() {
-    setBusy(true); setMsg("");
-    try {
-      const r = await fetch("/api/qbo/connect", { redirect: "manual" });
-      if (r.type === "opaqueredirect" || r.status === 0 || r.redirected) { window.location.href = "/api/qbo/connect"; return; }
-      const j = await r.json().catch(() => ({}));
-      setMsg(j.error || "QuickBooks couldn't start. Try again.");
-    } catch { setMsg("QuickBooks couldn't start. Try again."); }
-    setBusy(false);
-  }
+type Pick = { kind: "bank" | "qbo"; title: string; sub: string; options: { name: string; note: string }[] };
+
+const BANKS = [
+  { name: "Chase", note: "chase.com" }, { name: "Huntington", note: "huntington.com" }, { name: "Fifth Third", note: "53.com" },
+  { name: "PNC", note: "pnc.com" }, { name: "Bank of America", note: "bankofamerica.com" }, { name: "Wells Fargo", note: "wellsfargo.com" },
+];
+const COMPANIES = [{ name: "My Lawn & Wash Co.", note: "Sandbox company · sole proprietor" }, { name: "Sample Detailing", note: "Sandbox company · sole proprietor" }];
+
+function PickSheet({ pick, onPick, onClose, busy }: { pick: Pick; onPick: (name: string) => void; onClose: () => void; busy: boolean }) {
+  const [chosen, setChosen] = useState("");
+  useEffect(() => { const k = (e: KeyboardEvent) => e.key === "Escape" && !busy && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose, busy]);
   return (
-    <div>
-      <div className="flex items-center gap-4">
-        <span className="grid h-12 w-12 place-items-center rounded-2xl border border-zinc-700 font-display text-lg font-bold">qb</span>
-        <div><div className="font-semibold">Connect QuickBooks</div><div className="text-sm text-zinc-400">Already use QuickBooks? We read your Profit &amp; Loss.</div></div>
+    <div className="fixed inset-0 z-40 grid place-items-end bg-black/70 backdrop-blur-sm sm:place-items-center" role="dialog" aria-modal="true" aria-label={pick.title} onClick={() => !busy && onClose()}>
+      <div className="toast w-full max-w-md rounded-t-[28px] border border-zinc-800 bg-[#0b0b0b] p-6 text-left sm:rounded-[28px]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between"><span className="chip text-zinc-300">{pick.kind === "bank" ? "Plaid · Sandbox" : "QuickBooks · Sandbox"}</span><button className="text-sm text-zinc-500 hover:text-white" onClick={onClose} disabled={busy}>Close</button></div>
+        <h3 className="font-display mt-4 text-2xl font-semibold">{busy ? "Connecting…" : pick.title}</h3>
+        <p className="muted mt-1 text-sm">{busy ? `Pulling ${chosen ? `${chosen}'s` : "your"} ${pick.kind === "bank" ? "transactions" : "Profit & Loss"}. Read-only.` : pick.sub}</p>
+        {busy ? (
+          <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-1/2 animate-pulse rounded-full bg-white" /></div>
+        ) : (
+          <ul className="mt-5 grid gap-2">
+            {pick.options.map((o) => (
+              <li key={o.name}><button className="flex w-full items-center justify-between rounded-2xl border border-zinc-800 px-4 py-3.5 text-left hover:border-zinc-500" onClick={() => { setChosen(o.name); onPick(o.name); }}>
+                <span><span className="block font-medium">{o.name}</span><span className="muted block text-xs">{o.note}</span></span><ArrowRight size={16} className="text-zinc-500" />
+              </button></li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-5 text-[11px] text-zinc-500">{pick.kind === "bank" ? "Sandbox mode: no login needed. Plaid creates a test connection for the bank you pick." : "Sandbox mode: no login needed. Loads a sample QuickBooks company."}</p>
       </div>
-      <button className="btn btn-ghost mt-4 w-full !rounded-xl !py-3.5" onClick={go} disabled={busy}>{busy ? "Opening QuickBooks…" : "Connect QuickBooks"}</button>
-      {msg && <p className="mt-2 text-xs text-zinc-400">{msg}</p>}
     </div>
   );
 }
 
 /* ---------------- Connect ---------------- */
 
-export function Connect({ name, onSample, onFiles, onPlaid, busy, error, onBack }: { name: string; onSample: () => void; onFiles: (f: FileList | null) => void; onPlaid: (d: { txns: Txn[]; balances: Profile["balances"] }) => void; busy: string; error: string; onBack: () => void }) {
+export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, error, onBack }: { onPlaidSandbox: (bank: string) => void; onQuickBooksSandbox: (company: string) => void; onPlaid: (d: { txns: Txn[]; balances: Profile["balances"] }) => void; busy: string; error: string; onBack: () => void }) {
+  const [pick, setPick] = useState<Pick | null>(null);
+  const live = process.env.NEXT_PUBLIC_PLAID_ENV === "production";
   return (
     <Shell step={2} onBack={onBack}>
       <div className="mx-auto max-w-3xl py-12 text-center">
         <span className="chip text-zinc-300">Last step</span>
-        <h1 className="headline font-display mt-5 text-[clamp(2.4rem,6vw,4.25rem)] font-semibold leading-[1]">Connect your business money.</h1>
-        <p className="mx-auto mt-4 max-w-xl text-zinc-400">We read your income and business costs and work out what you owe the IRS. Read-only. We can't move a cent.</p>
-        <div className="glass mx-auto mt-10 max-w-xl p-6 text-left sm:p-8">
-          <div className="flex items-center gap-4">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-black"><Landmark size={22} /></span>
-            <div><div className="font-semibold">Connect your bank</div><div className="text-sm text-zinc-400">Chase, Huntington, Fifth Third and 12,000+ more, via Plaid</div></div>
+        <h1 className="headline font-display mt-5 text-[clamp(2.4rem,6vw,4.25rem)] font-semibold leading-[1]">Connect your business.</h1>
+        <p className="mx-auto mt-4 max-w-xl text-zinc-400">We read your income and business costs and show what you owe the IRS. Read-only.</p>
+        <div className="glass mx-auto mt-10 grid max-w-xl gap-6 p-6 text-left sm:p-8">
+          <div>
+            <div className="flex items-center gap-4">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-black"><Landmark size={22} /></span>
+              <div><div className="font-semibold">Your bank</div><div className="text-sm text-zinc-400">Chase, Huntington, Fifth Third and 12,000+ more, via Plaid</div></div>
+            </div>
+            {live ? <div className="mt-4"><PlaidButton onData={onPlaid} /></div> : (
+              <button className="btn btn-primary mt-4 w-full !rounded-xl !py-3.5" onClick={() => setPick({ kind: "bank", title: "Pick your bank", sub: "Choose where your business money lands.", options: BANKS })}>Connect with Plaid</button>
+            )}
           </div>
-          <div className="mt-5"><PlaidButton onData={onPlaid} /></div>
-          <div className="my-6 flex items-center gap-3 text-xs text-zinc-500"><span className="h-px flex-1 bg-zinc-800" />or<span className="h-px flex-1 bg-zinc-800" /></div>
-          <QuickBooksButton />
-          <label className="mt-5 flex cursor-pointer items-center justify-center gap-2 text-sm text-zinc-400 hover:text-white">
-            <FileUp size={16} /> Upload Chase / Cash App / Venmo CSVs (stays in your browser)
-            <input type="file" accept=".csv,text/csv" multiple className="sr-only" onChange={(e) => onFiles(e.target.files)} />
-          </label>
-          {error && <p className="mt-3 text-sm" style={{ color: "var(--red)" }}>{error}</p>}
+          <div className="flex items-center gap-3 text-xs text-zinc-500"><span className="h-px flex-1 bg-zinc-800" />or<span className="h-px flex-1 bg-zinc-800" /></div>
+          <div>
+            <div className="flex items-center gap-4">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl border border-zinc-700 font-display text-lg font-bold">qb</span>
+              <div><div className="font-semibold">QuickBooks</div><div className="text-sm text-zinc-400">Already use QuickBooks? We read your Profit &amp; Loss.</div></div>
+            </div>
+            <button className="btn btn-ghost mt-4 w-full !rounded-xl !py-3.5" onClick={() => setPick({ kind: "qbo", title: "Pick your company", sub: "Choose the QuickBooks company to read.", options: COMPANIES })}>Connect QuickBooks</button>
+          </div>
+          {error && <p className="text-sm" style={{ color: "var(--red)" }}>{error}</p>}
         </div>
         <div className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-zinc-500">
-          <span className="flex items-center gap-1.5"><ShieldCheck size={14} /> Bank-level encryption via Plaid</span>
-          <span className="flex items-center gap-1.5"><Lock size={14} /> Read-only access</span>
+          <span className="flex items-center gap-1.5"><ShieldCheck size={14} /> Read-only</span>
+          <span className="flex items-center gap-1.5"><Lock size={14} /> We never move money</span>
           <span className="flex items-center gap-1.5"><Check size={14} /> Disconnect anytime</span>
         </div>
       </div>
+      {pick && <PickSheet pick={pick} busy={!!busy} onClose={() => setPick(null)} onPick={(n) => (pick.kind === "bank" ? onPlaidSandbox(n) : onQuickBooksSandbox(n))} />}
     </Shell>
   );
 }

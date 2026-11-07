@@ -8,6 +8,8 @@ import { DEMO_FILES, DEMO_PROFILE } from "@/lib/demo";
 import { computeNumber, type Alert, type Line, type NumberResult } from "@/lib/number";
 import { federalEstimate, formatUSD } from "@/lib/tax";
 import { parseEntry, type Entry } from "@/lib/entry";
+import { plToTxns } from "@/lib/qbo";
+import { randomFactor, scaleBusiness } from "@/lib/scale";
 import { ASSUMPTIONS, SOURCES, TAX_2026, TAX_YEAR } from "@/lib/taxConfig";
 import type { Profile, Txn } from "@/lib/types";
 import { Connect, Landing, Logo, Pricing, SignUp, ThemeToggle, type Account } from "./Onboarding";
@@ -62,40 +64,53 @@ export default function App() {
 
   function enter(note: string) { setSource(note); setTab("home"); setStage("app"); }
 
-  async function loadSampleBank() {
+  async function loadSampleBank(bank = "your bank") {
     setBusy("bank"); setError("");
+    const f = randomFactor();
     try {
       const r = await fetch("/api/plaid/demo", { method: "POST" });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error);
       setProfile({ ...DEMO_PROFILE, asOf: new Date().toISOString().slice(0, 10), balances: j.balances });
-      setTxns(j.txns); enter("Plaid Sandbox · test bank loaded with a realistic teen business");
+      setTxns(scaleBusiness(j.txns, f)); enter(`Plaid Sandbox · ${bank} (test connection, sample business, amounts randomized each load)`);
     } catch (e) {
       // Plaid unreachable (Wi-Fi, keys): fall back to the same data from local files so the demo never breaks.
       console.warn("Plaid sample bank unavailable:", (e as Error).message);
-      await loadFiles("Sample statements (Plaid unavailable, so the same data was loaded offline)");
+      await loadFiles("Sample business (Plaid unavailable, so the same data was loaded offline)", f);
     } finally { setBusy(""); }
   }
 
-  async function loadFiles(note?: string) {
+  async function sampleTxns() {
     const texts = await Promise.all(DEMO_FILES.map((f) => fetch(f).then((r) => r.text())));
+    return texts.flatMap((t, i) => normalize(t, DEMO_FILES[i])).map(classify);
+  }
+
+  async function loadFiles(note?: string, f = randomFactor()) {
     setProfile(DEMO_PROFILE);
-    setTxns(texts.flatMap((t, i) => normalize(t, DEMO_FILES[i])).map(classify));
+    setTxns(scaleBusiness(await sampleTxns(), f));
     enter(note || "Sample statements (Chase + Cash App + Venmo)");
   }
 
-  async function onFiles(files: FileList | null) {
-    if (!files?.length) return;
-    setError("");
+  async function loadQuickBooksSandbox(company: string) {
+    setBusy("qbo"); setError("");
     try {
-      // Read and processed only in this browser. Nothing is uploaded to a server.
-      const texts = await Promise.all([...files].map(async (f) => ({ name: f.name, text: await f.text() })));
-      const all = texts.flatMap((f) => normalize(f.text, f.name)).map(classify);
-      const balances = texts.map((f) => ({ name: f.name.replace(/\.csv$/i, ""), balanceCents: latestBalance(f.text) ?? 0 }));
-      const last = all.reduce((m, t) => (t.date > m ? t.date : m), "2026-01-01");
-      setProfile({ ...DEMO_PROFILE, ownerName: account?.name || "You", businessName: account ? `${account.name}'s ${account.business.toLowerCase()}` : "Your business", age: 0, parentRule: undefined, balances, bills: [], asOf: last });
-      setTxns(all); enter(`Your statements (${[...files].map((f) => f.name).join(", ")}), processed in your browser only`);
-    } catch (e) { setError((e as Error).message); }
+      const f = randomFactor();
+      const t = scaleBusiness(await sampleTxns(), f).filter((x) => x.date.startsWith(String(TAX_YEAR)));
+      const months = Array.from(new Set(t.map((x) => x.date.slice(0, 7)))).sort();
+      const end = (m: string) => new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0)).toISOString().slice(0, 10);
+      const col = (m: string) => ({ ColTitle: m, MetaData: [{ Name: "StartDate", Value: `${m}-01` }, { Name: "EndDate", Value: end(m) }] });
+      const sum = (m: string, inc: boolean) => (t.filter((x) => x.date.startsWith(m) && (inc ? x.kind === "business_income" || (x.kind === "review" && x.amountCents > 0) : x.kind === "business_expense")).reduce((a, x) => a + Math.abs(x.amountCents), 0) / 100).toFixed(2);
+      const report = {
+        Columns: { Column: [{ ColTitle: "" }, ...months.map(col), { ColTitle: "Total" }] },
+        Rows: { Row: [
+          { group: "Income", Summary: { ColData: [{ value: "Total Income" }, ...months.map((m) => ({ value: sum(m, true) }))] } },
+          { group: "Expenses", Summary: { ColData: [{ value: "Total Expenses" }, ...months.map((m) => ({ value: sum(m, false) }))] } },
+        ] },
+      };
+      const today = new Date().toISOString().slice(0, 10);
+      setProfile({ ...DEMO_PROFILE, asOf: today, bills: [] });
+      setTxns(plToTxns(report, today)); enter(`QuickBooks Sandbox · ${company} (sample company, amounts randomized each load)`);
+    } finally { setBusy(""); }
   }
 
   function onPlaid(data: { txns: Txn[]; balances: Profile["balances"] }) {
@@ -117,10 +132,10 @@ export default function App() {
 
   function signOut() { saveAccount(null); setAccount(null); setTxns(null); setStage("landing"); }
 
-  if (stage === "landing") return <Landing onStart={() => setStage(account ? (account.plan ? "connect" : "pricing") : "signup")} onSignIn={() => setStage(account ? "connect" : "signup")} onDemo={loadSampleBank} busy={busy === "bank"} />;
+  if (stage === "landing") return <Landing onStart={() => setStage(account ? (account.plan ? "connect" : "pricing") : "signup")} onSignIn={() => setStage(account ? "connect" : "signup")} onDemo={() => loadSampleBank()} busy={busy === "bank"} />;
   if (stage === "signup") return <SignUp onBack={() => setStage("landing")} onDone={(a) => { setAccount(a); saveAccount(a); setStage("pricing"); }} />;
   if (stage === "pricing") return <Pricing name={account?.name || "friend"} onBack={() => setStage("landing")} onPick={(plan) => { const a = { ...(account as Account), plan }; setAccount(a); saveAccount(a); setStage("connect"); }} />;
-  if (stage === "connect" || !txns || !result) return <Connect name={account?.name || ""} onBack={() => setStage("landing")} onSample={loadSampleBank} onFiles={onFiles} onPlaid={onPlaid} busy={busy} error={error} />;
+  if (stage === "connect" || !txns || !result) return <Connect onBack={() => setStage("landing")} onPlaidSandbox={loadSampleBank} onQuickBooksSandbox={loadQuickBooksSandbox} onPlaid={onPlaid} busy={busy} error={error} />;
 
   const byId = new Map(txns.map((t) => [t.id, t]));
   const openLine = (l: Line) => setWhy({ title: l.label, body: l.why, txns: l.txnIds?.map((i) => byId.get(i)!).filter(Boolean).slice(-6) });
@@ -210,6 +225,7 @@ function Label({ children, icon: I }: { children: React.ReactNode; icon?: typeof
 
 function Home({ r, openLine, setWhy }: { r: NumberResult; openLine: (l: Line) => void; setWhy: (w: Why) => void }) {
   const shown = useCountUp(r.owedSoFarCents);
+  const usd = (c: number) => formatUSD(c, { cents: true });
   const fmtDate = (iso: string, year = false) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", ...(year ? { year: "numeric" } : {}) });
   const days = (iso: string) => Math.round(dayNum(iso) - dayNum(r.asOf));
   const live = r.quarters.find((q) => q.status === "building");
@@ -235,7 +251,7 @@ function Home({ r, openLine, setWhy }: { r: NumberResult; openLine: (l: Line) =>
     const delta = taxOn(next) - newTax;
     const label = e.kind === "business_income" ? "business income" : e.kind === "business_expense" ? "business cost" : "personal";
     setExtras(next); setEntry("");
-    setEntryMsg({ ok: true, msg: `${e.direction === "in" ? "+" : "−"}${formatUSD(e.amountCents)} ${e.description} (${label}): ${delta > 0 ? `you owe ${formatUSD(delta)} more.` : delta < 0 ? `you owe ${formatUSD(-delta)} less.` : "no change, personal money isn't taxed."}` });
+    setEntryMsg({ ok: true, msg: `${e.direction === "in" ? "+" : "−"}${formatUSD(e.amountCents)} ${e.description} (${label}): ${delta > 0 ? `you owe ${usd(delta)} more.` : delta < 0 ? `you owe ${usd(-delta)} less.` : "no change, personal money isn't taxed."}` });
   };
 
   return (
@@ -243,7 +259,7 @@ function Home({ r, openLine, setWhy }: { r: NumberResult; openLine: (l: Line) =>
       {/* The one number */}
       <section className="card hero-glow overflow-hidden px-6 py-10 text-center sm:py-14">
         <div className="flex items-center justify-center gap-2 text-sm text-zinc-400"><span className="dot" style={{ background: anyLate ? "var(--red)" : "var(--green)" }} />You owe the IRS</div>
-        <div className="font-display num mt-3 text-[clamp(4rem,13vw,8rem)] font-semibold leading-none tracking-tight">{formatUSD(shown)}</div>
+        <div className="font-display num mt-3 text-[clamp(4rem,13vw,8rem)] font-semibold leading-none tracking-tight">{usd(shown)}</div>
         <p className="mx-auto mt-4 max-w-md text-zinc-400">Federal tax on your {TAX_YEAR} business profit as a sole proprietor, minus anything you've already paid.</p>
         <button className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-300 underline-offset-4 hover:text-white hover:underline" onClick={() => setWhy({ title: `Why ${formatUSD(r.owedSoFarCents)}?`, body: taxLines.map((l) => `${l.label}: ${formatUSD(l.amountCents)}. ${l.why}`).join("\n\n") })}>Why this much? <Info size={14} /></button>
       </section>
@@ -252,7 +268,7 @@ function Home({ r, openLine, setWhy }: { r: NumberResult; openLine: (l: Line) =>
       <section className="grid gap-4 md:grid-cols-2">
         <div className="card flex flex-col p-6">
           <div className="flex items-center justify-between gap-2"><Label icon={Lock}>1 · Pay by {fmtDate(payBy)}</Label><span className="rounded-full border border-zinc-700 px-2.5 py-0.5 text-[11px] text-zinc-300">fixed</span></div>
-          <div className="font-display num mt-4 text-5xl font-semibold">{formatUSD(r.owedSoFarCents)}</div>
+          <div className="font-display num mt-4 text-5xl font-semibold">{usd(r.owedSoFarCents)}</div>
           <div className="mt-1 text-sm text-zinc-400">Due <b className="text-white">{fmtDate(payBy, true)}</b> · {days(payBy)} days from now</div>
           <p className="muted mt-2 text-sm">Tax on money you've already earned. It won't change.</p>
           {owedRows.length > 1 && (
@@ -260,7 +276,7 @@ function Home({ r, openLine, setWhy }: { r: NumberResult; openLine: (l: Line) =>
               {owedRows.map((q) => (
                 <li key={q.quarter} className="flex items-center justify-between gap-3 py-2">
                   <span className="text-zinc-300">{q.status === "building" ? `${q.covers.split(" – ")[0]} – today` : q.covers}</span>
-                  <span className="flex items-center gap-2"><span className="num font-medium">{formatUSD(q.remainingCents)}</span>{q.status === "missed" && <span className="flex items-center gap-1 rounded-full border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300"><span className="dot !h-1.5 !w-1.5" style={{ background: "var(--red)" }} />late</span>}</span>
+                  <span className="flex items-center gap-2"><span className="num font-medium">{usd(q.remainingCents)}</span>{q.status === "missed" && <span className="flex items-center gap-1 rounded-full border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300"><span className="dot !h-1.5 !w-1.5" style={{ background: "var(--red)" }} />late</span>}</span>
                 </li>
               ))}
             </ul>
@@ -270,9 +286,9 @@ function Home({ r, openLine, setWhy }: { r: NumberResult; openLine: (l: Line) =>
         </div>
 
         <div className="card hero-glow flex flex-col p-6">
-          <div className="flex items-center justify-between gap-2"><Label icon={CalendarClock}>2 · New money · adds up live</Label><span className="flex items-center gap-1.5 text-xs text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />live</span></div>
-          <div className="mt-4 font-display num text-4xl font-semibold">{formatUSD(newTaxShown)}</div>
-          <div className="mt-1 text-sm text-zinc-400">More you'll owe, due <b className="text-white">{fmtDate(payBy, true)}</b>{live && <> · counts until {fmtDate(live.end)}</>}</div>
+          <div className="flex items-center justify-between gap-2"><Label icon={CalendarClock}>2 · New money · through {live ? fmtDate(live.end) : fmtDate(payBy)}</Label><span className="flex items-center gap-1.5 text-xs text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />live</span></div>
+          <div className="mt-4 font-display num text-4xl font-semibold">{usd(newTaxShown)}</div>
+          <div className="mt-1 text-sm text-zinc-400">More you'll owe from new money until <b className="text-white">{live ? fmtDate(live.end, true) : fmtDate(payBy, true)}</b>{live && <> · {days(live.end)} days left</>}</div>
           <p className="muted mt-2 text-sm">Rule of thumb right now: about <b className="text-white">{formatUSD(per100)} of every $100</b> you earn goes to taxes.</p>
           {extras.length > 0 && (
             <ul className="mt-3 max-h-32 space-y-1.5 overflow-y-auto text-sm">
