@@ -224,7 +224,7 @@ export function Pricing({ onPick, onBack }: { name?: string; onPick: (plan: stri
   );
 }
 
-type Pick = { kind: "bank" | "qbo"; title: string; sub: string; options: { name: string; note: string }[] };
+type Pick = { kind: "bank" | "qbo" | "app"; title: string; sub: string; options: { name: string; note: string }[]; preset?: string };
 
 const BANKS = [
   { name: "Chase", note: "chase.com" }, { name: "Huntington", note: "huntington.com" }, { name: "Fifth Third", note: "53.com" },
@@ -232,10 +232,10 @@ const BANKS = [
 ];
 
 function PickSheet({ pick, onPick, onClose, busy }: { pick: Pick; onPick: (name: string) => void; onClose: () => void; busy: boolean }) {
-  const [chosen, setChosen] = useState("");
+  const [chosen, setChosen] = useState(pick.preset || "");
   const [user, setUser] = useState(""), [pass, setPass] = useState(""), [err, setErr] = useState("");
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === "Escape" && !busy && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose, busy]);
-  const brand = pick.kind === "bank" ? "Plaid" : "QuickBooks";
+  const brand = pick.kind === "bank" ? "Plaid" : pick.kind === "qbo" ? "QuickBooks" : pick.preset || "App";
   // Sandbox test login: anything typed goes through. Nothing typed here is stored or sent anywhere.
   const login = (e: React.FormEvent) => {
     e.preventDefault();
@@ -245,7 +245,7 @@ function PickSheet({ pick, onPick, onClose, busy }: { pick: Pick; onPick: (name:
   return (
     <div className="fixed inset-0 z-40 grid place-items-end bg-black/70 backdrop-blur-sm sm:place-items-center" role="dialog" aria-modal="true" aria-label={pick.title} onClick={() => !busy && onClose()}>
       <div className="toast w-full max-w-md rounded-t-[28px] border border-zinc-800 bg-[#0b0b0b] p-6 text-left sm:rounded-[28px]" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between"><span className="chip text-zinc-300">{brand} · Sandbox</span><button className="text-sm text-zinc-500 hover:text-white" onClick={() => (chosen && !busy ? setChosen("") : onClose())} disabled={busy}>{chosen && !busy ? "Back" : "Close"}</button></div>
+        <div className="flex items-center justify-between"><span className="chip text-zinc-300">{brand} · Sandbox</span><button className="text-sm text-zinc-500 hover:text-white" onClick={() => (chosen && !busy && !pick.preset ? setChosen("") : onClose())} disabled={busy}>{chosen && !busy && !pick.preset ? "Back" : "Close"}</button></div>
         {busy ? (
           <>
             <h3 className="font-display mt-4 text-2xl font-semibold">Connecting…</h3>
@@ -308,6 +308,20 @@ export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, er
             </div>
             <div className="mt-4"><PlaidButton onSandbox={onQuickBooksSandbox} label="Connect QuickBooks" primary={false} /></div>
           </div>
+          <div className="flex items-center gap-3 text-xs text-zinc-500"><span className="h-px flex-1 bg-zinc-800" />payment apps<span className="h-px flex-1 bg-zinc-800" /></div>
+          <div className="flex items-center gap-4 rounded-2xl border border-white/15 bg-white/[0.04] px-4 py-3">
+            <div className="font-display num shrink-0 text-4xl font-semibold text-white">74%</div>
+            <div className="text-sm leading-snug text-zinc-300">of freelancers and app sellers don't know when Venmo, Cash App and PayPal report their income to the IRS. <a className="text-[11px] text-zinc-500 underline" href="https://finance.yahoo.com/news/gig-workers-may-unprepared-2025-123000859.html" target="_blank" rel="noreferrer">Avalara survey</a></div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {(["Venmo", "Cash App", "PayPal", "Stripe"] as const).map((app) => (
+              <button key={app} className="flex flex-col items-center gap-2 rounded-2xl border border-zinc-800 px-2 py-4 text-sm font-medium hover:border-zinc-500" disabled={!!busy}
+                onClick={() => setPick({ kind: "app", title: app, sub: "", options: [], preset: app })}>
+                <span className="grid h-10 w-10 place-items-center rounded-xl border border-zinc-700 font-display text-base font-bold">{app === "Venmo" ? "V" : app === "Cash App" ? "$" : app === "PayPal" ? "P" : "S"}</span>
+                {app}
+              </button>
+            ))}
+          </div>
           {!live && <p className="rounded-xl border border-zinc-800 px-3 py-2 text-center text-xs text-zinc-400">Sandbox test login: <b className="text-white">user_good</b> / <b className="text-white">pass_good</b></p>}
           {busy && <p className="text-center text-sm text-zinc-300">Pulling your transactions…</p>}
           {error && <p className="text-sm" style={{ color: "var(--red)" }}>{error}</p>}
@@ -318,7 +332,7 @@ export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, er
           <span className="flex items-center gap-1.5"><Check size={14} /> Disconnect anytime</span>
         </div>
       </div>
-      {pick && <PickSheet pick={pick} busy={!!busy} onClose={() => setPick(null)} onPick={(n) => (pick.kind === "bank" ? onPlaidSandbox(n) : onQuickBooksSandbox(n))} />}
+      {pick && <PickSheet pick={pick} busy={!!busy} onClose={() => setPick(null)} onPick={(n) => (pick.kind === "qbo" ? onQuickBooksSandbox(n) : onPlaidSandbox(n))} />}
     </Shell>
   );
 }
