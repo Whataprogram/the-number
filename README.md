@@ -53,4 +53,4 @@ Direct connections for every bank and payment app, state and local taxes, one-ta
 ## Credits
 Redhawk Builds starter pack (CSV and money-handling patterns), Plaid, Next.js, Tailwind. Design guided by the UI/UX Pro Max skill. Team: Mehaan Shaik (small business owner), Elise (accounting).
 
-_Live demo: https://the-number12.vercel.app_
+_Live demo: https://the-number12.vercel.app (Plaid Sandbox enabled)_
