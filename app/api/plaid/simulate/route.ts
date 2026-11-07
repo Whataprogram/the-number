@@ -5,7 +5,7 @@ import { notConfigured, plaidClient } from "@/lib/plaid";
 export async function POST() {
   const plaid = plaidClient();
   if (!plaid) return notConfigured();
-  if ((process.env.PLAID_ENV || "sandbox") !== "sandbox") return Response.json({ error: "Sandbox only" }, { status: 403 });
+  if ((process.env.PLAID_ENV || "").trim().toLowerCase() === "production") return Response.json({ error: "Sandbox only" }, { status: 403 });
   const at = cookies().get("plaid_at")?.value;
   if (!at) return Response.json({ error: "Connect a bank first." }, { status: 401 });
   try {

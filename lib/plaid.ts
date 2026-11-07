@@ -6,7 +6,8 @@ import type { Txn } from "./types";
 export function plaidClient() {
   // Trim in case a key was pasted with a stray space or newline.
   const id = process.env.PLAID_CLIENT_ID?.trim(), secret = process.env.PLAID_SECRET?.trim();
-  const env = ((process.env.PLAID_ENV || "sandbox").trim() as keyof typeof PlaidEnvironments);
+  // Only "production" switches to live banks; anything else (missing, typo) safely uses sandbox.
+  const env: keyof typeof PlaidEnvironments = (process.env.PLAID_ENV || "").trim().toLowerCase() === "production" ? "production" : "sandbox";
   if (!id || !secret) return null;
   return new PlaidApi(new Configuration({
     basePath: PlaidEnvironments[env],
