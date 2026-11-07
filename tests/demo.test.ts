@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { classify } from "../lib/classify";
 import { normalize } from "../lib/csv";
 import { DEMO_PROFILE } from "../lib/demo";
-import { computeNumber } from "../lib/number";
+import { computeNumber, quarterBreakdown } from "../lib/number";
 import { federalEstimate } from "../lib/tax";
 
 const load = () =>
@@ -41,5 +41,23 @@ describe("bad input", () => {
   });
   it("explains an empty file", () => {
     expect(() => normalize("Posting Date,Description,Amount\n", "empty.csv")).toThrow(/no transactions/);
+  });
+});
+
+describe("IRS payment periods", () => {
+  it("locked past periods + the live period add up to what you owe", () => {
+    const result = computeNumber(load(), DEMO_PROFILE);
+    const q = result.quarters;
+    const started = q.filter((x) => x.status !== "future");
+    expect(started.reduce((s, x) => s + x.remainingCents, 0)).toBe(result.owedSoFarCents);
+    expect(q.filter((x) => x.status === "missed").map((x) => x.quarter)).toEqual(["Q2", "Q3"]);
+    expect(q[0].status).toBe("none"); // Jan–Mar profit is under the $400 self-employment threshold
+    expect(q.find((x) => x.status === "building")?.quarter).toBe("Q4");
+  });
+  it("a closed period's amount doesn't change when new money comes in", () => {
+    const txns = load(); const result = computeNumber(txns, DEMO_PROFILE);
+    const after = quarterBreakdown([...txns, { id: "x", date: result.asOf, source: "Cash App", description: "job", amountCents: 50000, kind: "business_income" as const, reason: "" }], result.asOf, 0);
+    expect(after[2].amountCents).toBe(result.quarters[2].amountCents);
+    expect(after[3].amountCents).toBeGreaterThan(result.quarters[3].amountCents);
   });
 });

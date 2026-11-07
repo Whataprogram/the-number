@@ -18,8 +18,15 @@
   --font-display: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ring-1: #ffffff;
+  --ring-2: #9a9a9e;
+  --ring-3: #4a4a4f;
   color-scheme: dark;
 }
+/* Light mode: the design is pure black & white, so a full inversion gives an exact light twin.
+   hue-rotate keeps the small status dots green/amber/red. */
+html[data-theme="light"] { filter: invert(1) hue-rotate(180deg); }
+.tile { background: #070707; }
 
 @layer base { *, ::before, ::after { border-color: var(--line); } }
 

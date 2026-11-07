@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, FileUp, Hash, Landmark, Lock, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Check, FileUp, Moon, Sun, Hash, Landmark, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import type { Profile, Txn } from "@/lib/types";
 import { PlaidButton } from "./PlaidButton";
 
@@ -10,6 +10,21 @@ export function Logo({ size = 40 }: { size?: number }) {
     <div className="grid place-items-center rounded-xl bg-white text-black" style={{ width: size, height: size }} aria-hidden>
       <Hash size={size * 0.55} strokeWidth={2.6} />
     </div>
+  );
+}
+
+export function ThemeToggle() {
+  const [light, setLight] = useState(false);
+  useEffect(() => { setLight(document.documentElement.dataset.theme === "light"); }, []);
+  const flip = () => {
+    const next = !light; setLight(next);
+    document.documentElement.dataset.theme = next ? "light" : "dark";
+    try { localStorage.setItem("the-number:theme", next ? "light" : "dark"); } catch { /* fine */ }
+  };
+  return (
+    <button onClick={flip} className="btn btn-ghost !p-2.5" aria-label={light ? "Switch to dark mode" : "Switch to light mode"} title={light ? "Dark mode" : "Light mode"}>
+      {light ? <Moon size={15} /> : <Sun size={15} />}
+    </button>
   );
 }
 
@@ -23,7 +38,7 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
       <div className="grid-bg pointer-events-none absolute inset-0" />
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-5" style={pad}>
         <div className="flex items-center gap-3"><Logo size={36} /><span className="font-display text-lg font-semibold">The Number</span></div>
-        <button className="text-sm font-medium text-zinc-300 hover:text-white" onClick={onSignIn}>Sign in</button>
+        <div className="flex items-center gap-3"><ThemeToggle /><button className="text-sm font-medium text-zinc-300 hover:text-white" onClick={onSignIn}>Sign in</button></div>
       </header>
 
       <main className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-4 pb-[34vh] pt-[7vh] text-center">
@@ -83,11 +98,11 @@ function Shell({ children, step, onBack }: { children: React.ReactNode; step: nu
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[60vh]" style={{ background: "radial-gradient(60% 60% at 50% 0%, rgba(255,255,255,.08), transparent 70%)" }} />
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-5">
         <button onClick={onBack} className="flex items-center gap-3"><Logo size={34} /><span className="font-display text-lg font-semibold">The Number</span></button>
-        <ol className="flex items-center gap-2 text-xs font-medium text-zinc-500" aria-label="Setup progress">
+        <div className="flex items-center gap-4"><ol className="flex items-center gap-2 text-xs font-medium text-zinc-500" aria-label="Setup progress">
           {["Account", "Plan", "Connect"].map((s, i) => (
             <li key={s} className="flex items-center gap-2"><span className={`grid h-6 w-6 place-items-center rounded-full border ${i < step ? "border-white bg-white text-black" : i === step ? "border-white text-white" : "border-zinc-700"}`}>{i < step ? <Check size={13} /> : i + 1}</span><span className={`hidden sm:inline ${i === step ? "text-white" : ""}`}>{s}</span>{i < 2 && <span className="mx-1 hidden h-px w-6 bg-zinc-700 sm:inline-block" />}</li>
           ))}
-        </ol>
+        </ol><ThemeToggle /></div>
       </header>
       <div className="relative z-10">{children}</div>
     </div>

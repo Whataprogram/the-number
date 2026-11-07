@@ -7,6 +7,41 @@ const dayNum = (iso: string) => Date.parse(iso + "T00:00:00Z") / 86_400_000;
 export interface Line { key: string; label: string; amountCents: number; why: string; txnIds?: string[] }
 export interface Alert { id: string; level: "critical" | "warning" | "info"; title: string; body: string }
 
+export interface Quarter {
+  quarter: string; due: string; covers: string; start: string; end: string;
+  /** Tax that belongs to this period's profit. Fixed once the period ends, live while it's running. */
+  amountCents: number;
+  /** What's still unpaid after estimated payments are applied oldest-first. */
+  remainingCents: number;
+  status: "paid" | "none" | "missed" | "locked" | "building" | "future";
+}
+
+const PERIOD_ENDS = ["03-31", "05-31", "08-31", "12-31"];
+
+export function quarterBreakdown(txns: Txn[], asOf: string, paidCents: number): Quarter[] {
+  const year = String(TAX_YEAR);
+  const inYear = txns.filter((t) => t.date.startsWith(year) && t.date <= asOf);
+  const profitThrough = (end: string) => inYear.filter((t) => t.date <= end).reduce((s, t) => {
+    if (t.kind === "business_income" || (t.kind === "review" && t.amountCents > 0)) return s + t.amountCents;
+    if (t.kind === "business_expense") return s + t.amountCents;
+    return s;
+  }, 0);
+  let prevTax = 0, prevEnd = `${year}-01-00`, left = paidCents;
+  return TAX_2026.quarterlyDueDates.map((q, i) => {
+    const end = `${year}-${PERIOD_ENDS[i]}`;
+    const start = i === 0 ? `${year}-01-01` : (() => { const d = new Date(Date.parse(prevEnd + "T00:00:00Z") + 86_400_000); return d.toISOString().slice(0, 10); })();
+    const started = start <= asOf;
+    const cumTax = started ? federalEstimate(profitThrough(end < asOf ? end : asOf)).totalTaxCents : prevTax;
+    const amount = Math.max(0, cumTax - prevTax);
+    prevTax = Math.max(prevTax, cumTax); prevEnd = end;
+    const covered = Math.min(left, amount); left -= covered;
+    const remaining = amount - covered;
+    let status: Quarter["status"] = !started ? "future" : end >= asOf ? "building" : q.due < asOf ? "missed" : "locked";
+    if (started && end < asOf && remaining === 0) status = amount === 0 ? "none" : "paid";
+    return { quarter: q.quarter, due: q.due, covers: q.covers, start, end, amountCents: amount, remainingCents: remaining, status };
+  });
+}
+
 export interface NumberResult {
   asOf: string;
   incomeCents: number;
@@ -28,6 +63,7 @@ export interface NumberResult {
   monthly: { month: string; incomeCents: number; expensesCents: number }[];
   topCategories: { category: string; amountCents: number }[];
   alerts: Alert[];
+  quarters: Quarter[];
 }
 
 export function computeNumber(txns: Txn[], profile: Profile): NumberResult {
@@ -88,10 +124,13 @@ export function computeNumber(txns: Txn[], profile: Profile): NumberResult {
   for (const t of expenseTx) catMap.set(t.category || "Other", (catMap.get(t.category || "Other") || 0) - t.amountCents);
   const topCategories = [...catMap.entries()].map(([category, amountCents]) => ({ category, amountCents })).sort((a, b) => b.amountCents - a.amountCents);
 
+  const quarters = quarterBreakdown(txns, asOf, paid);
+  const missedQ = quarters.filter((q) => q.status === "missed" && q.remainingCents > 0);
+  const building = quarters.find((q) => q.status === "building");
   const alerts: Alert[] = [];
   if (safe < 0) alerts.push({ id: "below", level: "critical", title: `You're ${formatUSD(-safe)} below your Number`, body: `You have ${formatUSD(balance)} across your accounts, but ${formatUSD(theNumber)} of it is already spoken for. Hold off on big purchases until you're back above it.` });
-  if (missed.length) alerts.push({ id: "missed", level: "warning", title: `${missed.length} estimated tax payment${missed.length > 1 ? "s" : ""} missed`, body: `The IRS expected payments on ${missed.map((m) => m.due).join(", ")}. Paying soon keeps the underpayment penalty small. You can pay at irs.gov/payments.` });
-  alerts.push({ id: "next", level: "info", title: `Next estimated tax: ${upcoming.due} (${daysLeft} days)`, body: `Set aside about ${formatUSD(saveThisMonth)} a month to cover the ${formatUSD(owed)} you owe so far.` });
+  if (missedQ.length) alerts.push({ id: "missed", level: "warning", title: `${missedQ.length} estimated tax payment${missedQ.length > 1 ? "s" : ""} missed: ${formatUSD(missedQ.reduce((s, q) => s + q.remainingCents, 0))}`, body: `${missedQ.map((q) => `${formatUSD(q.remainingCents)} was due ${q.due}`).join(", ")}. These amounts are locked in. Paying soon at irs.gov/payments keeps the late penalty small.` });
+  if (building) alerts.push({ id: "next", level: "info", title: `Next payment so far: ${formatUSD(building.remainingCents)}, due ${building.due} (${daysLeft} days)`, body: `This one is still growing. It covers what you earn ${building.covers}, so it goes up with every job until the period ends.` });
   if (reviewCount) alerts.push({ id: "review", level: "info", title: `${reviewCount} payments need a quick answer`, body: `Tell us business or personal. Payment apps expect business money on a business profile, so sorting these keeps you legit.` });
   if (profile.parentRule && theNumber > profile.parentRule.amountCents) alerts.push({ id: "rule", level: "warning", title: `${profile.parentRule.label} is ${formatUSD(theNumber - profile.parentRule.amountCents)} too low`, body: `The rule of thumb is ${formatUSD(profile.parentRule.amountCents)}. Your actual Number is ${formatUSD(theNumber)}, mostly because of self-employment tax.` });
 
@@ -100,6 +139,6 @@ export function computeNumber(txns: Txn[], profile: Profile): NumberResult {
     taxPaidCents: paid, owedSoFarCents: owed, cushionCents: cushion, billsCents: bills, theNumberCents: theNumber,
     balanceCents: balance, safeToSpendCents: safe, saveThisMonthCents: saveThisMonth,
     next: { quarter: upcoming.quarter, due: upcoming.due, daysLeft, amountCents: owed }, missed,
-    lines, monthly, topCategories, alerts,
+    lines, monthly, topCategories, alerts, quarters,
   };
 }

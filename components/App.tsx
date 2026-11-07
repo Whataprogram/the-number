@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowRight, Check, Lightbulb, ArrowUpRight, Bell, BookOpen, Briefcase, CalendarClock, Download, Eye, EyeOff, GraduationCap, Home as HomeIcon, Info, LogOut, Octagon, Printer, ShoppingBag, Terminal, User, Users, Wallet, X, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Lightbulb, Lock, ArrowUpRight, Bell, BookOpen, Briefcase, CalendarClock, Download, Eye, EyeOff, GraduationCap, Home as HomeIcon, Info, LogOut, Octagon, Printer, ShoppingBag, Terminal, User, Users, Wallet, X, Zap } from "lucide-react";
 import { classify } from "@/lib/classify";
 import { latestBalance, normalize } from "@/lib/csv";
 import { DEMO_FILES, DEMO_PROFILE } from "@/lib/demo";
 import { computeNumber, type Alert, type Line, type NumberResult } from "@/lib/number";
 import { federalEstimate, formatUSD } from "@/lib/tax";
-import { ASSUMPTIONS, SOURCES, TAX_2026 } from "@/lib/taxConfig";
+import { ASSUMPTIONS, SOURCES, TAX_2026, TAX_YEAR } from "@/lib/taxConfig";
 import type { Profile, Txn } from "@/lib/types";
-import { Connect, Landing, Logo, Pricing, SignUp, type Account } from "./Onboarding";
+import { Connect, Landing, Logo, Pricing, SignUp, ThemeToggle, type Account } from "./Onboarding";
 
 type Tab = "home" | "alerts" | "money" | "learn";
 type Stage = "landing" | "signup" | "pricing" | "connect" | "app";
@@ -19,7 +19,7 @@ type LogLine = { id: string; time: string; text: string; tone: "in" | "out" | "s
 const dayNum = (iso: string) => Date.parse(iso + "T00:00:00Z") / 86_400_000;
 const PLAN_NAME: Record<string, string> = { trial: "Free trial", free: "Free trial", season: "Season Pass", family: "Season Pass" };
 export type AlertPrefs = Record<string, boolean>;
-const DEFAULT_PREFS: AlertPrefs = { below: true, due: true, big: true, paid: true, weekly: true, sms: true, email: false };
+const DEFAULT_PREFS: AlertPrefs = { below: true, due: true, big: true, paid: true, weekly: true, locks: true, sms: true, email: false };
 const PREFS_KEY = "the-number:alerts";
 const KEY = "the-number:account";
 
@@ -33,8 +33,6 @@ export default function App() {
   const [profile, setProfile] = useState<Profile>(DEMO_PROFILE);
   const [source, setSource] = useState("");
   const [tab, setTab] = useState<Tab>("home");
-  const [parent, setParent] = useState(false);
-  const [privacy, setPrivacy] = useState(false);
   const [why, setWhy] = useState<Why | null>(null);
   const [toast, setToast] = useState<Alert | null>(null);
   const [events, setEvents] = useState<LogLine[]>([]);
@@ -111,15 +109,15 @@ export default function App() {
       const extra = federalEstimate(result.netProfitCents + amt).totalTaxCents - federalEstimate(result.netProfitCents).totalTaxCents;
       setTxns([...txns, classify({ id, date: profile.asOf, source: "Cash App", description: "house wash", counterparty: "New customer", amountCents: amt })]);
       setProfile((p) => ({ ...p, balances: p.balances.map((b, i) => i === 0 ? { ...b, balanceCents: b.balanceCents + amt } : b) }));
-      setEvents((e) => [{ id, time: clock(), tone: "in" as const, text: `+${formatUSD(amt, { cents: true })} cash app · house wash → business · ${formatUSD(extra)} to IRS jar` }, ...e].slice(0, 6));
-      if (prefs.paid) notify({ id, level: "info", title: `+${formatUSD(amt)} from a new customer`, body: `${formatUSD(extra)} of it goes in your IRS jar. The other ${formatUSD(amt - extra)} is yours (after your jars are full).` });
+      setEvents((e) => [{ id, time: clock(), tone: "in" as const, text: `got ${formatUSD(amt, { cents: true })} · cash app · house wash → business income · ${formatUSD(extra)} set aside for taxes` }, ...e].slice(0, 6));
+      if (prefs.paid) notify({ id, level: "info", title: `+${formatUSD(amt)} from a new customer`, body: `Your next IRS payment just went up ${formatUSD(extra)}. Set that aside. The other ${formatUSD(amt - extra)} is yours once you're covered.` });
     } else {
       const amt = 18000;
       const short = result.theNumberCents - (result.balanceCents - amt);
       setTxns([...txns, classify({ id, date: profile.asOf, source: "Chase", description: "NIKE.COM", counterparty: "NIKE.COM", amountCents: -amt })]);
       setProfile((p) => ({ ...p, balances: p.balances.map((b, i) => i === 0 ? { ...b, balanceCents: b.balanceCents - amt } : b) }));
-      setEvents((e) => [{ id, time: clock(), tone: "warn" as const, text: `−${formatUSD(amt, { cents: true })} chase · NIKE.COM → personal · now ${formatUSD(short)} short` }, ...e].slice(0, 6));
-      if (prefs.below || prefs.big) notify({ id, level: "critical", title: `${formatUSD(amt)} at Nike.com`, body: `That came out of your IRS jar. You're now ${formatUSD(short)} short of your Number.` });
+      setEvents((e) => [{ id, time: clock(), tone: "warn" as const, text: `paid ${formatUSD(amt, { cents: true })} · chase · nike.com → personal · add ${formatUSD(short)} to be covered` }, ...e].slice(0, 6));
+      if (prefs.below || prefs.big) notify({ id, level: "critical", title: `${formatUSD(amt)} at Nike.com`, body: `That was tax money. Add ${formatUSD(short)} back to be fully covered again.` });
     }
   }
 
@@ -132,7 +130,6 @@ export default function App() {
 
   const byId = new Map(txns.map((t) => [t.id, t]));
   const openLine = (l: Line) => setWhy({ title: l.label, body: l.why, txns: l.txnIds?.map((i) => byId.get(i)!).filter(Boolean).slice(-6) });
-  const name = profile.ownerName === "You" ? "" : profile.ownerName;
   const alertDot = result.alerts.some((a) => a.level !== "info");
   const NAV: [Tab, typeof HomeIcon, string][] = [["home", HomeIcon, "Home"], ["alerts", Bell, "Alerts"], ["money", Wallet, "Money"], ["learn", GraduationCap, "Learn"]];
 
@@ -144,7 +141,7 @@ export default function App() {
           <Logo size={38} />
           <div>
             <div className="font-display text-lg font-semibold leading-none">The Number</div>
-            <div className="muted mt-1 text-xs">{profile.businessName}{profile.age ? ` · ${profile.age}` : ""}</div>
+            <div className="muted mt-1 text-xs">Your business · {TAX_YEAR} tax year</div>
           </div>
         </button>
         <nav className="glass hidden items-center gap-1 !rounded-full p-1 sm:flex" aria-label="Main">
@@ -156,17 +153,16 @@ export default function App() {
           ))}
         </nav>
         <div className="flex flex-wrap items-center gap-2">
-          <Toggle on={parent} onChange={setParent} label="Parent view" icon={Users} />
-          <Toggle on={privacy} onChange={setPrivacy} label="Privacy" icon={privacy ? EyeOff : Eye} />
+          <ThemeToggle />
           {account && <span className="chip hidden text-zinc-300 md:inline-flex">{PLAN_NAME[account.plan || "free"]}</span>}
           <button className="btn btn-ghost !p-2.5" onClick={signOut} aria-label="Sign out" title="Sign out"><LogOut size={15} /></button>
         </div>
       </header>
 
       <main className="relative z-10 mx-auto max-w-6xl space-y-4">
-        {tab === "home" && <Home r={result} profile={profile} name={name} parent={parent} privacy={privacy} openLine={openLine} setWhy={setWhy} simulate={simulate} go={setTab} txns={txns} events={events} />}
-        {tab === "alerts" && <Alerts r={result} go={setTab} prefs={prefs} setPref={setPref} name={name} />}
-        {tab === "money" && <Money r={result} txns={txns} setKind={setKind} parent={parent} privacy={privacy} profile={profile} />}
+        {tab === "home" && <Home r={result} profile={profile} openLine={openLine} setWhy={setWhy} simulate={simulate} txns={txns} events={events} />}
+        {tab === "alerts" && <Alerts r={result} go={setTab} prefs={prefs} setPref={setPref} />}
+        {tab === "money" && <Money r={result} txns={txns} setKind={setKind} profile={profile} />}
         {tab === "learn" && <Learn r={result} />}
         <p className="muted pb-4 pt-2 text-center text-xs">Data: {source}. Educational estimate, not tax advice.</p>
       </main>
@@ -182,7 +178,7 @@ export default function App() {
         </div>
       </nav>
 
-      {why && <WhySheet {...why} privacy={privacy} onClose={() => setWhy(null)} />}
+      {why && <WhySheet {...why} onClose={() => setWhy(null)} />}
       {toast && (
         <div className="pointer-events-none fixed inset-x-0 top-3 z-40 flex justify-center px-4" role="status">
           <div className="toast glass w-full max-w-[420px] !rounded-2xl p-4 shadow-2xl" style={{ background: "rgba(20,20,20,.92)" }}>
@@ -197,14 +193,6 @@ export default function App() {
 }
 
 /* ---------- small pieces ---------- */
-
-function Toggle({ on, onChange, label, icon: I }: { on: boolean; onChange: (v: boolean) => void; label: string; icon: typeof Eye }) {
-  return (
-    <button role="switch" aria-checked={on} onClick={() => onChange(!on)} className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition ${on ? "border-white bg-white text-black" : "border-zinc-800 text-zinc-300 hover:border-zinc-600"}`}>
-      <I size={15} />{label}
-    </button>
-  );
-}
 
 function useCountUp(target: number) {
   const [v, setV] = useState(target);
@@ -221,7 +209,7 @@ function useCountUp(target: number) {
 }
 
 function status(r: NumberResult) {
-  if (r.safeToSpendCents < 0) return { key: "red", title: "Hold off on spending", sub: `You're ${formatUSD(-r.safeToSpendCents)} short of your Number.`, color: "var(--red)" };
+  if (r.safeToSpendCents < 0) return { key: "red", title: "Hold off on spending", sub: `Add ${formatUSD(-r.safeToSpendCents)} and you're fully covered.`, color: "var(--red)" };
   if (r.safeToSpendCents < r.theNumberCents * 0.25) return { key: "amber", title: "Getting close", sub: `Only ${formatUSD(r.safeToSpendCents)} is safe to spend right now.`, color: "var(--amber)" };
   return { key: "green", title: "You're good", sub: `${formatUSD(r.safeToSpendCents)} is yours to spend or reinvest.`, color: "var(--green)" };
 }
@@ -256,124 +244,163 @@ function weekly(txns: Txn[], r: NumberResult, weeks = 16) {
 
 /* ---------- Home (bento) ---------- */
 
-function Home({ r, profile, name, parent, privacy, openLine, setWhy, simulate, go, txns, events }: { r: NumberResult; profile: Profile; name: string; parent: boolean; privacy: boolean; openLine: (l: Line) => void; setWhy: (w: Why) => void; simulate: (k: "job" | "spend") => void; go: (t: Tab) => void; txns: Txn[]; events: LogLine[] }) {
+function Home({ r, profile, openLine, setWhy, simulate, txns, events }: { r: NumberResult; profile: Profile; openLine: (l: Line) => void; setWhy: (w: Why) => void; simulate: (k: "job" | "spend") => void; txns: Txn[]; events: LogLine[] }) {
   const s = status(r);
   const shown = useCountUp(r.theNumberCents);
   const series = useMemo(() => weekly(txns, r), [txns, r]);
   const j = jars(r);
-  const top = r.alerts.find((a) => a.level !== "info") ?? r.alerts[0];
+  const fmtDate = (iso: string, year = false) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", ...(year ? { year: "numeric" } : {}) });
+  const pastDue = r.quarters.filter((q) => (q.status === "missed" || q.status === "locked") && q.remainingCents > 0);
+  const pastDueTotal = pastDue.reduce((t, q) => t + q.remainingCents, 0);
+  const anyLate = pastDue.some((q) => q.status === "missed");
+  const live = r.quarters.find((q) => q.status === "building");
+  const liveShown = useCountUp(live?.remainingCents ?? 0);
+  const elapsed = live ? Math.min(1, Math.max(0, (dayNum(r.asOf) - dayNum(live.start) + 1) / (dayNum(live.end) - dayNum(live.start) + 1))) : 0;
+  const monthsLeft = live ? Math.max(1, Math.ceil((dayNum(live.due) - dayNum(r.asOf)) / 30)) : 1;
+  const free = Math.max(0, r.safeToSpendCents);
+  const steps: [string, number, string][] = [
+    ["You have", r.balanceCents, "In all your accounts right now"],
+    ["Already spoken for", r.theNumberCents, "Your Number. Tap a line below to see why"],
+    ["Free to spend", free, free > 0 ? "Yours to spend or reinvest" : `Add ${formatUSD(-r.safeToSpendCents)} and you're fully covered`],
+  ];
+  const ringRows: [string, number, number, string, string][] = [
+    ["Taxes", j.irsHave, j.irsNeed, "var(--ring-1)", `This is money the IRS will ask for: ${formatUSD(r.fed.se.totalCents)} self-employment tax + ${formatUSD(r.fed.incomeTaxCents)} income tax${r.taxPaidCents ? `, minus ${formatUSD(r.taxPaidCents)} you already paid` : ""}. Your money covers this first.`],
+    ["Business costs + bills", j.bizHave, j.bizNeed, "var(--ring-2)", `One month of business costs (${formatUSD(r.cushionCents)}) plus bills due soon (${formatUSD(r.billsCents)}). This keeps a slow month or a broken pump from sinking you.`],
+    ["Free to spend", j.yours, 0, "var(--ring-3)", `Whatever is left after taxes and business costs are covered. ${j.yours === 0 ? "Right now that's $0." : `Right now you can spend or reinvest ${formatUSD(j.yours)}.`}`],
+  ];
+  const year: [string, number, string][] = [
+    ["Money in · 2026", r.incomeCents, `${txns.filter((t) => t.kind === "business_income").length} customer payments`],
+    ["Business costs", r.expensesCents, "fuel, supplies, gear, insurance"],
+    ["Profit", r.netProfitCents, "money in minus costs"],
+    ["Tax on that profit", r.fed.totalTaxCents, r.fed.incomeTaxCents === 0 ? "all of it self-employment tax" : "income + self-employment"],
+  ];
   return (
     <>
-      {parent && <ParentWeek r={r} txns={txns} name={name || "Your kid"} />}
+      {/* 1. The answer, in one card */}
+      <section className="card hero-glow overflow-hidden p-6 sm:p-8">
+        <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr] lg:items-center">
+          <div>
+            <div className="flex items-center gap-2 text-sm text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />Your Number · updates every time money moves</div>
+            <div className="font-display num mt-3 text-[clamp(3.75rem,10vw,6.5rem)] font-semibold leading-none tracking-tight">{formatUSD(shown)}</div>
+            <p className="mt-4 max-w-md text-lg leading-snug text-zinc-300">Always keep at least this much. It's already spoken for by taxes, business costs and bills coming up.</p>
+            <div className="mt-5 inline-flex items-center gap-3 rounded-2xl border border-zinc-800 bg-black/40 px-4 py-3">
+              <span className="dot" style={{ background: s.color }} />
+              <div><div className="font-semibold">{s.title}</div><div className="muted text-sm">{s.sub}</div></div>
+            </div>
+          </div>
+          <ol className="space-y-2">
+            {steps.map(([l, v, sub], i) => (
+              <li key={l} className={`flex items-center justify-between gap-4 rounded-2xl border px-5 py-4 ${i === 2 ? "border-white/40 bg-white/[0.06]" : "border-zinc-800 bg-black/30"}`}>
+                <div className="min-w-0"><div className="text-sm font-medium">{i === 1 ? "− " : i === 2 ? "= " : ""}{l}</div><div className="muted text-xs">{sub}</div></div>
+                <div className="font-display num shrink-0 text-2xl font-semibold sm:text-3xl">{formatUSD(v)}</div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
 
+      {/* 2. IRS payments: locked vs. live */}
+      <section className="grid gap-4 lg:grid-cols-3">
+        <div className="card flex flex-col p-6">
+          <Label icon={Lock}>{anyLate ? "Past due · locked in" : "Due next · locked in"}</Label>
+          {pastDue.length ? (
+            <>
+              <div className="font-display num mt-4 text-5xl font-semibold">{formatUSD(pastDueTotal)}</div>
+              <p className="muted mt-1 text-sm">These periods are over, so these amounts won't change.</p>
+              <ul className="mt-4 divide-y text-sm">
+                {pastDue.map((q) => (
+                  <li key={q.quarter} className="flex items-center justify-between gap-3 py-2.5">
+                    <span><span className="font-medium">Due {fmtDate(q.due)}</span><span className="muted block text-xs">for {q.covers}</span></span>
+                    <span className="flex items-center gap-2"><span className="num font-semibold">{formatUSD(q.remainingCents)}</span>{q.status === "missed" && <span className="flex items-center gap-1 rounded-full border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300"><span className="dot !h-1.5 !w-1.5" style={{ background: "var(--red)" }} />late</span>}</span>
+                  </li>
+                ))}
+              </ul>
+              <a href="https://www.irs.gov/payments" target="_blank" rel="noreferrer" className="btn btn-primary w-full" style={{ marginTop: "auto" }}>Pay at irs.gov <ArrowUpRight size={15} /></a>
+            </>
+          ) : (
+            <><div className="font-display num mt-4 text-5xl font-semibold">$0</div><p className="muted mt-2 text-sm">You're caught up. Nothing is locked in and waiting.</p></>
+          )}
+        </div>
+
+        {live && (
+          <div className="card hero-glow flex flex-col p-6">
+            <div className="flex items-center justify-between gap-2"><Label icon={CalendarClock}>Next payment · building now</Label><span className="flex items-center gap-1.5 text-xs text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />live</span></div>
+            <div className="font-display num mt-4 text-5xl font-semibold">{formatUSD(liveShown)}</div>
+            <div className="mt-1 text-sm text-zinc-400">Due <b className="text-white">{fmtDate(live.due, true)}</b> · {Math.round(dayNum(live.due) - dayNum(r.asOf))} days</div>
+            <div className="mt-5">
+              <div className="flex justify-between text-xs text-zinc-500"><span>{fmtDate(live.start)}</span><span>locks {fmtDate(live.end)}</span></div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-white" style={{ width: `${Math.max(4, elapsed * 100)}%` }} /></div>
+            </div>
+            <p className="mt-4 text-sm text-zinc-400">This covers what you earn {live.covers}. It goes up with every job until {fmtDate(live.end)}, then it locks.</p>
+            <p className="mt-auto pt-4 text-sm">Set aside <b>{formatUSD(Math.round(live.remainingCents / monthsLeft))}/month</b> and it's covered.</p>
+          </div>
+        )}
+
+        <div className="card p-6">
+          <Label>Where your {formatUSD(r.balanceCents)} goes first</Label>
+          <div className="mt-4 flex justify-center"><Rings j={j} /></div>
+          <ul className="mt-4 space-y-1 text-sm">
+            {ringRows.map(([l, have, need, c, w]) => (
+              <li key={l}>
+                <button className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1.5 text-left hover:bg-white/5" onClick={() => setWhy({ title: l, body: w })}>
+                  <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />{l}</span>
+                  <span className="num"><b>{formatUSD(have)}</b>{need > 0 && <span className="muted"> of {formatUSD(need)}</span>}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* 3. The year in four numbers */}
       <section className="card grid grid-cols-2 gap-px overflow-hidden !bg-white/[0.06] p-0 lg:grid-cols-4" aria-label="2026 so far">
-        {([["Money in · 2026", r.incomeCents, `${txns.filter((t) => t.kind === "business_income").length} customer payments`], ["Business costs", r.expensesCents, "fuel, chemicals, gear, insurance"], ["Profit", r.netProfitCents, "what the IRS taxes"], ["Tax you owe", r.fed.totalTaxCents, r.fed.incomeTaxCents === 0 ? "all of it self-employment tax" : "income + self-employment"]] as [string, number, string][]).map(([l, v, sub]) => (
-          <div key={l} className="bg-[#070707] p-5 sm:p-6">
+        {year.map(([l, v, sub]) => (
+          <div key={l} className="tile p-5 sm:p-6">
             <div className="muted text-xs font-medium uppercase tracking-[0.12em]">{l}</div>
-            <div className="font-display num mt-2 text-[clamp(1.9rem,4vw,2.9rem)] font-semibold leading-none">{formatUSD(v)}</div>
+            <div className="font-display num mt-2 text-[clamp(1.8rem,4vw,2.7rem)] font-semibold leading-none">{formatUSD(v)}</div>
             <div className="muted mt-2 text-xs">{sub}</div>
           </div>
         ))}
       </section>
 
+      {/* 4. How we got it + try it */}
       <section className="grid gap-4 lg:grid-cols-3">
-        {/* Hero: The Number + balance chart */}
-        <div className="card hero-glow relative overflow-hidden p-6 sm:p-8 lg:col-span-2">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-sm text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />{parent ? `${name || "Their"}'s Number` : name ? `Hey ${name}. Your Number` : "Your Number"}</div>
-              <div className="font-display num mt-2 text-[clamp(3.5rem,9vw,5.75rem)] font-semibold leading-none tracking-tight">{formatUSD(shown)}</div>
-              <p className="mt-3 max-w-md text-zinc-400">Never let your money drop below this. It's already spoken for.</p>
-            </div>
-            <div className="rounded-2xl border border-zinc-800 bg-black/40 px-4 py-3">
-              <div className="flex items-center gap-2 font-semibold"><span className="dot" style={{ background: s.color }} />{s.title}</div>
-              <div className="muted mt-0.5 text-sm">{s.sub}</div>
-            </div>
-          </div>
-          <BalanceChart data={series} number={r.theNumberCents} />
-          <div className="mt-4 grid grid-cols-3 gap-3 border-t pt-4" style={{ borderColor: "var(--line)" }}>
-            {[["You have", r.balanceCents], ["Safe to spend", Math.max(0, r.safeToSpendCents)], ["Profit in 2026", r.netProfitCents]].map(([l, v]) => (
-              <div key={l as string}><div className="muted text-xs">{l as string}</div><div className="font-display num mt-0.5 text-xl font-semibold sm:text-2xl">{formatUSD(v as number)}</div></div>
-            ))}
-          </div>
-        </div>
-
-        {/* Rings */}
-        <div className="card p-6">
-          <Label>Where your {formatUSD(r.balanceCents)} belongs</Label>
-          <div className="mt-5 flex justify-center"><Rings j={j} /></div>
-          <ul className="mt-5 space-y-2 text-sm">
-            {[
-              ["IRS jar", j.irsHave, j.irsNeed, "#ffffff", `This is money the IRS will ask for: ${formatUSD(r.fed.se.totalCents)} self-employment tax + ${formatUSD(r.fed.incomeTaxCents)} income tax${r.taxPaidCents ? `, minus ${formatUSD(r.taxPaidCents)} you already paid` : ""}. Your money fills this jar first.`],
-              ["Business jar", j.bizHave, j.bizNeed, "#9a9a9e", `One month of business costs (${formatUSD(r.cushionCents)}) plus bills due soon (${formatUSD(r.billsCents)}). This keeps a slow month or a broken pump from sinking you.`],
-              ["Yours", j.yours, 0, "#4a4a4f", `Whatever is left after the IRS jar and the business jar are full. ${j.yours === 0 ? "Right now that's $0, so fill the other jars first." : `Right now you can spend or reinvest ${formatUSD(j.yours)}.`}`],
-            ].map(([l, have, need, c, w]) => (
-              <li key={l as string}>
-                <button className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1.5 text-left hover:bg-white/5" onClick={() => setWhy({ title: l as string, body: w as string })}>
-                  <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: c as string }} />{l as string}</span>
-                  <span className="num"><b>{formatUSD(have as number)}</b>{(need as number) > 0 && <span className="muted"> / {formatUSD(need as number)}</span>}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-5 border-t pt-4">
-            <div className="flex justify-between text-sm"><span className="muted">Toward your Number</span><span className="num font-semibold">{Math.min(100, Math.round((Math.max(0, r.balanceCents) / Math.max(1, r.theNumberCents)) * 100))}%</span></div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${Math.min(100, (Math.max(0, r.balanceCents) / Math.max(1, r.theNumberCents)) * 100)}%` }} /></div>
-            <p className="muted mt-2 text-xs">{r.safeToSpendCents < 0 ? `${formatUSD(-r.safeToSpendCents)} more and every jar is full.` : `Every jar is full. ${formatUSD(r.safeToSpendCents)} is yours.`}</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-3">
-        <ActivityLog txns={txns} events={events} privacy={privacy} />
-        <WeekBars data={series.slice(-12)} />
-        <div className="card flex flex-col p-6">
-          <Label icon={CalendarClock}>Next IRS payment</Label>
-          <div className="font-display num mt-4 text-5xl font-semibold">{formatUSD(r.owedSoFarCents)}</div>
-          <div className="mt-1 text-sm text-zinc-400">Due <b className="text-white">{new Date(r.next.due + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</b> · {r.next.daysLeft} days</div>
-          <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-white" style={{ width: `${Math.max(4, Math.min(100, 100 - (r.next.daysLeft / 92) * 100))}%` }} /></div>
-          <p className="mt-4 text-sm text-zinc-400">Save <b className="text-white">{formatUSD(r.saveThisMonthCents)}/month</b> and you're covered.{r.missed.length > 0 && <> <span className="text-white"><span className="dot mr-1.5" style={{ background: "var(--red)" }} />{r.missed.length} earlier payment{r.missed.length > 1 ? "s" : ""} missed.</span></>}</p>
-          <button className="mt-auto flex items-center gap-1.5 pt-4 text-sm font-medium text-zinc-300 hover:text-white" onClick={() => go("learn")}>Why do I pay during the year? <ArrowRight size={14} /></button>
-        </div>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-3">
-        {profile.parentRule ? (
-          <button onClick={() => setWhy({ title: "Myth: “under the limit means you owe nothing”", body: `Being under the ${formatUSD(TAX_2026.standardDeductionCents)} standard deduction means $0 federal income tax, and that part is true for you. But self-employment tax is separate. It's Social Security + Medicare for people who work for themselves, and it starts once you net $400, at any age. On ${formatUSD(r.netProfitCents)} of profit that's ${formatUSD(r.fed.se.totalCents)}. Most young owners (and their parents) don't know this until the bill shows up.` })}
-            className="card card-hover flex flex-col items-start justify-start p-6 text-left lg:col-span-1">
-            <Label icon={AlertTriangle}>Myth buster</Label>
-            <div className="font-display mt-3 text-2xl font-semibold leading-snug"><span className="text-zinc-500 line-through decoration-white/60">{profile.parentRule.label}</span></div>
-            <p className="mt-3 text-sm text-zinc-400">You owe {formatUSD(r.fed.incomeTaxCents)} income tax, but <b className="text-white">{formatUSD(r.fed.se.totalCents)} self-employment tax</b>.</p>
-            <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-medium">See why <ArrowUpRight size={14} /></span>
-          </button>
-        ) : top && (
-          <button onClick={() => go("alerts")} className="card card-hover p-6 text-left">
-            <Label icon={Bell}>Top alert</Label>
-            <div className="mt-3 font-semibold">{top.title}</div>
-            <div className="muted mt-1 text-sm">{top.body}</div>
-          </button>
-        )}
-
         <div className="card p-6 lg:col-span-2">
           <div className="flex items-baseline justify-between gap-3"><h2 className="font-display text-xl font-semibold">How we got {formatUSD(r.theNumberCents)}</h2><span className="muted text-xs">tap any line</span></div>
-          <ul className="mt-3 divide-y" style={{ borderColor: "var(--line)" }}>
+          <ul className="mt-3 divide-y">
             {r.lines.map((l) => (
-              <li key={l.key} style={{ borderColor: "var(--line)" }}><button className="flex w-full items-center justify-between gap-3 py-3 text-left hover:text-white" onClick={() => openLine(l)}><span className="flex items-center gap-2 text-zinc-300">{l.label}<Info size={13} className="text-zinc-600" /></span><span className="num font-semibold">{formatUSD(l.amountCents)}</span></button></li>
+              <li key={l.key}><button className="flex w-full items-center justify-between gap-3 py-3 text-left" onClick={() => openLine(l)}><span className="flex items-center gap-2 text-zinc-300">{l.label}<Info size={13} className="text-zinc-600" /></span><span className="num font-semibold">{formatUSD(l.amountCents)}</span></button></li>
             ))}
-            <li className="flex items-center justify-between pt-3 font-semibold" style={{ borderColor: "var(--line-2)" }}><span>Your Number</span><span className="num text-lg">{formatUSD(r.theNumberCents)}</span></li>
+            <li className="flex items-center justify-between pt-3 font-semibold"><span>Your Number</span><span className="num text-lg">{formatUSD(r.theNumberCents)}</span></li>
           </ul>
+        </div>
+        <div className="space-y-4">
+          {profile.parentRule && (
+            <button onClick={() => setWhy({ title: "Myth: “under the limit means you owe nothing”", body: `Being under the ${formatUSD(TAX_2026.standardDeductionCents)} standard deduction means $0 federal income tax, and that part is true here. But self-employment tax is separate. It's Social Security + Medicare for people who work for themselves, and it starts once you net $400, at any age. On ${formatUSD(r.netProfitCents)} of profit that's ${formatUSD(r.fed.se.totalCents)}. Most young owners (and their parents) don't know this until the bill shows up.` })}
+              className="card card-hover flex w-full flex-col items-start p-6 text-left">
+              <Label icon={AlertTriangle}>Myth buster</Label>
+              <div className="font-display mt-3 text-xl font-semibold leading-snug"><span className="text-zinc-500 line-through">{profile.parentRule.label}</span></div>
+              <p className="mt-2 text-sm text-zinc-400">Income tax: {formatUSD(r.fed.incomeTaxCents)}. Self-employment tax: <b className="text-white">{formatUSD(r.fed.se.totalCents)}</b>.</p>
+              <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium">See why <ArrowUpRight size={14} /></span>
+            </button>
+          )}
+          <div className="card p-6">
+            <h2 className="font-display flex items-center gap-2 text-lg font-semibold"><Zap size={17} />Try it live</h2>
+            <p className="muted mt-1 text-sm">Watch your Number and next payment move.</p>
+            <div className="mt-4 grid gap-2">
+              <button className="btn btn-primary" onClick={() => simulate("job")}><Briefcase size={16} />A customer pays $350</button>
+              <button className="btn btn-ghost" onClick={() => simulate("spend")}><ShoppingBag size={16} />Buy $180 sneakers</button>
+            </div>
+          </div>
         </div>
       </section>
 
-      {!parent && (
-        <section className="card flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div><h2 className="font-display flex items-center gap-2 text-xl font-semibold"><Zap size={18} />Try it live</h2><p className="muted text-sm">Watch the Number react the moment money moves.</p></div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <button className="btn btn-primary" onClick={() => simulate("job")}><Briefcase size={16} />New job paid: $350</button>
-            <button className="btn btn-ghost" onClick={() => simulate("spend")}><ShoppingBag size={16} />Buy $180 sneakers</button>
-          </div>
-        </section>
-      )}
+      {/* 5. Details */}
+      <section className="grid gap-4 lg:grid-cols-3">
+        <div className="card p-6 lg:col-span-2"><BalanceChart data={series} number={r.theNumberCents} /></div>
+        <WeekBars data={series.slice(-12)} />
+      </section>
+      <ActivityLog txns={txns} events={events} />
     </>
   );
 }
@@ -388,8 +415,8 @@ function BalanceChart({ data, number }: { data: { label: string; balance: number
   const area = `${line} L${x(data.length - 1)},${H} L${x(0)},${H} Z`;
   const last = data[data.length - 1];
   return (
-    <div className="mt-6">
-      <div className="mb-2 flex items-center justify-between text-xs text-zinc-500"><span>Your balance, last 16 weeks</span><span className="flex items-center gap-3"><span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-white" />Balance</span><span className="flex items-center gap-1.5"><span className="w-4 border-t border-dashed border-zinc-400" />Your Number</span></span></div>
+    <div>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500"><span className="font-display text-lg font-semibold text-white">Your money vs. your Number · 16 weeks</span><span className="flex items-center gap-3"><span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-white" />Balance</span><span className="flex items-center gap-1.5"><span className="w-4 border-t border-dashed border-zinc-400" />Your Number</span></span></div>
       <svg viewBox={`0 0 ${W} ${H + 18}`} className="w-full" role="img" aria-label={`Balance over the last 16 weeks, now ${formatUSD(last.balance)}, against a Number of ${formatUSD(number)}`}>
         <defs><linearGradient id="bal" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".22" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></linearGradient></defs>
         <path d={area} fill="url(#bal)" />
@@ -405,13 +432,13 @@ function BalanceChart({ data, number }: { data: { label: string; balance: number
 
 function Rings({ j }: { j: ReturnType<typeof jars> }) {
   const rings = [
-    { r: 78, pct: j.irsNeed ? j.irsHave / j.irsNeed : 1, c: "#ffffff" },
-    { r: 60, pct: j.bizNeed ? j.bizHave / j.bizNeed : 1, c: "#9a9a9e" },
-    { r: 42, pct: j.yours > 0 ? 1 : 0, c: "#4a4a4f" },
+    { r: 78, pct: j.irsNeed ? j.irsHave / j.irsNeed : 1, c: "var(--ring-1)" },
+    { r: 60, pct: j.bizNeed ? j.bizHave / j.bizNeed : 1, c: "var(--ring-2)" },
+    { r: 42, pct: j.yours > 0 ? 1 : 0, c: "var(--ring-3)" },
   ];
   const irsPct = Math.round(rings[0].pct * 100);
   return (
-    <svg viewBox="0 0 180 180" className="h-48 w-48" role="img" aria-label={`IRS jar ${irsPct}% full`}>
+    <svg viewBox="0 0 180 180" className="h-48 w-48" role="img" aria-label={`Taxes ${irsPct}% covered`}>
       {rings.map((g) => {
         const C = 2 * Math.PI * g.r;
         return (
@@ -422,16 +449,16 @@ function Rings({ j }: { j: ReturnType<typeof jars> }) {
         );
       })}
       <text x="90" y="88" textAnchor="middle" fontSize="26" fontWeight="600" fill="#fff" fontFamily="Geist, sans-serif">{irsPct}%</text>
-      <text x="90" y="106" textAnchor="middle" fontSize="10" fill="#8b8b91" fontFamily="Geist, sans-serif">IRS jar full</text>
+      <text x="90" y="106" textAnchor="middle" fontSize="10" fill="#8b8b91" fontFamily="Geist, sans-serif">taxes covered</text>
     </svg>
   );
 }
 
-function ActivityLog({ txns, events, privacy }: { txns: Txn[]; events: LogLine[]; privacy: boolean }) {
-  const kindWord: Record<Txn["kind"], string> = { business_income: "business", business_expense: "biz cost", personal: "personal", transfer: "transfer", tax_payment: "irs", review: "needs answer" };
+function ActivityLog({ txns, events }: { txns: Txn[]; events: LogLine[] }) {
+  const kindWord: Record<Txn["kind"], string> = { business_income: "business income", business_expense: "business cost", personal: "personal", transfer: "moved between accounts", tax_payment: "irs", review: "needs your answer" };
   const recent: LogLine[] = [...txns].filter((t) => !t.id.startsWith("sim-")).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 7).map((t) => ({
     id: t.id, time: t.date.slice(5).replace("-", "/"), tone: t.kind === "review" ? "warn" : t.amountCents > 0 ? "in" : "out",
-    text: `${t.amountCents > 0 ? "+" : "−"}${formatUSD(Math.abs(t.amountCents), { cents: true })} ${t.source.toLowerCase()} · ${privacy ? (t.kind === "business_income" ? "customer" : "•••") : (t.description || "no note").toLowerCase().slice(0, 22)} → ${kindWord[t.kind]}`,
+    text: `${t.amountCents > 0 ? "got" : "paid"} ${formatUSD(Math.abs(t.amountCents), { cents: true })} · ${t.source.toLowerCase()} · ${(t.description || "no note").toLowerCase().slice(0, 24)} → ${kindWord[t.kind]}`,
   }));
   const lines = [...events, ...recent].slice(0, 8);
   return (
@@ -475,37 +502,16 @@ function WeekBars({ data }: { data: { label: string; inflow: number }[] }) {
   );
 }
 
-function ParentWeek({ r, txns, name }: { r: NumberResult; txns: Txn[]; name: string }) {
-  const end = dayNum(r.asOf), start = end - 6;
-  const wk = txns.filter((t) => dayNum(t.date) >= start && dayNum(t.date) <= end);
-  const earned = wk.filter((t) => t.kind === "business_income" || (t.kind === "review" && t.amountCents > 0)).reduce((s, t) => s + t.amountCents, 0);
-  const costs = wk.filter((t) => t.kind === "business_expense").reduce((s, t) => s - t.amountCents, 0);
-  const setAside = federalEstimate(r.netProfitCents).totalTaxCents - federalEstimate(r.netProfitCents - earned + costs).totalTaxCents;
-  const s = status(r);
-  return (
-    <section className="card border-white/30 p-6">
-      <Label icon={User}>Parent weekly summary · read-only</Label>
-      <div className="font-display mt-2 flex items-center gap-2 text-2xl font-semibold"><span className="dot" style={{ background: s.color }} />{name} this week: {s.title}</div>
-      <div className="mt-4 grid grid-cols-3 gap-3">
-        {[["Earned", earned], ["Business costs", costs], ["Should set aside", setAside]].map(([l, v]) => (
-          <div key={l as string} className="rounded-2xl border border-zinc-800 bg-black/40 p-4"><div className="muted text-xs">{l as string}</div><div className="font-display num mt-1 text-2xl font-semibold">{formatUSD(v as number)}</div></div>
-        ))}
-      </div>
-      <p className="muted mt-4 text-sm">No spreadsheet needed. You'll get a text if {name} drops below their Number or a tax date is coming up.</p>
-    </section>
-  );
-}
-
 /* ---------- Alerts ---------- */
 
-function Alerts({ r, go, prefs, setPref, name }: { r: NumberResult; go: (t: Tab) => void; prefs: AlertPrefs; setPref: (k: string, v: boolean) => void; name: string }) {
+function Alerts({ r, go, prefs, setPref }: { r: NumberResult; go: (t: Tab) => void; prefs: AlertPrefs; setPref: (k: string, v: boolean) => void }) {
   const color = { critical: "var(--red)", warning: "var(--amber)", info: "#ffffff" };
   const Icon = { critical: Octagon, warning: AlertTriangle, info: Bell };
   const action = (id: string): [string, Tab] | null => id === "review" ? ["Sort them now", "money"] : id === "missed" || id === "next" ? ["How estimated taxes work", "learn"] : id === "below" ? ["See my jars", "home"] : id === "rule" ? ["Why it's wrong", "learn"] : null;
   const due = new Date(r.next.due + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const tips: [string, string][] = [
     r.safeToSpendCents < 0
-      ? ["Top up today", `Move ${formatUSD(-r.safeToSpendCents)} from personal money into the business account and every jar is full again.`]
+      ? ["Top up today", `Move ${formatUSD(-r.safeToSpendCents)} into your business account and you're fully covered again.`]
       : ["You have room", `${formatUSD(r.safeToSpendCents)} is above your Number. Reinvest some of it in gear before you spend it.`],
     [r.missed.length ? "Pay the IRS now, not later" : "Pay a little every month", r.missed.length ? `${r.missed.length} payment${r.missed.length > 1 ? "s" : ""} already passed. Paying ${formatUSD(r.owedSoFarCents)} at irs.gov/payments before ${due} stops the late penalty from growing.` : `Set aside ${formatUSD(r.saveThisMonthCents)} a month and the ${due} payment is already covered.`],
     ...(r.reviewCount ? [["Sort your mystery payments", `${r.reviewCount} payment${r.reviewCount > 1 ? "s" : ""} could be business or personal. Answering takes about a minute and makes your Number exact.`] as [string, string]] : []),
@@ -516,14 +522,15 @@ function Alerts({ r, go, prefs, setPref, name }: { r: NumberResult; go: (t: Tab)
     ["due", "An IRS payment is coming up", "14 days and 3 days before each due date, with the amount."],
     ["big", "I spend more than $100 at once", "So a big purchase never surprises you later."],
     ["paid", "A customer pays me", "Shows how much of it goes to the IRS jar."],
-    ["weekly", "Weekly summary for my parent", "Sundays: earned, costs, and what to set aside. Read-only."],
+    ["weekly", "Weekly money recap", "Sundays: what you earned, spent, and should set aside."],
+    ["locks", "A tax payment locks in", "When a period ends and the amount you owe is final."],
   ];
   return (
     <section className="mx-auto max-w-5xl space-y-4">
       <h1 className="font-display text-4xl font-semibold">Alerts</h1>
       <div className="grid gap-4 lg:grid-cols-5">
         <div className="space-y-3 lg:col-span-3">
-          <Label>Right now{name ? ` for ${name}` : ""}</Label>
+          <Label>Right now</Label>
           {r.alerts.map((a) => {
             const act = action(a.id); const I = Icon[a.level];
             return (
@@ -580,30 +587,30 @@ const KIND_LABEL: Record<Txn["kind"], [string, string]> = {
   business_income: ["Business income", "var(--green)"],
   business_expense: ["Business cost", "#a1a1aa"],
   personal: ["Personal", "#52525b"],
-  transfer: ["Transfer", "#52525b"],
+  transfer: ["Moved between your accounts", "#52525b"],
   tax_payment: ["Tax payment", "#ffffff"],
   review: ["Needs answer", "var(--amber)"],
 };
 
-function TxnRow({ t, privacy, children }: { t: Txn; privacy?: boolean; children?: React.ReactNode }) {
+function TxnRow({ t, children }: { t: Txn; children?: React.ReactNode }) {
   const [label, color] = KIND_LABEL[t.kind];
-  const title = privacy ? (t.kind === "business_income" ? "Customer payment" : t.category || label) : t.description || "(no note)";
-  const who = privacy ? "" : t.counterparty && t.counterparty !== t.description ? t.counterparty : "";
+  const who = t.counterparty && t.counterparty !== t.description ? t.counterparty : "";
+  const isIn = t.amountCents > 0;
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 py-3" style={{ borderColor: "var(--line)" }}>
+    <li className="flex flex-wrap items-center justify-between gap-3 py-3">
       <div className="min-w-0">
-        <div className="truncate font-medium">{title}{who && <span className="muted text-sm"> · {who}</span>}</div>
+        <div className="truncate font-medium">{t.description || "(no note)"}{who && <span className="muted text-sm"> · {who}</span>}</div>
         <div className="muted mt-0.5 flex items-center gap-1.5 text-xs">{t.date} · {t.source} · <span className="dot !h-1.5 !w-1.5" style={{ background: color }} />{label}</div>
       </div>
       <div className="flex items-center gap-3">
         {children}
-        <div className={`num font-semibold ${t.amountCents > 0 ? "text-white" : "text-zinc-400"}`}>{t.amountCents > 0 ? "+" : ""}{formatUSD(t.amountCents, { cents: true })}</div>
+        <div className="text-right"><div className={`num font-semibold ${isIn ? "text-white" : "text-zinc-300"}`}>{formatUSD(Math.abs(t.amountCents), { cents: true })}</div><div className="muted text-[11px]">{isIn ? "money in" : "money out"}</div></div>
       </div>
     </li>
   );
 }
 
-function Money({ r, txns, setKind, parent, privacy, profile }: { r: NumberResult; txns: Txn[]; setKind: (id: string, k: "business_income" | "personal" | "business_expense") => void; parent: boolean; privacy: boolean; profile: Profile }) {
+function Money({ r, txns, setKind, profile }: { r: NumberResult; txns: Txn[]; setKind: (id: string, k: "business_income" | "personal" | "business_expense") => void; profile: Profile }) {
   const review = txns.filter((t) => t.kind === "review");
   const current = review[0];
   const [filter, setFilter] = useState<"all" | Txn["kind"]>("all");
@@ -617,14 +624,16 @@ function Money({ r, txns, setKind, parent, privacy, profile }: { r: NumberResult
           {current ? (
             <div className="mt-4 rounded-3xl border border-zinc-800 bg-black/40 p-6 text-center">
               <div className="muted text-xs">{review.length} left · {current.date} · {current.source}</div>
-              <div className="font-display num mt-2 text-5xl font-semibold">{current.amountCents > 0 ? "+" : ""}{formatUSD(current.amountCents, { cents: true })}</div>
-              <div className="mt-2 text-zinc-300">{privacy ? "Payment" : `${current.description || "(no note)"}${current.counterparty && current.counterparty !== current.description ? ` · ${current.counterparty}` : ""}`}</div>
-              {!parent ? (
-                <div className="mt-5 grid grid-cols-2 gap-2">
+              <div className="mt-2 text-sm font-medium text-zinc-400">{current.amountCents > 0 ? "You got paid" : "You paid"}</div>
+              <div className="font-display num mt-1 text-5xl font-semibold">{formatUSD(Math.abs(current.amountCents), { cents: true })}</div>
+              <div className="mt-2 text-zinc-300">{`${current.description || "(no note)"}${current.counterparty && current.counterparty !== current.description ? ` · ${current.counterparty}` : ""}`}</div>
+              <div className="muted mt-4 text-sm">Was this for your business, or just for you?</div>
+              {(
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   <button className="btn btn-primary" onClick={() => setKind(current.id, current.amountCents > 0 ? "business_income" : "business_expense")}><Briefcase size={16} />Business</button>
                   <button className="btn btn-ghost" onClick={() => setKind(current.id, "personal")}><User size={16} />Personal</button>
                 </div>
-              ) : <p className="muted mt-4 text-sm">Your kid answers these.</p>}
+              )}
             </div>
           ) : <p className="mt-3 flex items-center gap-2 text-sm"><span className="dot" style={{ background: "var(--green)" }} />All sorted. Your Number is exact.</p>}
           <p className="muted mt-4 text-xs">Payment apps expect business money on a business profile. Sorting keeps your books, and your account, legit.</p>
@@ -655,7 +664,7 @@ function Money({ r, txns, setKind, parent, privacy, profile }: { r: NumberResult
             {Object.entries(KIND_LABEL).map(([k, [l]]) => <option key={k} value={k}>{l}</option>)}
           </select>
         </div>
-        <ul className="mt-2 divide-y">{list.slice(0, 100).map((t) => <TxnRow key={t.id} t={t} privacy={privacy} />)}</ul>
+        <ul className="mt-2 divide-y">{list.slice(0, 100).map((t) => <TxnRow key={t.id} t={t} />)}</ul>
       </section>
     </>
   );
@@ -699,7 +708,7 @@ function Cpa({ r, txns, profile }: { r: NumberResult; txns: Txn[]; profile: Prof
       <h2 className="font-display text-xl font-semibold">Send to a CPA</h2>
       <p className="muted text-sm">A clean one-pager so you can graduate to a real accountant without showing up with a shoebox.</p>
       <dl className="mt-4 grid gap-x-8 sm:grid-cols-2">
-        {([["Business", profile.businessName], ["Gross income", formatUSD(r.incomeCents, { cents: true })], ["Business expenses", formatUSD(r.expensesCents, { cents: true })], ["Net profit", formatUSD(r.netProfitCents, { cents: true })], ["Self-employment tax (est.)", formatUSD(r.fed.se.totalCents, { cents: true })], ["Income tax (est.)", formatUSD(r.fed.incomeTaxCents, { cents: true })], ["Estimated payments made", formatUSD(r.taxPaidCents, { cents: true })], ["Unsorted items", String(r.reviewCount)]] as [string, string][]).map(([k, v]) => (
+        {([["Business", "Your business"], ["Gross income", formatUSD(r.incomeCents, { cents: true })], ["Business expenses", formatUSD(r.expensesCents, { cents: true })], ["Net profit", formatUSD(r.netProfitCents, { cents: true })], ["Self-employment tax (est.)", formatUSD(r.fed.se.totalCents, { cents: true })], ["Income tax (est.)", formatUSD(r.fed.incomeTaxCents, { cents: true })], ["Estimated payments made", formatUSD(r.taxPaidCents, { cents: true })], ["Unsorted items", String(r.reviewCount)]] as [string, string][]).map(([k, v]) => (
           <div key={k} className="flex justify-between gap-4 border-b py-2 text-sm" style={{ borderColor: "var(--line)" }}><dt className="muted">{k}</dt><dd className="num font-semibold">{v}</dd></div>
         ))}
       </dl>
@@ -784,7 +793,7 @@ function Learn({ r }: { r: NumberResult }) {
 
 /* ---------- Why sheet ---------- */
 
-function WhySheet({ title, body, txns, privacy, onClose }: Why & { privacy: boolean; onClose: () => void }) {
+function WhySheet({ title, body, txns, onClose }: Why & { onClose: () => void }) {
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === "Escape" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose]);
   return (
     <div className="fixed inset-0 z-30 grid place-items-end bg-black/70 backdrop-blur-sm sm:place-items-center" onClick={onClose} role="dialog" aria-modal="true" aria-label={title}>
@@ -793,7 +802,7 @@ function WhySheet({ title, body, txns, privacy, onClose }: Why & { privacy: bool
         <Label>Why?</Label>
         <h3 className="font-display mt-2 pr-10 text-2xl font-semibold">{title}</h3>
         <p className="mt-3 leading-relaxed text-zinc-300">{body}</p>
-        {txns && txns.length > 0 && (<><div className="muted mt-5 text-xs font-medium uppercase tracking-wider">From these transactions (latest)</div><ul className="divide-y">{txns.map((t) => <TxnRow key={t.id} t={t} privacy={privacy} />)}</ul></>)}
+        {txns && txns.length > 0 && (<><div className="muted mt-5 text-xs font-medium uppercase tracking-wider">From these transactions (latest)</div><ul className="divide-y">{txns.map((t) => <TxnRow key={t.id} t={t} />)}</ul></>)}
         <button className="btn btn-primary mt-6 w-full" onClick={onClose}>Got it</button>
       </div>
     </div>
