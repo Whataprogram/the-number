@@ -5,9 +5,9 @@ import { AlertTriangle, ArrowRight, Check, Lightbulb, Lock, ArrowUpRight, Bell, 
 import { classify } from "@/lib/classify";
 import { latestBalance, normalize } from "@/lib/csv";
 import { DEMO_FILES, DEMO_PROFILE } from "@/lib/demo";
-import { computeNumber, quarterBreakdown, type Alert, type Line, type NumberResult } from "@/lib/number";
-import { formatUSD } from "@/lib/tax";
-import { parseEntry } from "@/lib/entry";
+import { computeNumber, type Alert, type Line, type NumberResult } from "@/lib/number";
+import { federalEstimate, formatUSD } from "@/lib/tax";
+import { parseEntry, type Entry } from "@/lib/entry";
 import { ASSUMPTIONS, SOURCES, TAX_2026, TAX_YEAR } from "@/lib/taxConfig";
 import type { Profile, Txn } from "@/lib/types";
 import { Connect, Landing, Logo, Pricing, SignUp, ThemeToggle, type Account } from "./Onboarding";
@@ -102,28 +102,6 @@ export default function App() {
   function notify(a: Alert) { setToast(a); window.setTimeout(() => setToast(null), 6500); }
   const clock = () => new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
 
-  // Plain-English entry ("got $350 for a house wash") -> a real transaction, and the live payment box updates.
-  function addEntry(text: string): { ok: boolean; msg: string } {
-    if (!txns || !result) return { ok: false, msg: "" };
-    const e = parseEntry(text);
-    if ("error" in e) return { ok: false, msg: e.error };
-    const id = `sim-${Date.now()}`;
-    const signed = e.direction === "in" ? e.amountCents : -e.amountCents;
-    const next = [...txns, { id, date: profile.asOf, source: "You", description: e.description, counterparty: e.description, amountCents: signed, kind: e.kind, category: e.kind === "personal" ? "Personal" : e.kind === "business_income" ? "Customer payment" : "Business expense", reason: "You told us.", userSet: true } as Txn];
-    const before = result.quarters.find((q) => q.status === "building");
-    const after = quarterBreakdown(next, profile.asOf, result.taxPaidCents).find((q) => q.status === "building");
-    const delta = (after?.remainingCents ?? 0) - (before?.remainingCents ?? 0);
-    const due = before ? new Date(before.due + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "next";
-    setTxns(next);
-    setProfile((p) => ({ ...p, balances: p.balances.map((b, i) => i === 0 ? { ...b, balanceCents: b.balanceCents + signed } : b) }));
-    const effect = delta > 0 ? `your ${due} payment went up ${formatUSD(delta)}` : delta < 0 ? `your ${due} payment went down ${formatUSD(-delta)}` : `your ${due} payment didn't change (personal money isn't taxed)`;
-    const label = e.kind === "business_income" ? "business income" : e.kind === "business_expense" ? "business cost" : "personal";
-    setEvents((ev) => [{ id, time: clock(), tone: (e.direction === "in" ? "in" : "warn") as LogLine["tone"], text: `${e.direction === "in" ? "got" : "paid"} ${formatUSD(e.amountCents, { cents: true })} · ${e.description.toLowerCase()} → ${label} · ${delta >= 0 ? "+" : "−"}${formatUSD(Math.abs(delta))} next payment` }, ...ev].slice(0, 6));
-    const msg = `${e.direction === "in" ? "Got" : "Spent"} ${formatUSD(e.amountCents)} (${label}), so ${effect}.`;
-    if ((e.direction === "in" && prefs.paid) || (e.direction === "out" && (prefs.big || prefs.below))) notify({ id, level: e.direction === "in" ? "info" : "warning", title: `${e.direction === "in" ? "+" : ""}${formatUSD(e.amountCents)} · ${e.description}`, body: msg });
-    return { ok: true, msg };
-  }
-
   function signOut() { saveAccount(null); setAccount(null); setTxns(null); setStage("landing"); }
 
   if (stage === "landing") return <Landing onStart={() => setStage(account ? (account.plan ? "connect" : "pricing") : "signup")} onSignIn={() => setStage(account ? "connect" : "signup")} onDemo={loadSampleBank} busy={busy === "bank"} />;
@@ -163,7 +141,7 @@ export default function App() {
       </header>
 
       <main className="relative z-10 mx-auto max-w-6xl space-y-4">
-        {tab === "home" && <Home r={result} profile={profile} openLine={openLine} setWhy={setWhy} addEntry={addEntry} txns={txns} events={events} />}
+        {tab === "home" && <Home r={result} profile={profile} openLine={openLine} setWhy={setWhy} txns={txns} events={events} />}
         {tab === "alerts" && <Alerts r={result} go={setTab} prefs={prefs} setPref={setPref} />}
         {tab === "money" && <Money r={result} txns={txns} setKind={setKind} profile={profile} />}
         {tab === "learn" && <Learn r={result} />}
@@ -247,7 +225,7 @@ function weekly(txns: Txn[], r: NumberResult, weeks = 16) {
 
 /* ---------- Home (bento) ---------- */
 
-function Home({ r, profile, openLine, setWhy, addEntry, txns, events }: { r: NumberResult; profile: Profile; openLine: (l: Line) => void; setWhy: (w: Why) => void; addEntry: (t: string) => { ok: boolean; msg: string }; txns: Txn[]; events: LogLine[] }) {
+function Home({ r, profile, openLine, setWhy, txns, events }: { r: NumberResult; profile: Profile; openLine: (l: Line) => void; setWhy: (w: Why) => void; txns: Txn[]; events: LogLine[] }) {
   const s = status(r);
   const shown = useCountUp(r.theNumberCents);
   const series = useMemo(() => weekly(txns, r), [txns, r]);
@@ -257,16 +235,31 @@ function Home({ r, profile, openLine, setWhy, addEntry, txns, events }: { r: Num
   const pastDueTotal = pastDue.reduce((t, q) => t + q.remainingCents, 0);
   const anyLate = pastDue.some((q) => q.status === "missed");
   const live = r.quarters.find((q) => q.status === "building");
-  const liveShown = useCountUp(live?.remainingCents ?? 0);
-  const elapsed = live ? Math.min(1, Math.max(0, (dayNum(r.asOf) - dayNum(live.start) + 1) / (dayNum(live.end) - dayNum(live.start) + 1))) : 0;
-  const monthsLeft = live ? Math.max(1, Math.ceil((dayNum(live.due) - dayNum(r.asOf)) / 30)) : 1;
   const free = Math.max(0, r.safeToSpendCents);
-  const win = live ? txns.filter((t) => t.date >= live.start && t.date <= r.asOf) : [];
-  const winIn = win.filter((t) => t.kind === "business_income" || (t.kind === "review" && t.amountCents > 0)).reduce((a, t) => a + t.amountCents, 0);
-  const winCost = win.filter((t) => t.kind === "business_expense").reduce((a, t) => a - t.amountCents, 0);
+  // Box 1: what you owe on money already in your bank. Fixed. Box 2: only new money you tell us about.
+  const owedRows = r.quarters.filter((q) => (q.status === "missed" || q.status === "locked" || q.status === "building") && q.remainingCents > 0);
+  const owedTotal = owedRows.reduce((t, q) => t + q.remainingCents, 0);
+  const nextDue = live?.due ?? r.next.due;
+  const [extras, setExtras] = useState<(Entry & { id: string })[]>([]);
+  const newIn = extras.filter((e) => e.kind === "business_income").reduce((t, e) => t + e.amountCents, 0);
+  const newCost = extras.filter((e) => e.kind === "business_expense").reduce((t, e) => t + e.amountCents, 0);
+  const newPersonal = extras.filter((e) => e.kind === "personal").reduce((t, e) => t + e.amountCents, 0);
+  const newTax = Math.max(0, federalEstimate(r.netProfitCents + newIn - newCost).totalTaxCents - r.fed.totalTaxCents);
+  const newTaxShown = useCountUp(newTax);
   const [entry, setEntry] = useState("");
   const [entryMsg, setEntryMsg] = useState<{ ok: boolean; msg: string } | null>(null);
-  const submitEntry = (ev: React.FormEvent) => { ev.preventDefault(); const res = addEntry(entry); setEntryMsg(res); if (res.ok) setEntry(""); };
+  const submitEntry = (ev: React.FormEvent) => {
+    ev.preventDefault();
+    const e = parseEntry(entry);
+    if ("error" in e) return setEntryMsg({ ok: false, msg: e.error });
+    const next = [...extras, { ...e, id: `x-${Date.now()}` }];
+    const nIn = next.filter((x) => x.kind === "business_income").reduce((t, x) => t + x.amountCents, 0);
+    const nCost = next.filter((x) => x.kind === "business_expense").reduce((t, x) => t + x.amountCents, 0);
+    const delta = Math.max(0, federalEstimate(r.netProfitCents + nIn - nCost).totalTaxCents - r.fed.totalTaxCents) - newTax;
+    const label = e.kind === "business_income" ? "business income" : e.kind === "business_expense" ? "business cost" : "personal";
+    setExtras(next); setEntry("");
+    setEntryMsg({ ok: true, msg: `${e.direction === "in" ? "+" : "−"}${formatUSD(e.amountCents)} ${e.description} (${label}). ${delta > 0 ? `Set aside ${formatUSD(delta)} more.` : delta < 0 ? `You owe ${formatUSD(-delta)} less.` : "No tax change, it's personal money."}` });
+  };
   const steps: [string, number, string][] = [
     ["You have", r.balanceCents, "In all your accounts right now"],
     ["Already spoken for", r.theNumberCents, "Your Number. Tap a line below to see why"],
@@ -308,59 +301,55 @@ function Home({ r, profile, openLine, setWhy, addEntry, txns, events }: { r: Num
         </div>
       </section>
 
-      {/* 2. IRS payments: locked vs. live */}
+      {/* 2. What you owe: fixed vs. live */}
       <section className="grid gap-4 md:grid-cols-2">
         <div className="card flex flex-col p-6">
-          <div className="flex items-center justify-between gap-2"><Label icon={Lock}>{anyLate ? "1 · Owed now · locked in" : "1 · Due next · locked in"}</Label><span className="text-xs text-zinc-500">fixed</span></div>
-          {pastDue.length ? (
-            <>
-              <div className="font-display num mt-4 text-5xl font-semibold">{formatUSD(pastDueTotal)}</div>
-              <p className="muted mt-1 text-sm">These periods are over, so these amounts won't change.</p>
-              <ul className="mt-4 divide-y text-sm">
-                {pastDue.map((q) => (
-                  <li key={q.quarter} className="flex items-center justify-between gap-3 py-2.5">
-                    <span><span className="font-medium">Due {fmtDate(q.due)}</span><span className="muted block text-xs">for {q.covers}</span></span>
-                    <span className="flex items-center gap-2"><span className="num font-semibold">{formatUSD(q.remainingCents)}</span>{q.status === "missed" && <span className="flex items-center gap-1 rounded-full border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300"><span className="dot !h-1.5 !w-1.5" style={{ background: "var(--red)" }} />late</span>}</span>
-                  </li>
-                ))}
-              </ul>
-              <a href="https://www.irs.gov/payments" target="_blank" rel="noreferrer" className="btn btn-primary w-full" style={{ marginTop: "auto" }}>Pay at irs.gov <ArrowUpRight size={15} /></a>
-            </>
-          ) : (
-            <><div className="font-display num mt-4 text-5xl font-semibold">$0</div><p className="muted mt-2 text-sm">You're caught up. Nothing is locked in and waiting.</p></>
-          )}
+          <div className="flex items-center justify-between gap-2"><Label icon={Lock}>1 · Due {fmtDate(nextDue)} · locked in</Label><span className="text-xs text-zinc-500">fixed</span></div>
+          <div className="font-display num mt-4 text-5xl font-semibold">{formatUSD(owedTotal)}</div>
+          <div className="mt-1 text-sm text-zinc-400">Pay by <b className="text-white">{fmtDate(nextDue, true)}</b> · {Math.round(dayNum(nextDue) - dayNum(r.asOf))} days</div>
+          <p className="muted mt-2 text-sm">Tax on money already in your bank. That money's earned, so this won't change.</p>
+          <ul className="mt-3 divide-y text-sm">
+            {owedRows.map((q) => (
+              <li key={q.quarter} className="flex items-center justify-between gap-3 py-2.5">
+                <span><span className="font-medium">{q.status === "building" ? `${q.covers.split(" – ")[0]} – today` : q.covers}</span><span className="muted block text-xs">{q.status === "missed" ? `was due ${fmtDate(q.due)}` : `due ${fmtDate(q.due)}`}</span></span>
+                <span className="flex items-center gap-2"><span className="num font-semibold">{formatUSD(q.remainingCents)}</span>{q.status === "missed" && <span className="flex items-center gap-1 rounded-full border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300"><span className="dot !h-1.5 !w-1.5" style={{ background: "var(--red)" }} />late</span>}</span>
+              </li>
+            ))}
+          </ul>
+          <a href="https://www.irs.gov/payments" target="_blank" rel="noreferrer" className="btn btn-primary w-full" style={{ marginTop: "auto" }}>Pay at irs.gov <ArrowUpRight size={15} /></a>
         </div>
 
-        {live && (
-          <div className="card hero-glow flex flex-col p-6">
-            <div className="flex items-center justify-between gap-2"><Label icon={CalendarClock}>2 · Next payment · building now</Label><span className="flex items-center gap-1.5 text-xs text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />live</span></div>
-            <div className="font-display num mt-4 text-5xl font-semibold">{formatUSD(liveShown)}</div>
-            <div className="mt-1 text-sm text-zinc-400">Due <b className="text-white">{fmtDate(live.due, true)}</b> · {Math.round(dayNum(live.due) - dayNum(r.asOf))} days</div>
-            <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
-              {([["Earned", winIn], ["Business costs", winCost], ["Profit", winIn - winCost]] as [string, number][]).map(([l, v]) => (
-                <div key={l} className="rounded-xl border border-zinc-800 bg-black/30 px-2 py-2.5"><dt className="muted text-[11px]">{l}</dt><dd className="num mt-0.5 font-semibold">{formatUSD(v)}</dd></div>
+        <div className="card hero-glow flex flex-col p-6">
+          <div className="flex items-center justify-between gap-2"><Label icon={CalendarClock}>2 · New since today · building</Label><span className="flex items-center gap-1.5 text-xs text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />live</span></div>
+          <div className="mt-4 flex items-baseline gap-2"><span className="font-display num text-4xl font-semibold">{formatUSD(newTaxShown)}</span><span className="muted text-sm">set aside</span></div>
+          <div className="mt-1 text-sm text-zinc-400">Next due <b className="text-white">{fmtDate(nextDue, true)}</b> · {Math.round(dayNum(nextDue) - dayNum(r.asOf))} days from now</div>
+          <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+            {([["Earned", newIn], ["Business costs", newCost], ["Personal", newPersonal]] as [string, number][]).map(([l, v]) => (
+              <div key={l} className="rounded-xl border border-zinc-800 bg-black/30 px-2 py-2"><dt className="muted text-[11px]">{l}</dt><dd className="num mt-0.5 text-sm font-semibold">{formatUSD(v)}</dd></div>
+            ))}
+          </dl>
+          {extras.length > 0 && (
+            <ul className="mt-3 max-h-28 space-y-1 overflow-y-auto text-xs">
+              {[...extras].reverse().map((x) => (
+                <li key={x.id} className="flex items-center justify-between gap-2 text-zinc-400">
+                  <span className="truncate">{x.direction === "in" ? "+" : "−"}{formatUSD(x.amountCents)} · {x.description}</span>
+                  <button className="shrink-0 text-zinc-600 hover:text-white" aria-label={`Remove ${x.description}`} onClick={() => { setExtras((e) => e.filter((y) => y.id !== x.id)); setEntryMsg(null); }}><X size={13} /></button>
+                </li>
               ))}
-            </dl>
-            <p className="muted mt-1.5 text-[11px]">Only counts money from {fmtDate(live.start)} to today. Tax on that profit = this payment.</p>
-            <div className="mt-5">
-              <div className="flex justify-between text-xs text-zinc-500"><span>{fmtDate(live.start)}</span><span>locks {fmtDate(live.end)}</span></div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-white" style={{ width: `${Math.max(4, elapsed * 100)}%` }} /></div>
+            </ul>
+          )}
+          <form onSubmit={submitEntry} className="mt-auto pt-5">
+            <label htmlFor="entry" className="text-sm font-medium">Made or spent money? Type it.</label>
+            <div className="mt-2 flex gap-2">
+              <input id="entry" className="input !rounded-full !py-2.5" value={entry} onChange={(ev) => { setEntry(ev.target.value); setEntryMsg(null); }} placeholder="earned $350 on a house wash" autoComplete="off" />
+              <button className="btn btn-primary shrink-0 !px-4" aria-label="Add"><ArrowRight size={16} /></button>
             </div>
-            <p className="mt-4 text-sm">Set aside <b>{formatUSD(Math.round(live.remainingCents / monthsLeft))}/month</b> and it's covered. It locks on {fmtDate(live.end)}.</p>
-            <form onSubmit={submitEntry} className="mt-auto pt-5">
-              <label htmlFor="entry" className="text-sm font-medium">What happened? Type it and watch this update.</label>
-              <div className="mt-2 flex gap-2">
-                <input id="entry" className="input !rounded-full !py-2.5" value={entry} onChange={(ev) => { setEntry(ev.target.value); setEntryMsg(null); }} placeholder="got $350 for a house wash" autoComplete="off" />
-                <button className="btn btn-primary shrink-0 !px-4" aria-label="Add"><ArrowRight size={16} /></button>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {["got $350 for a house wash", "spent $180 on sneakers", "bought $45 of gas for the truck"].map((x) => <button type="button" key={x} onClick={() => { setEntry(x); setEntryMsg(null); }} className="rounded-full border border-zinc-800 px-2.5 py-1 text-[11px] text-zinc-400 hover:border-zinc-600 hover:text-white">{x}</button>)}
-              </div>
-              {entryMsg && <p role="status" className={`mt-2 text-sm ${entryMsg.ok ? "text-white" : "text-zinc-400"}`}>{entryMsg.ok && <span className="dot mr-1.5" style={{ background: "var(--green)" }} />}{entryMsg.msg}</p>}
-            </form>
-          </div>
-        )}
-
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {["earned $350 on a house wash", "spent $180 on sneakers", "$45 gas for the truck"].map((x) => <button type="button" key={x} onClick={() => { setEntry(x); setEntryMsg(null); }} className="rounded-full border border-zinc-800 px-2.5 py-1 text-[11px] text-zinc-400 hover:border-zinc-600 hover:text-white">{x}</button>)}
+            </div>
+            {entryMsg && <p role="status" className={`mt-2 text-sm ${entryMsg.ok ? "text-white" : "text-zinc-400"}`}>{entryMsg.msg}</p>}
+          </form>
+        </div>
       </section>
 
       {/* 3. The year in four numbers */}
