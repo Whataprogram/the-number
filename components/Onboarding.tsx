@@ -152,7 +152,7 @@ export function SignUp({ onDone, onBack }: { onDone: (a: Account) => void; onBac
           <input id="su-biz" className="input mt-1.5" value={business} onChange={(e) => setBusiness(e.target.value)} placeholder="Pressure washing, lawn care, reselling…" />
           {err && <p className="mt-3 text-sm" style={{ color: "var(--red)" }}>{err}</p>}
           <button className="btn btn-primary mt-6 w-full !rounded-xl !py-3.5">Create account <ArrowRight size={16} /></button>
-          <p className="mt-4 text-center text-xs text-zinc-500">Hackathon demo: your account stays on this device.</p>
+          <p className="mt-4 text-center text-xs text-zinc-500">Hackathon demo: nothing is saved. Reloading starts over.</p>
         </form>
       </div>
     </Shell>

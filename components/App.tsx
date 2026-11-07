@@ -24,8 +24,6 @@ const DEFAULT_PREFS: AlertPrefs = { due: true, late: true, paid: true, weekly: t
 const PREFS_KEY = "the-number:alerts";
 const KEY = "the-number:account";
 
-function loadAccount(): Account | null { try { const v = localStorage.getItem(KEY); return v ? JSON.parse(v) : null; } catch { return null; } }
-function saveAccount(a: Account | null) { try { a ? localStorage.setItem(KEY, JSON.stringify(a)) : localStorage.removeItem(KEY); } catch { /* storage blocked: fine */ } }
 
 export default function App() {
   const [stage, setStage] = useState<Stage>("landing");
@@ -42,7 +40,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<string>("");
 
-  useEffect(() => { setAccount(loadAccount()); }, []);
+  useEffect(() => { try { localStorage.removeItem(KEY); } catch { /* fine */ } }, []);
   // Back from QuickBooks: pull the Profit & Loss and open the dashboard.
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get("qbo");
@@ -110,11 +108,11 @@ export default function App() {
   function notify(a: Alert) { setToast(a); window.setTimeout(() => setToast(null), 6500); }
   const clock = () => new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
 
-  function signOut() { saveAccount(null); setAccount(null); setTxns(null); setStage("landing"); }
+  function signOut() { setAccount(null); setTxns(null); setStage("landing"); }
 
-  if (stage === "landing") return <Landing onStart={() => setStage(account ? (account.plan ? "connect" : "pricing") : "signup")} onSignIn={() => setStage(account ? "connect" : "signup")} onDemo={() => loadSampleBank()} busy={busy === "bank"} />;
-  if (stage === "signup") return <SignUp onBack={() => setStage("landing")} onDone={(a) => { setAccount(a); saveAccount(a); setStage("pricing"); }} />;
-  if (stage === "pricing") return <Pricing name={account?.name || "friend"} onBack={() => setStage("landing")} onPick={(plan) => { const a = { ...(account as Account), plan }; setAccount(a); saveAccount(a); setStage("connect"); }} />;
+  if (stage === "landing") return <Landing onStart={() => setStage("signup")} onSignIn={() => setStage("signup")} onDemo={() => loadSampleBank()} busy={busy === "bank"} />;
+  if (stage === "signup") return <SignUp onBack={() => setStage("landing")} onDone={(a) => { setAccount(a); setStage("pricing"); }} />;
+  if (stage === "pricing") return <Pricing name={account?.name || "friend"} onBack={() => setStage("landing")} onPick={(plan) => { setAccount({ ...(account as Account), plan }); setStage("connect"); }} />;
   if (stage === "connect" || !txns || !result) return <Connect onBack={() => setStage("landing")} onPlaidSandbox={loadSampleBank} onQuickBooksSandbox={(bank) => loadSampleBank(bank, "qbo")} onPlaid={onPlaid} busy={busy} error={error} />;
 
   const byId = new Map(txns.map((t) => [t.id, t]));
