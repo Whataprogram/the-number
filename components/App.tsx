@@ -126,7 +126,7 @@ export default function App() {
         <button className="flex items-center gap-3 text-left" onClick={() => setTab("home")}>
           <Logo size={38} />
           <div>
-            <div className="font-display text-lg font-semibold leading-none">The Number</div>
+            <div className="font-display text-[1.05rem] font-medium leading-none tracking-[-0.01em]">The <span className="font-semibold">Number</span></div>
             <div className="muted mt-1 text-xs">Your business · {TAX_YEAR} tax year</div>
           </div>
         </button>

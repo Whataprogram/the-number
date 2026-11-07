@@ -1,15 +1,37 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, Moon, Sun, Hash, Landmark, Lock, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Check, Moon, Sun, Landmark, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import type { Profile, Txn } from "@/lib/types";
 import { PlaidButton } from "./PlaidButton";
 
 export function Logo({ size = 40 }: { size?: number }) {
+  // Engraved, slanted pound sign on a black tile with a fine metallic edge.
+  const id = `lg-${size}`;
   return (
-    <div className="grid place-items-center rounded-xl bg-white text-black" style={{ width: size, height: size }} aria-hidden>
-      <Hash size={size * 0.55} strokeWidth={2.6} />
-    </div>
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden className="shrink-0">
+      <defs>
+        <linearGradient id={`${id}-edge`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffffff" stopOpacity=".9" /><stop offset=".45" stopColor="#ffffff" stopOpacity=".15" /><stop offset="1" stopColor="#ffffff" stopOpacity=".55" /></linearGradient>
+        <linearGradient id={`${id}-ink`} gradientUnits="userSpaceOnUse" x1="0" y1="10" x2="0" y2="38"><stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#a1a1aa" /></linearGradient>
+        <radialGradient id={`${id}-glow`} cx=".3" cy=".2" r=".9"><stop offset="0" stopColor="#2a2a2e" /><stop offset="1" stopColor="#050505" /></radialGradient>
+      </defs>
+      <rect x="1" y="1" width="46" height="46" rx="13" fill={`url(#${id}-glow)`} stroke={`url(#${id}-edge)`} strokeWidth="1.2" />
+      <g stroke={`url(#${id}-ink)`} strokeWidth="2.6" strokeLinecap="round" fill="none">
+        <path d="M20.5 12.5 L16.5 35.5" />
+        <path d="M31.5 12.5 L27.5 35.5" />
+        <path d="M13 19.5 H36" />
+        <path d="M11.5 28.5 H34.5" />
+      </g>
+    </svg>
+  );
+}
+
+export function Wordmark({ size = 36 }: { size?: number }) {
+  return (
+    <span className="flex items-center gap-3">
+      <Logo size={size} />
+      <span className="font-display text-[1.05rem] font-medium tracking-[-0.01em]">The <span className="font-semibold">Number</span></span>
+    </span>
   );
 }
 
@@ -37,7 +59,7 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
     <div className="relative min-h-screen overflow-hidden bg-black">
       <div className="grid-bg pointer-events-none absolute inset-0" />
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-5" style={pad}>
-        <div className="flex items-center gap-3"><Logo size={36} /><span className="font-display text-lg font-semibold">The Number</span></div>
+        <Wordmark size={36} />
         <div className="flex items-center gap-3"><ThemeToggle /><button className="text-sm font-medium text-zinc-300 hover:text-white" onClick={onSignIn}>Sign in</button></div>
       </header>
 
@@ -101,7 +123,7 @@ function Shell({ children, step, onBack }: { children: React.ReactNode; step: nu
       <Starfield />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[60vh]" style={{ background: "radial-gradient(60% 60% at 50% 0%, rgba(255,255,255,.08), transparent 70%)" }} />
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-5">
-        <button onClick={onBack} className="flex items-center gap-3"><Logo size={34} /><span className="font-display text-lg font-semibold">The Number</span></button>
+        <button onClick={onBack}><Wordmark size={34} /></button>
         <div className="flex items-center gap-4"><ol className="flex items-center gap-2 text-xs font-medium text-zinc-500" aria-label="Setup progress">
           {["Account", "Plan", "Connect"].map((s, i) => (
             <li key={s} className="flex items-center gap-2"><span className={`grid h-6 w-6 place-items-center rounded-full border ${i < step ? "border-white bg-white text-black" : i === step ? "border-white text-white" : "border-zinc-700"}`}>{i < step ? <Check size={13} /> : i + 1}</span><span className={`hidden sm:inline ${i === step ? "text-white" : ""}`}>{s}</span>{i < 2 && <span className="mx-1 hidden h-px w-6 bg-zinc-700 sm:inline-block" />}</li>
