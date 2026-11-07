@@ -9,7 +9,6 @@ import { computeNumber, type Alert, type Line, type NumberResult } from "@/lib/n
 import { federalEstimate, formatUSD } from "@/lib/tax";
 import { parseEntry, type Entry } from "@/lib/entry";
 import { randomFactor, scaleBusiness } from "@/lib/scale";
-import { penaltySummary, RATE_SOURCE } from "@/lib/penalty";
 import { ASSUMPTIONS, SOURCES, TAX_2026, TAX_YEAR } from "@/lib/taxConfig";
 import type { Profile, Txn } from "@/lib/types";
 import { Connect, Landing, Logo, Pricing, SignUp, ThemeToggle, type Account } from "./Onboarding";
@@ -292,80 +291,8 @@ function Home({ r, openLine, setWhy, txns }: { r: NumberResult; openLine: (l: Li
         </div>
       </section>
 
-      <PenaltyCard r={r} />
       <Breakdown r={r} />
-      <CpaExport r={r} txns={txns} />
     </>
-  );
-}
-
-/* ---------- The wake-up number: what not knowing already cost ---------- */
-
-function PenaltyCard({ r }: { r: NumberResult }) {
-  const usd = (c: number) => formatUSD(c, { cents: true });
-  const nextApril = `${Number(r.asOf.slice(0, 4)) + 1}-04-15`;
-  const p = penaltySummary(r.quarters, r.asOf, nextApril);
-  if (!p.lateCount) {
-    return (
-      <section className="card flex flex-col gap-2 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-        <div><div className="muted text-xs font-medium uppercase tracking-[0.12em]">Late penalties</div><div className="font-display num mt-1 text-4xl font-semibold">$0.00</div></div>
-        <p className="max-w-md text-sm text-zinc-400">You're paying on time, so the IRS isn't charging you extra. Keep it that way: pay each box by its date.</p>
-      </section>
-    );
-  }
-  return (
-    <section className="card overflow-hidden border-white/30 p-6 sm:p-8">
-      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.12em] text-zinc-400"><span className="dot live-dot" style={{ background: "var(--red)" }} />What not knowing has already cost you</div>
-      <div className="mt-3 grid gap-6 lg:grid-cols-[1fr_1.2fr] lg:items-end">
-        <div>
-          <div className="font-display num text-[clamp(3rem,8vw,5rem)] font-semibold leading-none">{usd(p.soFarCents)}</div>
-          <p className="mt-3 text-zinc-300">in IRS late penalties on {p.lateCount} missed payment{p.lateCount > 1 ? "s" : ""}. That's money you pay on top of the tax, for nothing.</p>
-        </div>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-800 px-4 py-3"><span className="text-zinc-300">It grows every week by</span><b className="num">{usd(p.perWeekCents)}</b></li>
-          <li className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-800 px-4 py-3"><span className="text-zinc-300">If you wait until tax day ({new Date(nextApril + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})</span><b className="num">{usd(p.byThenCents)}</b></li>
-          <li className="flex items-center justify-between gap-3 rounded-2xl border border-white/40 bg-white/[0.06] px-4 py-3"><span>Pay the late part today and it stops at</span><b className="num">{usd(p.soFarCents)}</b></li>
-        </ul>
-      </div>
-      <p className="muted mt-4 text-xs">Estimate using the IRS underpayment rate (7% a year, compounded daily, <a className="underline" href={RATE_SOURCE} target="_blank" rel="noreferrer">IRS</a>). Not tax advice.</p>
-    </section>
-  );
-}
-
-/* ---------- Send to a CPA ---------- */
-
-function CpaExport({ r, txns }: { r: NumberResult; txns: Txn[] }) {
-  const [copied, setCopied] = useState(false);
-  const usd = (c: number) => formatUSD(c, { cents: true });
-  const f = r.fed;
-  const summary: [string, string][] = [
-    ["Tax year", String(TAX_YEAR)], ["Filing as", "Sole proprietor (Schedule C), single"],
-    ["Gross business income", usd(r.incomeCents)], ["Business expenses", usd(r.expensesCents)], ["Net profit (Schedule C line 31)", usd(r.netProfitCents)],
-    ["Self-employment tax (Schedule SE)", usd(f.se.totalCents)], ["Half of SE tax deduction", usd(f.halfSeDeductionCents)], ["QBI deduction (est.)", usd(f.qbiDeductionCents)],
-    ["Federal income tax (est.)", usd(f.incomeTaxCents)], ["Estimated payments made", usd(r.taxPaidCents)], ["Still owed", usd(r.owedSoFarCents)],
-  ];
-  const text = () => [`The Number · CPA summary · ${r.asOf}`, ...summary.map(([k, v]) => `${k}: ${v}`), "Educational estimate. Please verify."].join("\n");
-  const download = () => {
-    const biz = txns.filter((t) => t.kind === "business_income" || t.kind === "business_expense" || (t.kind === "review" && t.amountCents > 0));
-    const rows = [["Summary", ""], ...summary, ["", ""], ["date", "source", "description", "amount", "type", "category"], ...biz.map((t) => [t.date, t.source, t.description, (t.amountCents / 100).toFixed(2), t.kind === "business_income" || t.kind === "review" ? "income" : "expense", t.category || ""])];
-    const csv = rows.map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    const a = document.createElement("a"); a.href = url; a.download = `the-number-cpa-${TAX_YEAR}.csv`; a.click(); URL.revokeObjectURL(url);
-  };
-  const copy = async () => { try { await navigator.clipboard.writeText(text()); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* fine */ } };
-  return (
-    <section className="card p-6 sm:p-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div><h2 className="font-display text-2xl font-semibold">Send to your CPA</h2><p className="muted mt-1 max-w-lg text-sm">Everything an accountant needs to file your Schedule C and SE, in one file. No shoebox of receipts.</p></div>
-        <div className="flex flex-wrap gap-2">
-          <button className="btn btn-primary" onClick={download}><Download size={16} />Download for CPA</button>
-          <button className="btn btn-ghost" onClick={copy}>{copied ? <><Check size={16} />Copied</> : "Copy summary"}</button>
-        </div>
-      </div>
-      <dl className="mt-5 grid gap-x-8 sm:grid-cols-2">
-        {summary.slice(2).map(([k, v]) => <div key={k} className="flex justify-between gap-4 border-b py-2 text-sm"><dt className="muted">{k}</dt><dd className="num font-medium">{v}</dd></div>)}
-      </dl>
-    </section>
   );
 }
 

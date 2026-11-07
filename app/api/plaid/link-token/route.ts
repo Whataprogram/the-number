@@ -6,7 +6,8 @@ export async function POST() {
   try {
     const r = await plaid.linkTokenCreate({
       ...LINK_CONFIG,
-      user: { client_user_id: "the-number-demo-user" },
+      // A fresh id each time so Plaid never skips straight to a bank used earlier: you always get the full bank list.
+      user: { client_user_id: `the-number-${crypto.randomUUID()}` },
       ...(process.env.PLAID_WEBHOOK_URL ? { webhook: process.env.PLAID_WEBHOOK_URL } : {}),
     });
     return Response.json({ link_token: r.data.link_token });
