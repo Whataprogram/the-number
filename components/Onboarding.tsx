@@ -52,7 +52,7 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
             <div className="font-display num shrink-0 text-[clamp(3.5rem,9vw,5.5rem)] font-semibold leading-none">15.7M</div>
             <div>
               <div className="text-lg font-semibold leading-snug">IRS penalties last year for not paying quarterly taxes.</div>
-              <div className="muted mt-1 text-sm">And 1 in 3 small business owners don't even know they're supposed to pay quarterly. You can't pay what nobody told you about.</div>
+              <div className="muted mt-1 text-sm">And 1 in 3 small business owners don't even know they're supposed to pay quarterly. The Number shows what you owe as you earn, so you never pay extra for not knowing.</div>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-500 sm:text-left">

@@ -55,3 +55,14 @@ describe("money parsing", () => {
     expect(() => toCents("abc")).toThrow();
   });
 });
+
+import { latePenalty } from "../lib/penalty";
+describe("late-payment penalty (7%/yr, daily)", () => {
+  it("hand-checked: $1,000 late 365 days -> $72.50", () => {
+    // 1000 x ((1 + 0.07/365)^365 - 1) = 72.501...
+    expect(latePenalty(100_000, "2026-01-01", "2027-01-01")).toBe(7_250);
+  });
+  it("is zero before the due date", () => {
+    expect(latePenalty(100_000, "2026-09-15", "2026-09-01")).toBe(0);
+  });
+});
