@@ -26,11 +26,20 @@ The Number connects to the bank you already use (through Plaid) or reads Chase, 
 - CSV parsers for Chase, Cash App and Venmo exports.
 - Design guided by the UI/UX Pro Max skill (trust blue + profit green, mobile-first).
 
+## Where the demo numbers come from
+The sample owner (Jay, 17, pressure washing) is fictional, but sized to real teen businesses:
+- A 17-year-old's lawn business expecting about **$15,000** this summer: [WMTV 15, Jul 2025](https://www.wmtv15news.com/2025/07/31/teenage-small-business-owner-oregon-proving-hes-cut-above-when-it-comes-mowing-lawns/)
+- A high-school landscaping company's first year at about **$11,000**: [Lawn & Landscape](https://www.lawnandlandscape.com/news/ll-042418-high-school-students-profit-lawn-maintenance-work-colorado)
+- A teen pressure-washing business at about **$12,000 a month** by 18: [UpFlip](https://newsletter.upflip.com/p/12k-month-pressure-washing-company-high-school)
+- The IRS on young entrepreneurs and the $400 self-employment rule: [IRS](https://www.irs.gov/ht/newsroom/when-the-lemonade-stand-makes-bank-young-entrepreneurs-and-taxes)
+
+Jay grosses $18,840, nets $16,269, owes **$0 income tax** (under the $16,100 standard deduction) but **$2,299 self-employment tax**. That's the surprise The Number exists to catch.
+
 ## Real vs. mocked
 | Piece | Status |
 |---|---|
-| Demo statements (Jay, 17, pressure washing) | Synthetic, seeded generator, fictional people |
-| Bank connection | Real Plaid API in Sandbox (test data). Production banks need Plaid approval |
+| Sample owner (Jay, 17) | Fictional person, sized from the real teen businesses above |
+| Bank connection | **Real Plaid API** (Link, token exchange, /transactions/sync) running in Plaid Sandbox with a custom test bank loaded with Jay's activity |
 | Tax rules | Real 2026 IRS parameters with sources |
 | Text alerts | Shown in-app; SMS delivery not wired up yet |
 
