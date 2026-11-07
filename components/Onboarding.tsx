@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, ChevronRight, FileUp, Hash, Landmark, Lock, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Check, FileUp, Hash, Landmark, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import type { Profile, Txn } from "@/lib/types";
 import { PlaidButton } from "./PlaidButton";
 
@@ -26,19 +26,25 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
         <button className="text-sm font-medium text-zinc-300 hover:text-white" onClick={onSignIn}>Sign in</button>
       </header>
 
-      <main className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-4 pb-[38vh] pt-[10vh] text-center">
-        <button onClick={onDemo} className="chip rise mb-8 uppercase tracking-[0.14em] text-zinc-300 hover:text-white">
-          For young business owners <ChevronRight size={14} />
-        </button>
-        <h1 className="headline font-display rise text-[clamp(3rem,9vw,7.25rem)] font-semibold leading-[0.95]" style={{ textWrap: "balance" as never }}>
-          Know what's<br />actually yours.
-        </h1>
-        <p className="rise mt-7 max-w-2xl text-[clamp(1.05rem,2vw,1.35rem)] leading-relaxed text-zinc-400">
-          The Number connects your bank, works out what you owe the IRS, and tells you the one number your money should never drop below, in plain English.
+      <main className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-4 pb-[34vh] pt-[7vh] text-center">
+        <span className="chip rise mb-6 uppercase tracking-[0.14em] text-zinc-300">For young business owners</span>
+        <h1 className="headline font-display rise text-[clamp(2.4rem,6vw,4.5rem)] font-semibold leading-[1]" style={{ textWrap: "balance" as never }}>Know your Number.</h1>
+        <p className="rise mt-5 max-w-2xl text-[clamp(1.2rem,2.4vw,1.6rem)] font-medium leading-snug text-white" style={{ textWrap: "balance" as never }}>
+          The Number connects to your bank, works out what you owe the IRS, and tells you the one number your money should never drop below.
         </p>
-        <div className="rise mt-10 flex flex-col items-center gap-3 sm:flex-row">
-          <button className="btn btn-primary min-w-[200px] !rounded-xl !py-3.5 text-base" onClick={onStart}>Get Started</button>
-          <button className="btn btn-ghost !rounded-xl !py-3.5 text-base" onClick={onDemo} disabled={busy}>{busy ? "Connecting to the sample bank…" : "See a live demo"}</button>
+        <div className="rise mt-9 w-full max-w-2xl rounded-[28px] border border-white/15 bg-white/[0.04] px-6 py-6 backdrop-blur sm:px-8">
+          <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-6 sm:text-left">
+            <div className="font-display num shrink-0 text-[clamp(3.5rem,9vw,5.5rem)] font-semibold leading-none">1 in 3</div>
+            <div>
+              <div className="text-lg font-semibold leading-snug">small business owners don't know if they're supposed to pay the IRS every quarter.</div>
+              <div className="muted mt-1 text-sm">And 37% say taxes leave them anxious and confused.</div>
+            </div>
+          </div>
+          <a className="mt-3 block text-[11px] text-zinc-500 underline-offset-2 hover:underline sm:text-left" href="https://american.edu/media/news/20230418_CarolineBrucknerTaxLiteracySurvey.cfm" target="_blank" rel="noreferrer">Source: American University Kogod School of Business, Small Business Tax Literacy Survey</a>
+        </div>
+        <div className="rise mt-9 flex flex-col items-center gap-4">
+          <button className="btn btn-primary min-w-[220px] !rounded-xl !py-3.5 text-base" onClick={onStart}>Get Started <ArrowRight size={16} /></button>
+          <button className="text-sm text-zinc-400 underline-offset-4 hover:text-white hover:underline" onClick={onDemo} disabled={busy}>{busy ? "Loading a live example…" : "or see a live example first"}</button>
         </div>
       </main>
       <div className="horizon pointer-events-none" aria-hidden />
@@ -99,7 +105,8 @@ export function SignUp({ onDone, onBack }: { onDone: (a: Account) => void; onBac
     e.preventDefault();
     if (!name.trim()) return setErr("Add your first name so we know what to call you.");
     if (!/^\S+@\S+\.\S+$/.test(email)) return setErr("That email doesn't look right. Check for a typo.");
-    onDone({ name: name.trim().split(" ")[0], email: email.trim(), business });
+    if (!business.trim()) return setErr("Tell us what your business does, in your own words.");
+    onDone({ name: name.trim().split(" ")[0], email: email.trim(), business: business.trim() });
   };
   return (
     <Shell step={0} onBack={onBack}>
@@ -126,9 +133,7 @@ export function SignUp({ onDone, onBack }: { onDone: (a: Account) => void; onBac
           <label className="mt-4 block text-sm font-medium" htmlFor="su-email">Email</label>
           <input id="su-email" className="input mt-1.5" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" type="email" autoComplete="email" />
           <label className="mt-4 block text-sm font-medium" htmlFor="su-biz">What's your business?</label>
-          <select id="su-biz" className="input mt-1.5" value={business} onChange={(e) => setBusiness(e.target.value)}>
-            {["Pressure washing", "Lawn care", "Car detailing", "Reselling", "Streaming / content", "Tutoring", "Something else"].map((b) => <option key={b}>{b}</option>)}
-          </select>
+          <input id="su-biz" className="input mt-1.5" value={business} onChange={(e) => setBusiness(e.target.value)} placeholder="Pressure washing, lawn care, reselling…" />
           {err && <p className="mt-3 text-sm" style={{ color: "var(--red)" }}>{err}</p>}
           <button className="btn btn-primary mt-6 w-full !rounded-xl !py-3.5">Create account <ArrowRight size={16} /></button>
           <p className="mt-4 text-center text-xs text-zinc-500">Hackathon demo: your account stays on this device.</p>
@@ -140,37 +145,38 @@ export function SignUp({ onDone, onBack }: { onDone: (a: Account) => void; onBac
 
 /* ---------------- Pricing (no subscriptions) ---------------- */
 
+const FEATURES = ["Your Number, updated every time money moves", "Every account: bank, Cash App, Venmo", "Text alerts before you dip below your Number", "IRS due-date reminders, planned monthly", "Business-or-personal sorting", "Parent view", "CPA-ready export at tax time"];
 const PLANS = [
-  { id: "free", name: "Starter", blurb: "See where you stand.", price: "$0", unit: "forever", cta: "Start free", features: ["Your Number + money jars", "1 bank account", "Learn tab explainers", "Myth buster"] },
-  { id: "season", name: "Season Pass", blurb: "Everything for one tax year.", price: "$49", unit: "one-time · per tax year", popular: true, cta: "Get Season Pass", features: ["Everything in Starter", "Text alerts before you dip below your Number", "Bank + Cash App + Venmo", "Business-or-personal sorting", "Parent view", "CPA-ready export at tax time"] },
-  { id: "family", name: "Family Pass", blurb: "For siblings and a parent.", price: "$79", unit: "one-time · per tax year", cta: "Get Family Pass", features: ["Everything in Season Pass", "Up to 3 young business owners", "One parent dashboard for all of them", "Priority help from a CPA partner"] },
+  { id: "trial", name: "Free trial", blurb: "Try everything for 30 days.", price: "$0", unit: "30 days · no card needed", cta: "Start free trial", note: "Ends on its own. We never charge you automatically." },
+  { id: "season", name: "Season Pass", blurb: "One payment covers the whole tax year.", price: "$120", unit: "one-time · per tax year", popular: true, cta: "Start now", note: "No auto-renew. If it doesn't save you more than it costs, next season is on us." },
 ];
 
-export function Pricing({ name, onPick, onBack }: { name: string; onPick: (plan: string) => void; onBack: () => void }) {
+export function Pricing({ onPick, onBack }: { name?: string; onPick: (plan: string) => void; onBack: () => void }) {
   return (
     <Shell step={1} onBack={onBack}>
-      <div className="mx-auto max-w-6xl py-10 text-center">
+      <div className="mx-auto max-w-4xl py-10 text-center">
         <span className="chip text-zinc-300">No subscriptions. Ever.</span>
         <h1 className="headline font-display mt-5 text-[clamp(2.4rem,6vw,4.25rem)] font-semibold leading-[1]">Pay once a tax year.</h1>
-        <p className="mx-auto mt-4 max-w-xl text-zinc-400">No auto-renew, no surprise charges. One payment covers you from January to the April filing deadline. If it doesn't save you more than it costs, next season is on us.</p>
-        <div className="mt-12 grid items-end gap-5 text-left md:grid-cols-3">
+        <p className="mx-auto mt-4 max-w-xl text-zinc-400">One price, everything included. Try it free first, or start now and you're covered from January to the April filing deadline.</p>
+        <div className="mt-12 grid items-stretch gap-5 text-left md:grid-cols-2">
           {PLANS.map((p) => (
-            <div key={p.id} className={`relative rounded-[28px] p-7 ${p.popular ? "border-2 border-white bg-[#101010] shadow-[0_0_80px_rgba(255,255,255,.12)] md:-translate-y-4 md:py-10" : "glass"}`}>
-              {p.popular && <span className="absolute -top-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-black">★ Most popular</span>}
+            <div key={p.id} className={`relative flex flex-col rounded-[28px] p-8 ${p.popular ? "border-2 border-white bg-[#101010] shadow-[0_0_80px_rgba(255,255,255,.12)]" : "glass"}`}>
+              {p.popular && <span className="absolute -top-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-black">★ Most popular</span>}
               <div className="text-center">
                 <div className="font-display text-2xl font-semibold">{p.name}</div>
                 <div className="mt-1 text-sm text-zinc-400">{p.blurb}</div>
-                <div className="mt-6 flex items-baseline justify-center gap-1.5"><span className="font-display num text-6xl font-semibold">{p.price}</span></div>
+                <div className="font-display num mt-6 text-6xl font-semibold">{p.price}</div>
                 <div className="mt-1 text-xs text-zinc-400">{p.unit}</div>
               </div>
               <ul className="mt-7 space-y-3 text-sm">
-                {p.features.map((f) => <li key={f} className="flex gap-3"><Check size={18} className="shrink-0" />{f}</li>)}
+                {FEATURES.map((f) => <li key={f} className="flex gap-3"><Check size={18} className="shrink-0" />{f}</li>)}
               </ul>
-              <button className={`btn mt-8 w-full !rounded-xl !py-3.5 ${p.popular ? "btn-primary" : "btn-ghost"}`} onClick={() => onPick(p.id)}>{p.cta}</button>
+              <p className="muted mt-6 text-xs">{p.note}</p>
+              <button className={`btn mt-auto w-full !rounded-xl !py-3.5 ${p.popular ? "btn-primary" : "btn-ghost"}`} style={{ marginTop: 24 }} onClick={() => onPick(p.id)}>{p.cta}</button>
             </div>
           ))}
         </div>
-        <p className="mt-8 text-xs text-zinc-500">Hackathon demo: no payment is taken. Pricing shown is our proposed model.</p>
+        <p className="mt-8 text-xs text-zinc-500">Hackathon demo: no payment is taken.</p>
       </div>
     </Shell>
   );
@@ -192,8 +198,7 @@ export function Connect({ name, onSample, onFiles, onPlaid, busy, error, onBack 
           </div>
           <div className="mt-5"><PlaidButton onData={onPlaid} /></div>
           <div className="my-6 flex items-center gap-3 text-xs text-zinc-500"><span className="h-px flex-1 bg-zinc-800" />or<span className="h-px flex-1 bg-zinc-800" /></div>
-          <button className="btn btn-ghost w-full !rounded-xl !py-3.5" onClick={onSample} disabled={!!busy}>{busy === "bank" ? "Connecting through Plaid…" : "Use a sample bank: Jay, 17, pressure washing"}</button>
-          <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 text-sm text-zinc-400 hover:text-white">
+          <label className="flex cursor-pointer items-center justify-center gap-2 text-sm text-zinc-400 hover:text-white">
             <FileUp size={16} /> Upload Chase / Cash App / Venmo CSVs (stays in your browser)
             <input type="file" accept=".csv,text/csv" multiple className="sr-only" onChange={(e) => onFiles(e.target.files)} />
           </label>

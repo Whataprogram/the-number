@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowRight, ArrowUpRight, Bell, BookOpen, Briefcase, CalendarClock, Download, Eye, EyeOff, GraduationCap, Home as HomeIcon, Info, LogOut, Octagon, Printer, ShoppingBag, Terminal, User, Users, Wallet, X, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Lightbulb, ArrowUpRight, Bell, BookOpen, Briefcase, CalendarClock, Download, Eye, EyeOff, GraduationCap, Home as HomeIcon, Info, LogOut, Octagon, Printer, ShoppingBag, Terminal, User, Users, Wallet, X, Zap } from "lucide-react";
 import { classify } from "@/lib/classify";
 import { latestBalance, normalize } from "@/lib/csv";
 import { DEMO_FILES, DEMO_PROFILE } from "@/lib/demo";
@@ -17,7 +17,10 @@ type Why = { title: string; body: string; txns?: Txn[] };
 type LogLine = { id: string; time: string; text: string; tone: "in" | "out" | "sys" | "warn" };
 
 const dayNum = (iso: string) => Date.parse(iso + "T00:00:00Z") / 86_400_000;
-const PLAN_NAME: Record<string, string> = { free: "Starter", season: "Season Pass", family: "Family Pass" };
+const PLAN_NAME: Record<string, string> = { trial: "Free trial", free: "Free trial", season: "Season Pass", family: "Season Pass" };
+export type AlertPrefs = Record<string, boolean>;
+const DEFAULT_PREFS: AlertPrefs = { below: true, due: true, big: true, paid: true, weekly: true, sms: true, email: false };
+const PREFS_KEY = "the-number:alerts";
 const KEY = "the-number:account";
 
 function loadAccount(): Account | null { try { const v = localStorage.getItem(KEY); return v ? JSON.parse(v) : null; } catch { return null; } }
@@ -35,6 +38,9 @@ export default function App() {
   const [why, setWhy] = useState<Why | null>(null);
   const [toast, setToast] = useState<Alert | null>(null);
   const [events, setEvents] = useState<LogLine[]>([]);
+  const [prefs, setPrefs] = useState<AlertPrefs>(DEFAULT_PREFS);
+  useEffect(() => { try { const v = localStorage.getItem(PREFS_KEY); if (v) setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(v) }); } catch { /* fine */ } }, []);
+  const setPref = (k: string, v: boolean) => setPrefs((p) => { const n = { ...p, [k]: v }; try { localStorage.setItem(PREFS_KEY, JSON.stringify(n)); } catch { /* fine */ } return n; });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<string>("");
 
@@ -81,6 +87,11 @@ export default function App() {
   }
 
   function onPlaid(data: { txns: Txn[]; balances: Profile["balances"] }) {
+    // Our Plaid Sandbox test user (Jay's business): pair the bank data with Jay's profile (age, bills he entered).
+    if (data.balances.some((b) => b.name.startsWith("Jay's Pressure Washing"))) {
+      setProfile({ ...DEMO_PROFILE, asOf: new Date().toISOString().slice(0, 10), balances: data.balances });
+      setTxns(data.txns); enter("Your bank via Plaid (Sandbox test user)"); return;
+    }
     setProfile({ ...DEMO_PROFILE, ownerName: account?.name || "You", businessName: account ? `${account.name}'s ${account.business.toLowerCase()}` : "Your business", age: 0, parentRule: undefined, balances: data.balances, bills: [], asOf: new Date().toISOString().slice(0, 10) });
     setTxns(data.txns); enter("Your bank via Plaid");
   }
@@ -101,14 +112,14 @@ export default function App() {
       setTxns([...txns, classify({ id, date: profile.asOf, source: "Cash App", description: "house wash", counterparty: "New customer", amountCents: amt })]);
       setProfile((p) => ({ ...p, balances: p.balances.map((b, i) => i === 0 ? { ...b, balanceCents: b.balanceCents + amt } : b) }));
       setEvents((e) => [{ id, time: clock(), tone: "in" as const, text: `+${formatUSD(amt, { cents: true })} cash app · house wash → business · ${formatUSD(extra)} to IRS jar` }, ...e].slice(0, 6));
-      notify({ id, level: "info", title: `+${formatUSD(amt)} from a new customer`, body: `${formatUSD(extra)} of it goes in your IRS jar. The other ${formatUSD(amt - extra)} is yours (after your jars are full).` });
+      if (prefs.paid) notify({ id, level: "info", title: `+${formatUSD(amt)} from a new customer`, body: `${formatUSD(extra)} of it goes in your IRS jar. The other ${formatUSD(amt - extra)} is yours (after your jars are full).` });
     } else {
       const amt = 18000;
       const short = result.theNumberCents - (result.balanceCents - amt);
       setTxns([...txns, classify({ id, date: profile.asOf, source: "Chase", description: "NIKE.COM", counterparty: "NIKE.COM", amountCents: -amt })]);
       setProfile((p) => ({ ...p, balances: p.balances.map((b, i) => i === 0 ? { ...b, balanceCents: b.balanceCents - amt } : b) }));
       setEvents((e) => [{ id, time: clock(), tone: "warn" as const, text: `−${formatUSD(amt, { cents: true })} chase · NIKE.COM → personal · now ${formatUSD(short)} short` }, ...e].slice(0, 6));
-      notify({ id, level: "critical", title: `${formatUSD(amt)} at Nike.com`, body: `That came out of your IRS jar. You're now ${formatUSD(short)} short of your Number.` });
+      if (prefs.below || prefs.big) notify({ id, level: "critical", title: `${formatUSD(amt)} at Nike.com`, body: `That came out of your IRS jar. You're now ${formatUSD(short)} short of your Number.` });
     }
   }
 
@@ -154,7 +165,7 @@ export default function App() {
 
       <main className="relative z-10 mx-auto max-w-6xl space-y-4">
         {tab === "home" && <Home r={result} profile={profile} name={name} parent={parent} privacy={privacy} openLine={openLine} setWhy={setWhy} simulate={simulate} go={setTab} txns={txns} events={events} />}
-        {tab === "alerts" && <Alerts r={result} go={setTab} />}
+        {tab === "alerts" && <Alerts r={result} go={setTab} prefs={prefs} setPref={setPref} name={name} />}
         {tab === "money" && <Money r={result} txns={txns} setKind={setKind} parent={parent} privacy={privacy} profile={profile} />}
         {tab === "learn" && <Learn r={result} />}
         <p className="muted pb-4 pt-2 text-center text-xs">Data: {source}. Educational estimate, not tax advice.</p>
@@ -254,6 +265,16 @@ function Home({ r, profile, name, parent, privacy, openLine, setWhy, simulate, g
   return (
     <>
       {parent && <ParentWeek r={r} txns={txns} name={name || "Your kid"} />}
+
+      <section className="card grid grid-cols-2 gap-px overflow-hidden !bg-white/[0.06] p-0 lg:grid-cols-4" aria-label="2026 so far">
+        {([["Money in · 2026", r.incomeCents, `${txns.filter((t) => t.kind === "business_income").length} customer payments`], ["Business costs", r.expensesCents, "fuel, chemicals, gear, insurance"], ["Profit", r.netProfitCents, "what the IRS taxes"], ["Tax you owe", r.fed.totalTaxCents, r.fed.incomeTaxCents === 0 ? "all of it self-employment tax" : "income + self-employment"]] as [string, number, string][]).map(([l, v, sub]) => (
+          <div key={l} className="bg-[#070707] p-5 sm:p-6">
+            <div className="muted text-xs font-medium uppercase tracking-[0.12em]">{l}</div>
+            <div className="font-display num mt-2 text-[clamp(1.9rem,4vw,2.9rem)] font-semibold leading-none">{formatUSD(v)}</div>
+            <div className="muted mt-2 text-xs">{sub}</div>
+          </div>
+        ))}
+      </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
         {/* Hero: The Number + balance chart */}
@@ -477,27 +498,78 @@ function ParentWeek({ r, txns, name }: { r: NumberResult; txns: Txn[]; name: str
 
 /* ---------- Alerts ---------- */
 
-function Alerts({ r, go }: { r: NumberResult; go: (t: Tab) => void }) {
+function Alerts({ r, go, prefs, setPref, name }: { r: NumberResult; go: (t: Tab) => void; prefs: AlertPrefs; setPref: (k: string, v: boolean) => void; name: string }) {
   const color = { critical: "var(--red)", warning: "var(--amber)", info: "#ffffff" };
   const Icon = { critical: Octagon, warning: AlertTriangle, info: Bell };
   const action = (id: string): [string, Tab] | null => id === "review" ? ["Sort them now", "money"] : id === "missed" || id === "next" ? ["How estimated taxes work", "learn"] : id === "below" ? ["See my jars", "home"] : id === "rule" ? ["Why it's wrong", "learn"] : null;
+  const due = new Date(r.next.due + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const tips: [string, string][] = [
+    r.safeToSpendCents < 0
+      ? ["Top up today", `Move ${formatUSD(-r.safeToSpendCents)} from personal money into the business account and every jar is full again.`]
+      : ["You have room", `${formatUSD(r.safeToSpendCents)} is above your Number. Reinvest some of it in gear before you spend it.`],
+    [r.missed.length ? "Pay the IRS now, not later" : "Pay a little every month", r.missed.length ? `${r.missed.length} payment${r.missed.length > 1 ? "s" : ""} already passed. Paying ${formatUSD(r.owedSoFarCents)} at irs.gov/payments before ${due} stops the late penalty from growing.` : `Set aside ${formatUSD(r.saveThisMonthCents)} a month and the ${due} payment is already covered.`],
+    ...(r.reviewCount ? [["Sort your mystery payments", `${r.reviewCount} payment${r.reviewCount > 1 ? "s" : ""} could be business or personal. Answering takes about a minute and makes your Number exact.`] as [string, string]] : []),
+    ["Keep a separate business profile", "A Cash App or Venmo business profile keeps customer money apart from your own. It makes tax time a lot easier."],
+  ];
+  const settings: [string, string, string][] = [
+    ["below", "I drop below my Number", "The moment your balance dips under what's spoken for."],
+    ["due", "An IRS payment is coming up", "14 days and 3 days before each due date, with the amount."],
+    ["big", "I spend more than $100 at once", "So a big purchase never surprises you later."],
+    ["paid", "A customer pays me", "Shows how much of it goes to the IRS jar."],
+    ["weekly", "Weekly summary for my parent", "Sundays: earned, costs, and what to set aside. Read-only."],
+  ];
   return (
-    <section className="mx-auto max-w-3xl space-y-3">
+    <section className="mx-auto max-w-5xl space-y-4">
       <h1 className="font-display text-4xl font-semibold">Alerts</h1>
-      <p className="muted text-sm">These get texted to you and your parent. Here's what they'd say right now.</p>
-      {r.alerts.map((a) => {
-        const act = action(a.id); const I = Icon[a.level];
-        return (
-          <div key={a.id} className="card flex gap-4 p-5">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-zinc-800"><I size={17} style={{ color: color[a.level] }} /></span>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-baseline justify-between gap-2"><div className="font-semibold">{a.title}</div><div className="muted shrink-0 text-xs">now</div></div>
-              <div className="muted mt-0.5 text-sm">{a.body}</div>
-              {act && <button className="mt-2 flex items-center gap-1.5 text-sm font-medium hover:underline" onClick={() => go(act[1])}>{act[0]} <ArrowRight size={14} /></button>}
+      <div className="grid gap-4 lg:grid-cols-5">
+        <div className="space-y-3 lg:col-span-3">
+          <Label>Right now{name ? ` for ${name}` : ""}</Label>
+          {r.alerts.map((a) => {
+            const act = action(a.id); const I = Icon[a.level];
+            return (
+              <div key={a.id} className="card flex gap-4 p-5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-zinc-800"><I size={17} style={{ color: color[a.level] }} /></span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-2"><div className="font-semibold">{a.title}</div><div className="muted shrink-0 text-xs">now</div></div>
+                  <div className="muted mt-0.5 text-sm">{a.body}</div>
+                  {act && <button className="mt-2 flex items-center gap-1.5 text-sm font-medium hover:underline" onClick={() => go(act[1])}>{act[0]} <ArrowRight size={14} /></button>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="space-y-4 lg:col-span-2">
+          <div className="card p-6">
+            <h2 className="font-display text-xl font-semibold">Text me when…</h2>
+            <p className="muted mt-1 text-sm">Pick the alerts you want. Change them any time.</p>
+            <ul className="mt-4 space-y-1">
+              {settings.map(([k, t, d]) => (
+                <li key={k}>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl p-2.5 hover:bg-white/[0.04]">
+                    <input type="checkbox" className="peer sr-only" checked={!!prefs[k]} onChange={(e) => setPref(k, e.target.checked)} />
+                    <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border transition peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-white ${prefs[k] ? "border-white bg-white text-black" : "border-zinc-600"}`}>{prefs[k] && <Check size={14} strokeWidth={3} />}</span>
+                    <span><span className="block text-sm font-medium">{t}</span><span className="muted block text-xs">{d}</span></span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+              <span className="muted mr-1 self-center text-xs">Send by</span>
+              {[["sms", "Text"], ["email", "Email"]].map(([k, l]) => (
+                <button key={k} role="switch" aria-checked={!!prefs[k]} onClick={() => setPref(k, !prefs[k])} className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${prefs[k] ? "border-white bg-white text-black" : "border-zinc-700 text-zinc-300"}`}>{l}</button>
+              ))}
             </div>
           </div>
-        );
-      })}
+          <div className="card p-6">
+            <h2 className="font-display flex items-center gap-2 text-xl font-semibold"><Lightbulb size={18} />Tips for you</h2>
+            <ol className="mt-4 space-y-4">
+              {tips.map(([t, d], i) => (
+                <li key={t} className="flex gap-3"><span className="font-mono text-xs text-zinc-500">0{i + 1}</span><div><div className="text-sm font-semibold">{t}</div><div className="muted mt-0.5 text-sm">{d}</div></div></li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -641,6 +713,15 @@ function Cpa({ r, txns, profile }: { r: NumberResult; txns: Txn[]; profile: Prof
 
 /* ---------- Learn ---------- */
 
+const AU = "https://american.edu/media/news/20230418_CarolineBrucknerTaxLiteracySurvey.cfm";
+const FB = "https://www.globenewswire.com/news-release/2025/03/19/3045674/0/en/Hidden-Tax-Challenges-for-Small-Businesses-FreshBooks-2025-Tax-Trend-Report.html";
+const STATS: { big: string; what: string; means: (r: NumberResult) => string; src: string; url: string }[] = [
+  { big: "1 in 3", what: "didn't know whether they had to pay the IRS every quarter.", means: (r) => `You do. Your next payment is ${formatUSD(r.owedSoFarCents)}, due ${r.next.due}.`, src: "American University Kogod, Small Business Tax Literacy Survey", url: AU },
+  { big: "37%", what: "say filing taxes leaves them anxious and confused.", means: () => "That's why every line of your Number has a plain-English 'why'.", src: "American University Kogod, Small Business Tax Literacy Survey", url: AU },
+  { big: "26%", what: "of small business owners and freelancers feel completely confident about their taxes.", means: () => "Confidence comes from knowing the number before April, not after.", src: "FreshBooks 2025 Tax Trends Report (about 1,300 surveyed)", url: FB },
+  { big: "35%", what: "say organizing receipts is their biggest tax headache.", means: (r) => `We sorted ${formatUSD(r.expensesCents)} of your business costs automatically.`, src: "FreshBooks 2025 Tax Trends Report", url: FB },
+];
+
 function Learn({ r }: { r: NumberResult }) {
   const months = [3, 2, 3, 4];
   const cards: [string, string, React.ReactNode][] = [
@@ -654,6 +735,20 @@ function Learn({ r }: { r: NumberResult }) {
     <>
       <h1 className="font-display text-4xl font-semibold">Learn</h1>
       <p className="muted -mt-2 text-sm">30-second explainers using your own numbers.</p>
+      <section className="card p-6">
+        <h2 className="font-display text-xl font-semibold">You're not the only one confused</h2>
+        <p className="muted mt-1 text-sm">What surveys of small business owners and freelancers found, and what it means for you.</p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {STATS.map((x) => (
+            <div key={x.big + x.what} className="flex flex-col rounded-2xl border border-zinc-800 p-5">
+              <div className="font-display num text-4xl font-semibold">{x.big}</div>
+              <div className="mt-2 text-sm font-medium">{x.what}</div>
+              <div className="muted mt-2 text-xs leading-relaxed">{x.means(r)}</div>
+              <a href={x.url} target="_blank" rel="noreferrer" className="mt-auto pt-3 text-[11px] text-zinc-500 underline-offset-2 hover:underline">{x.src}</a>
+            </div>
+          ))}
+        </div>
+      </section>
       <div className="grid gap-4 md:grid-cols-2">
         {cards.map(([n, title, body]) => (
           <details key={title} className="card group p-6" open={n === "02"}>

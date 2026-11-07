@@ -35,7 +35,7 @@ export function PlaidButton({ onData }: { onData: (d: { txns: Txn[]; balances: P
     <div className="flex flex-col gap-2">
       <button className="btn btn-primary w-full !rounded-xl !py-3.5" onClick={start} disabled={busy}>{busy ? "Connecting…" : "Connect with Plaid"}</button>
       {msg && <span className="text-xs" style={{ color: "var(--muted)" }}>{msg}</span>}
-      <span className="text-center text-[11px]" style={{ color: "var(--muted)" }}>Sandbox test login: user_good / pass_good</span>
+      <span className="text-center text-[11px]" style={{ color: "var(--muted)" }}>Sandbox: pick First Platypus Bank · username user_jay · any password</span>
     </div>
   );
 }
