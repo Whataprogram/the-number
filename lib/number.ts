@@ -104,7 +104,7 @@ export function computeNumber(txns: Txn[], profile: Profile): NumberResult {
     : `You work for yourself, so no boss pays half your Social Security and Medicare. You pay both halves: 15.3% on 92.35% of your profit (${formatUSD(fed.se.netEarningsCents)}). That's ${formatUSD(fed.se.totalCents)}. Most young owners have never heard of this tax. It applies at any age once you clear $400.`;
   const itWhy = fed.taxableIncomeCents === 0
     ? `Your profit after the standard deduction (${formatUSD(fed.standardDeductionCents)}) is $0, so no federal income tax yet.`
-    : `Profit ${formatUSD(net)} minus half your self-employment tax (${formatUSD(fed.halfSeDeductionCents)}) minus the ${formatUSD(fed.standardDeductionCents)} standard deduction leaves ${formatUSD(fed.taxableIncomeCents)} that gets taxed at 10%, then 12% above $12,400. That's ${formatUSD(fed.incomeTaxCents)}.`;
+    : `Profit ${formatUSD(net)} minus half your self-employment tax (${formatUSD(fed.halfSeDeductionCents)}) minus the ${formatUSD(fed.standardDeductionCents)} standard deduction${fed.qbiDeductionCents ? ` and the ${formatUSD(fed.qbiDeductionCents)} small-business (QBI) deduction` : ""} leaves ${formatUSD(fed.taxableIncomeCents)} that gets taxed at 10%, then 12% above $12,400. That's ${formatUSD(fed.incomeTaxCents)}.`;
 
   const lines: Line[] = [
     { key: "se", label: "Self-employment tax", amountCents: fed.se.totalCents, why: seWhy },

@@ -45,6 +45,7 @@ export interface FederalEstimate {
   halfSeDeductionCents: number;
   agiCents: number;
   standardDeductionCents: number;
+  qbiDeductionCents: number;
   taxableIncomeCents: number;
   incomeTaxCents: number;
   incomeTaxLines: { rateBps: number; amountCents: number; taxCents: number }[];
@@ -55,7 +56,10 @@ export function federalEstimate(netProfitCents: number, cfg = TAX_2026): Federal
   const se = selfEmploymentTax(netProfitCents, cfg);
   const halfSe = Math.round(se.totalCents / 2);
   const agi = Math.max(0, netProfitCents - halfSe);
-  const taxable = Math.max(0, agi - cfg.standardDeductionCents);
+  const beforeQbi = Math.max(0, agi - cfg.standardDeductionCents);
+  // Sole-proprietor QBI deduction: 20% of (profit - half SE tax), but no more than 20% of taxable income before it.
+  const qbi = Math.min(pct(Math.max(0, netProfitCents - halfSe), cfg.qbiBps), pct(beforeQbi, cfg.qbiBps));
+  const taxable = Math.max(0, beforeQbi - qbi);
   const it = bracketTax(taxable, cfg);
   return {
     netProfitCents,
@@ -63,6 +67,7 @@ export function federalEstimate(netProfitCents: number, cfg = TAX_2026): Federal
     halfSeDeductionCents: halfSe,
     agiCents: agi,
     standardDeductionCents: cfg.standardDeductionCents,
+    qbiDeductionCents: qbi,
     taxableIncomeCents: taxable,
     incomeTaxCents: it.totalCents,
     incomeTaxLines: it.lines,

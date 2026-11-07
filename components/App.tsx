@@ -15,12 +15,11 @@ import { Connect, Landing, Logo, Pricing, SignUp, ThemeToggle, type Account } fr
 type Tab = "home" | "alerts" | "money" | "learn";
 type Stage = "landing" | "signup" | "pricing" | "connect" | "app";
 type Why = { title: string; body: string; txns?: Txn[] };
-type LogLine = { id: string; time: string; text: string; tone: "in" | "out" | "sys" | "warn" };
 
 const dayNum = (iso: string) => Date.parse(iso + "T00:00:00Z") / 86_400_000;
 const PLAN_NAME: Record<string, string> = { trial: "Free trial", free: "Free trial", season: "Season Pass", family: "Season Pass" };
 export type AlertPrefs = Record<string, boolean>;
-const DEFAULT_PREFS: AlertPrefs = { below: true, due: true, big: true, paid: true, weekly: true, locks: true, sms: true, email: false };
+const DEFAULT_PREFS: AlertPrefs = { due: true, late: true, paid: true, weekly: true, locks: true, sms: true, email: false };
 const PREFS_KEY = "the-number:alerts";
 const KEY = "the-number:account";
 
@@ -36,7 +35,6 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("home");
   const [why, setWhy] = useState<Why | null>(null);
   const [toast, setToast] = useState<Alert | null>(null);
-  const [events, setEvents] = useState<LogLine[]>([]);
   const [prefs, setPrefs] = useState<AlertPrefs>(DEFAULT_PREFS);
   useEffect(() => { try { const v = localStorage.getItem(PREFS_KEY); if (v) setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(v) }); } catch { /* fine */ } }, []);
   const setPref = (k: string, v: boolean) => setPrefs((p) => { const n = { ...p, [k]: v }; try { localStorage.setItem(PREFS_KEY, JSON.stringify(n)); } catch { /* fine */ } return n; });
@@ -44,10 +42,25 @@ export default function App() {
   const [busy, setBusy] = useState<string>("");
 
   useEffect(() => { setAccount(loadAccount()); }, []);
+  // Back from QuickBooks: pull the Profit & Loss and open the dashboard.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("qbo");
+    if (!q) return;
+    window.history.replaceState(null, "", "/");
+    if (q !== "connected") { setError("QuickBooks wasn't connected. Try again."); setStage("connect"); return; }
+    setStage("connect"); setBusy("qbo");
+    fetch("/api/qbo/data").then(async (r) => {
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error);
+      const last = (j.txns as Txn[]).reduce((m, t) => (t.date > m ? t.date : m), `${TAX_YEAR}-01-01`);
+      setProfile({ ...DEMO_PROFILE, ownerName: "You", businessName: "Your business", age: 0, parentRule: undefined, balances: [], bills: [], asOf: new Date().toISOString().slice(0, 10) > last ? new Date().toISOString().slice(0, 10) : last });
+      setTxns(j.txns); enter("QuickBooks (sandbox company), Profit & Loss");
+    }).catch((e) => setError((e as Error).message)).finally(() => setBusy(""));
+  }, []);
   useEffect(() => { window.scrollTo(0, 0); }, [stage, tab]);
   const result = useMemo(() => (txns ? computeNumber(txns, profile) : null), [txns, profile]);
 
-  function enter(note: string) { setSource(note); setTab("home"); setEvents([]); setStage("app"); }
+  function enter(note: string) { setSource(note); setTab("home"); setStage("app"); }
 
   async function loadSampleBank() {
     setBusy("bank"); setError("");
@@ -141,7 +154,7 @@ export default function App() {
       </header>
 
       <main className="relative z-10 mx-auto max-w-6xl space-y-4">
-        {tab === "home" && <Home r={result} profile={profile} openLine={openLine} setWhy={setWhy} txns={txns} events={events} />}
+        {tab === "home" && <Home r={result} openLine={openLine} setWhy={setWhy} />}
         {tab === "alerts" && <Alerts r={result} go={setTab} prefs={prefs} setPref={setPref} />}
         {tab === "money" && <Money r={result} txns={txns} setKind={setKind} profile={profile} />}
         {tab === "learn" && <Learn r={result} />}
@@ -189,322 +202,102 @@ function useCountUp(target: number) {
   return v;
 }
 
-function status(r: NumberResult) {
-  if (r.safeToSpendCents < 0) return { key: "red", title: "Hold off on spending", sub: `Add ${formatUSD(-r.safeToSpendCents)} and you're fully covered.`, color: "var(--red)" };
-  if (r.safeToSpendCents < r.theNumberCents * 0.25) return { key: "amber", title: "Getting close", sub: `Only ${formatUSD(r.safeToSpendCents)} is safe to spend right now.`, color: "var(--amber)" };
-  return { key: "green", title: "You're good", sub: `${formatUSD(r.safeToSpendCents)} is yours to spend or reinvest.`, color: "var(--green)" };
-}
-
-function jars(r: NumberResult) {
-  const bal = Math.max(0, r.balanceCents);
-  const irsNeed = r.owedSoFarCents, bizNeed = r.cushionCents + r.billsCents;
-  const irsHave = Math.min(bal, irsNeed);
-  const bizHave = Math.min(bal - irsHave, bizNeed);
-  const yours = Math.max(0, bal - irsHave - bizHave);
-  return { irsNeed, irsHave, bizNeed, bizHave, yours };
-}
-
 function Label({ children, icon: I }: { children: React.ReactNode; icon?: typeof Eye }) {
   return <div className="muted flex items-center gap-2 text-xs font-medium uppercase tracking-[0.12em]">{I && <I size={14} />}{children}</div>;
 }
 
-/* ---------- weekly series (balance reconstructed backward from today's real balance) ---------- */
+/* ---------- Home: one number, two boxes ---------- */
 
-function weekly(txns: Txn[], r: NumberResult, weeks = 16) {
-  const end = dayNum(r.asOf);
-  const pts: { label: string; balance: number; inflow: number }[] = [];
-  for (let w = weeks - 1; w >= 0; w--) {
-    const wEnd = end - w * 7, wStart = wEnd - 6;
-    const after = txns.filter((t) => dayNum(t.date) > wEnd).reduce((s, t) => s + t.amountCents, 0);
-    const inflow = txns.filter((t) => { const d = dayNum(t.date); return d >= wStart && d <= wEnd && (t.kind === "business_income" || (t.kind === "review" && t.amountCents > 0)); }).reduce((s, t) => s + t.amountCents, 0);
-    const d = new Date(wEnd * 86_400_000);
-    pts.push({ label: `${d.getUTCMonth() + 1}/${d.getUTCDate()}`, balance: r.balanceCents - after, inflow });
-  }
-  return pts;
-}
-
-/* ---------- Home (bento) ---------- */
-
-function Home({ r, profile, openLine, setWhy, txns, events }: { r: NumberResult; profile: Profile; openLine: (l: Line) => void; setWhy: (w: Why) => void; txns: Txn[]; events: LogLine[] }) {
-  const s = status(r);
-  const shown = useCountUp(r.theNumberCents);
-  const series = useMemo(() => weekly(txns, r), [txns, r]);
-  const j = jars(r);
+function Home({ r, openLine, setWhy }: { r: NumberResult; openLine: (l: Line) => void; setWhy: (w: Why) => void }) {
+  const shown = useCountUp(r.owedSoFarCents);
   const fmtDate = (iso: string, year = false) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", ...(year ? { year: "numeric" } : {}) });
-  const pastDue = r.quarters.filter((q) => (q.status === "missed" || q.status === "locked") && q.remainingCents > 0);
-  const pastDueTotal = pastDue.reduce((t, q) => t + q.remainingCents, 0);
-  const anyLate = pastDue.some((q) => q.status === "missed");
+  const days = (iso: string) => Math.round(dayNum(iso) - dayNum(r.asOf));
   const live = r.quarters.find((q) => q.status === "building");
-  const free = Math.max(0, r.safeToSpendCents);
-  // Box 1: what you owe on money already in your bank. Fixed. Box 2: only new money you tell us about.
   const owedRows = r.quarters.filter((q) => (q.status === "missed" || q.status === "locked" || q.status === "building") && q.remainingCents > 0);
-  const owedTotal = owedRows.reduce((t, q) => t + q.remainingCents, 0);
-  const nextDue = live?.due ?? r.next.due;
+  const payBy = live?.due ?? r.next.due;
+  const anyLate = owedRows.some((q) => q.status === "missed");
+  const per100 = federalEstimate(r.netProfitCents + 10_000).totalTaxCents - r.fed.totalTaxCents;
+  const taxLines = r.lines.filter((l) => l.key === "se" || l.key === "income" || l.key === "paid");
+
+  // Box 2: only what you type. Nothing else on the page moves.
   const [extras, setExtras] = useState<(Entry & { id: string })[]>([]);
-  const newIn = extras.filter((e) => e.kind === "business_income").reduce((t, e) => t + e.amountCents, 0);
-  const newCost = extras.filter((e) => e.kind === "business_expense").reduce((t, e) => t + e.amountCents, 0);
-  const newPersonal = extras.filter((e) => e.kind === "personal").reduce((t, e) => t + e.amountCents, 0);
-  const newTax = Math.max(0, federalEstimate(r.netProfitCents + newIn - newCost).totalTaxCents - r.fed.totalTaxCents);
+  const sum = (k: Entry["kind"], list = extras) => list.filter((e) => e.kind === k).reduce((t, e) => t + e.amountCents, 0);
+  const taxOn = (list: typeof extras) => Math.max(0, federalEstimate(r.netProfitCents + sum("business_income", list) - sum("business_expense", list)).totalTaxCents - r.fed.totalTaxCents);
+  const newTax = taxOn(extras);
   const newTaxShown = useCountUp(newTax);
   const [entry, setEntry] = useState("");
   const [entryMsg, setEntryMsg] = useState<{ ok: boolean; msg: string } | null>(null);
-  const submitEntry = (ev: React.FormEvent) => {
+  const submit = (ev: React.FormEvent) => {
     ev.preventDefault();
     const e = parseEntry(entry);
     if ("error" in e) return setEntryMsg({ ok: false, msg: e.error });
     const next = [...extras, { ...e, id: `x-${Date.now()}` }];
-    const nIn = next.filter((x) => x.kind === "business_income").reduce((t, x) => t + x.amountCents, 0);
-    const nCost = next.filter((x) => x.kind === "business_expense").reduce((t, x) => t + x.amountCents, 0);
-    const delta = Math.max(0, federalEstimate(r.netProfitCents + nIn - nCost).totalTaxCents - r.fed.totalTaxCents) - newTax;
+    const delta = taxOn(next) - newTax;
     const label = e.kind === "business_income" ? "business income" : e.kind === "business_expense" ? "business cost" : "personal";
     setExtras(next); setEntry("");
-    setEntryMsg({ ok: true, msg: `${e.direction === "in" ? "+" : "−"}${formatUSD(e.amountCents)} ${e.description} (${label}). ${delta > 0 ? `Set aside ${formatUSD(delta)} more.` : delta < 0 ? `You owe ${formatUSD(-delta)} less.` : "No tax change, it's personal money."}` });
+    setEntryMsg({ ok: true, msg: `${e.direction === "in" ? "+" : "−"}${formatUSD(e.amountCents)} ${e.description} (${label}): ${delta > 0 ? `you owe ${formatUSD(delta)} more.` : delta < 0 ? `you owe ${formatUSD(-delta)} less.` : "no change, personal money isn't taxed."}` });
   };
-  const steps: [string, number, string][] = [
-    ["You have", r.balanceCents, "In all your accounts right now"],
-    ["Already spoken for", r.theNumberCents, "Your Number. Tap a line below to see why"],
-    ["Free to spend", free, free > 0 ? "Yours to spend or reinvest" : `Add ${formatUSD(-r.safeToSpendCents)} and you're fully covered`],
-  ];
-  const ringRows: [string, number, number, string, string][] = [
-    ["Taxes", j.irsHave, j.irsNeed, "var(--ring-1)", `This is money the IRS will ask for: ${formatUSD(r.fed.se.totalCents)} self-employment tax + ${formatUSD(r.fed.incomeTaxCents)} income tax${r.taxPaidCents ? `, minus ${formatUSD(r.taxPaidCents)} you already paid` : ""}. Your money covers this first.`],
-    ["Business costs + bills", j.bizHave, j.bizNeed, "var(--ring-2)", `One month of business costs (${formatUSD(r.cushionCents)}) plus bills due soon (${formatUSD(r.billsCents)}). This keeps a slow month or a broken pump from sinking you.`],
-    ["Free to spend", j.yours, 0, "var(--ring-3)", `Whatever is left after taxes and business costs are covered. ${j.yours === 0 ? "Right now that's $0." : `Right now you can spend or reinvest ${formatUSD(j.yours)}.`}`],
-  ];
-  const year: [string, number, string][] = [
-    ["Money in · 2026", r.incomeCents, `${txns.filter((t) => t.kind === "business_income").length} customer payments`],
-    ["Business costs", r.expensesCents, "fuel, supplies, gear, insurance"],
-    ["Profit", r.netProfitCents, "money in minus costs"],
-    ["Tax on that profit", r.fed.totalTaxCents, r.fed.incomeTaxCents === 0 ? "all of it self-employment tax" : "income + self-employment"],
-  ];
+
   return (
     <>
-      {/* 1. The answer, in one card */}
-      <section className="card hero-glow overflow-hidden p-6 sm:p-8">
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr] lg:items-center">
-          <div>
-            <div className="flex items-center gap-2 text-sm text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />Your Number · updates every time money moves</div>
-            <div className="font-display num mt-3 text-[clamp(3.75rem,10vw,6.5rem)] font-semibold leading-none tracking-tight">{formatUSD(shown)}</div>
-            <p className="mt-4 max-w-md text-lg leading-snug text-zinc-300">Always keep at least this much. It's already spoken for by taxes, business costs and bills coming up.</p>
-            <div className="mt-5 inline-flex items-center gap-3 rounded-2xl border border-zinc-800 bg-black/40 px-4 py-3">
-              <span className="dot" style={{ background: s.color }} />
-              <div><div className="font-semibold">{s.title}</div><div className="muted text-sm">{s.sub}</div></div>
-            </div>
-          </div>
-          <ol className="space-y-2">
-            {steps.map(([l, v, sub], i) => (
-              <li key={l} className={`flex items-center justify-between gap-4 rounded-2xl border px-5 py-4 ${i === 2 ? "border-white/40 bg-white/[0.06]" : "border-zinc-800 bg-black/30"}`}>
-                <div className="min-w-0"><div className="text-sm font-medium">{i === 1 ? "− " : i === 2 ? "= " : ""}{l}</div><div className="muted text-xs">{sub}</div></div>
-                <div className="font-display num shrink-0 text-2xl font-semibold sm:text-3xl">{formatUSD(v)}</div>
-              </li>
-            ))}
-          </ol>
-        </div>
+      {/* The one number */}
+      <section className="card hero-glow overflow-hidden px-6 py-10 text-center sm:py-14">
+        <div className="flex items-center justify-center gap-2 text-sm text-zinc-400"><span className="dot" style={{ background: anyLate ? "var(--red)" : "var(--green)" }} />You owe the IRS</div>
+        <div className="font-display num mt-3 text-[clamp(4rem,13vw,8rem)] font-semibold leading-none tracking-tight">{formatUSD(shown)}</div>
+        <p className="mx-auto mt-4 max-w-md text-zinc-400">Federal tax on your {TAX_YEAR} business profit as a sole proprietor, minus anything you've already paid.</p>
+        <button className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-300 underline-offset-4 hover:text-white hover:underline" onClick={() => setWhy({ title: `Why ${formatUSD(r.owedSoFarCents)}?`, body: taxLines.map((l) => `${l.label}: ${formatUSD(l.amountCents)}. ${l.why}`).join("\n\n") })}>Why this much? <Info size={14} /></button>
       </section>
 
-      {/* 2. What you owe: fixed vs. live */}
+      {/* Two boxes */}
       <section className="grid gap-4 md:grid-cols-2">
         <div className="card flex flex-col p-6">
-          <div className="flex items-center justify-between gap-2"><Label icon={Lock}>1 · Due {fmtDate(nextDue)} · locked in</Label><span className="text-xs text-zinc-500">fixed</span></div>
-          <div className="font-display num mt-4 text-5xl font-semibold">{formatUSD(owedTotal)}</div>
-          <div className="mt-1 text-sm text-zinc-400">Pay by <b className="text-white">{fmtDate(nextDue, true)}</b> · {Math.round(dayNum(nextDue) - dayNum(r.asOf))} days</div>
-          <p className="muted mt-2 text-sm">Tax on money already in your bank. That money's earned, so this won't change.</p>
-          <ul className="mt-3 divide-y text-sm">
-            {owedRows.map((q) => (
-              <li key={q.quarter} className="flex items-center justify-between gap-3 py-2.5">
-                <span><span className="font-medium">{q.status === "building" ? `${q.covers.split(" – ")[0]} – today` : q.covers}</span><span className="muted block text-xs">{q.status === "missed" ? `was due ${fmtDate(q.due)}` : `due ${fmtDate(q.due)}`}</span></span>
-                <span className="flex items-center gap-2"><span className="num font-semibold">{formatUSD(q.remainingCents)}</span>{q.status === "missed" && <span className="flex items-center gap-1 rounded-full border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300"><span className="dot !h-1.5 !w-1.5" style={{ background: "var(--red)" }} />late</span>}</span>
-              </li>
-            ))}
-          </ul>
-          <a href="https://www.irs.gov/payments" target="_blank" rel="noreferrer" className="btn btn-primary w-full" style={{ marginTop: "auto" }}>Pay at irs.gov <ArrowUpRight size={15} /></a>
-        </div>
-
-        <div className="card hero-glow flex flex-col p-6">
-          <div className="flex items-center justify-between gap-2"><Label icon={CalendarClock}>2 · New since today · building</Label><span className="flex items-center gap-1.5 text-xs text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />live</span></div>
-          <div className="mt-4 flex items-baseline gap-2"><span className="font-display num text-4xl font-semibold">{formatUSD(newTaxShown)}</span><span className="muted text-sm">set aside</span></div>
-          <div className="mt-1 text-sm text-zinc-400">Next due <b className="text-white">{fmtDate(nextDue, true)}</b> · {Math.round(dayNum(nextDue) - dayNum(r.asOf))} days from now</div>
-          <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
-            {([["Earned", newIn], ["Business costs", newCost], ["Personal", newPersonal]] as [string, number][]).map(([l, v]) => (
-              <div key={l} className="rounded-xl border border-zinc-800 bg-black/30 px-2 py-2"><dt className="muted text-[11px]">{l}</dt><dd className="num mt-0.5 text-sm font-semibold">{formatUSD(v)}</dd></div>
-            ))}
-          </dl>
-          {extras.length > 0 && (
-            <ul className="mt-3 max-h-28 space-y-1 overflow-y-auto text-xs">
-              {[...extras].reverse().map((x) => (
-                <li key={x.id} className="flex items-center justify-between gap-2 text-zinc-400">
-                  <span className="truncate">{x.direction === "in" ? "+" : "−"}{formatUSD(x.amountCents)} · {x.description}</span>
-                  <button className="shrink-0 text-zinc-600 hover:text-white" aria-label={`Remove ${x.description}`} onClick={() => { setExtras((e) => e.filter((y) => y.id !== x.id)); setEntryMsg(null); }}><X size={13} /></button>
+          <div className="flex items-center justify-between gap-2"><Label icon={Lock}>1 · Pay by {fmtDate(payBy)}</Label><span className="rounded-full border border-zinc-700 px-2.5 py-0.5 text-[11px] text-zinc-300">fixed</span></div>
+          <div className="font-display num mt-4 text-5xl font-semibold">{formatUSD(r.owedSoFarCents)}</div>
+          <div className="mt-1 text-sm text-zinc-400">Due <b className="text-white">{fmtDate(payBy, true)}</b> · {days(payBy)} days from now</div>
+          <p className="muted mt-2 text-sm">Tax on money you've already earned. It won't change.</p>
+          {owedRows.length > 1 && (
+            <ul className="mt-3 divide-y text-sm">
+              {owedRows.map((q) => (
+                <li key={q.quarter} className="flex items-center justify-between gap-3 py-2">
+                  <span className="text-zinc-300">{q.status === "building" ? `${q.covers.split(" – ")[0]} – today` : q.covers}</span>
+                  <span className="flex items-center gap-2"><span className="num font-medium">{formatUSD(q.remainingCents)}</span>{q.status === "missed" && <span className="flex items-center gap-1 rounded-full border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300"><span className="dot !h-1.5 !w-1.5" style={{ background: "var(--red)" }} />late</span>}</span>
                 </li>
               ))}
             </ul>
           )}
-          <form onSubmit={submitEntry} className="mt-auto pt-5">
+          {anyLate && <p className="muted mt-3 text-xs">Late parts add a small IRS penalty until they're paid. Paying sooner keeps it small.</p>}
+          <a href="https://www.irs.gov/payments" target="_blank" rel="noreferrer" className="btn btn-primary w-full" style={{ marginTop: "auto" }}>Pay at irs.gov <ArrowUpRight size={15} /></a>
+        </div>
+
+        <div className="card hero-glow flex flex-col p-6">
+          <div className="flex items-center justify-between gap-2"><Label icon={CalendarClock}>2 · New money · adds up live</Label><span className="flex items-center gap-1.5 text-xs text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />live</span></div>
+          <div className="mt-4 font-display num text-4xl font-semibold">{formatUSD(newTaxShown)}</div>
+          <div className="mt-1 text-sm text-zinc-400">More you'll owe, due <b className="text-white">{fmtDate(payBy, true)}</b>{live && <> · counts until {fmtDate(live.end)}</>}</div>
+          <p className="muted mt-2 text-sm">Rule of thumb right now: about <b className="text-white">{formatUSD(per100)} of every $100</b> you earn goes to taxes.</p>
+          {extras.length > 0 && (
+            <ul className="mt-3 max-h-32 space-y-1.5 overflow-y-auto text-sm">
+              {[...extras].reverse().map((x) => (
+                <li key={x.id} className="flex items-center justify-between gap-2">
+                  <span className="truncate text-zinc-300">{x.direction === "in" ? "+" : "−"}{formatUSD(x.amountCents)} · {x.description} <span className="muted text-xs">({x.kind === "business_income" ? "income" : x.kind === "business_expense" ? "business cost" : "personal"})</span></span>
+                  <button className="shrink-0 text-zinc-600 hover:text-white" aria-label={`Remove ${x.description}`} onClick={() => { setExtras((e) => e.filter((y) => y.id !== x.id)); setEntryMsg(null); }}><X size={14} /></button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <form onSubmit={submit} className="mt-auto pt-5">
             <label htmlFor="entry" className="text-sm font-medium">Made or spent money? Type it.</label>
             <div className="mt-2 flex gap-2">
               <input id="entry" className="input !rounded-full !py-2.5" value={entry} onChange={(ev) => { setEntry(ev.target.value); setEntryMsg(null); }} placeholder="earned $350 on a house wash" autoComplete="off" />
               <button className="btn btn-primary shrink-0 !px-4" aria-label="Add"><ArrowRight size={16} /></button>
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {["earned $350 on a house wash", "spent $180 on sneakers", "$45 gas for the truck"].map((x) => <button type="button" key={x} onClick={() => { setEntry(x); setEntryMsg(null); }} className="rounded-full border border-zinc-800 px-2.5 py-1 text-[11px] text-zinc-400 hover:border-zinc-600 hover:text-white">{x}</button>)}
+              {["earned $350 on a house wash", "$45 gas for the truck", "spent $180 on sneakers"].map((x) => <button type="button" key={x} onClick={() => { setEntry(x); setEntryMsg(null); }} className="rounded-full border border-zinc-800 px-2.5 py-1 text-[11px] text-zinc-400 hover:border-zinc-600 hover:text-white">{x}</button>)}
             </div>
             {entryMsg && <p role="status" className={`mt-2 text-sm ${entryMsg.ok ? "text-white" : "text-zinc-400"}`}>{entryMsg.msg}</p>}
           </form>
         </div>
       </section>
-
-      {/* 3. The year in four numbers */}
-      <section className="card grid grid-cols-2 gap-px overflow-hidden !bg-white/[0.06] p-0 lg:grid-cols-4" aria-label="2026 so far">
-        {year.map(([l, v, sub]) => (
-          <div key={l} className="tile p-5 sm:p-6">
-            <div className="muted text-xs font-medium uppercase tracking-[0.12em]">{l}</div>
-            <div className="font-display num mt-2 text-[clamp(1.8rem,4vw,2.7rem)] font-semibold leading-none">{formatUSD(v)}</div>
-            <div className="muted mt-2 text-xs">{sub}</div>
-          </div>
-        ))}
-      </section>
-
-      {/* 4. How we got it + try it */}
-      <section className="grid gap-4 lg:grid-cols-3">
-        <div className="card p-6 lg:col-span-2">
-          <div className="flex items-baseline justify-between gap-3"><h2 className="font-display text-xl font-semibold">How we got {formatUSD(r.theNumberCents)}</h2><span className="muted text-xs">tap any line</span></div>
-          <ul className="mt-3 divide-y">
-            {r.lines.map((l) => (
-              <li key={l.key}><button className="flex w-full items-center justify-between gap-3 py-3 text-left" onClick={() => openLine(l)}><span className="flex items-center gap-2 text-zinc-300">{l.label}<Info size={13} className="text-zinc-600" /></span><span className="num font-semibold">{formatUSD(l.amountCents)}</span></button></li>
-            ))}
-            <li className="flex items-center justify-between pt-3 font-semibold"><span>Your Number</span><span className="num text-lg">{formatUSD(r.theNumberCents)}</span></li>
-          </ul>
-        </div>
-        <div className="space-y-4">
-          {profile.parentRule && (
-            <button onClick={() => setWhy({ title: "Myth: “under the limit means you owe nothing”", body: `Being under the ${formatUSD(TAX_2026.standardDeductionCents)} standard deduction means $0 federal income tax, and that part is true here. But self-employment tax is separate. It's Social Security + Medicare for people who work for themselves, and it starts once you net $400, at any age. On ${formatUSD(r.netProfitCents)} of profit that's ${formatUSD(r.fed.se.totalCents)}. Most young owners (and their parents) don't know this until the bill shows up.` })}
-              className="card card-hover flex w-full flex-col items-start p-6 text-left">
-              <Label icon={AlertTriangle}>Myth buster</Label>
-              <div className="font-display mt-3 text-xl font-semibold leading-snug"><span className="text-zinc-500 line-through">{profile.parentRule.label}</span></div>
-              <p className="mt-2 text-sm text-zinc-400">Income tax: {formatUSD(r.fed.incomeTaxCents)}. Self-employment tax: <b className="text-white">{formatUSD(r.fed.se.totalCents)}</b>.</p>
-              <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium">See why <ArrowUpRight size={14} /></span>
-            </button>
-          )}
-          <div className="card p-6">
-          <Label>Where your {formatUSD(r.balanceCents)} goes first</Label>
-          <div className="mt-4 flex justify-center"><Rings j={j} /></div>
-          <ul className="mt-4 space-y-1 text-sm">
-            {ringRows.map(([l, have, need, c, w]) => (
-              <li key={l}>
-                <button className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1.5 text-left hover:bg-white/5" onClick={() => setWhy({ title: l, body: w })}>
-                  <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />{l}</span>
-                  <span className="num"><b>{formatUSD(have)}</b>{need > 0 && <span className="muted"> of {formatUSD(need)}</span>}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        </div>
-      </section>
-
-      {/* 5. Details */}
-      <section className="grid gap-4 lg:grid-cols-3">
-        <div className="card p-6 lg:col-span-2"><BalanceChart data={series} number={r.theNumberCents} /></div>
-        <WeekBars data={series.slice(-12)} />
-      </section>
-      <ActivityLog txns={txns} events={events} />
     </>
-  );
-}
-
-function BalanceChart({ data, number }: { data: { label: string; balance: number }[]; number: number }) {
-  const W = 640, H = 170, P = 6;
-  const vals = data.map((d) => d.balance);
-  const max = Math.max(number, ...vals) * 1.1, min = Math.min(0, ...vals);
-  const x = (i: number) => P + (i / (data.length - 1)) * (W - P * 2);
-  const y = (v: number) => H - P - ((v - min) / (max - min || 1)) * (H - P * 2);
-  const line = data.map((d, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(d.balance).toFixed(1)}`).join(" ");
-  const area = `${line} L${x(data.length - 1)},${H} L${x(0)},${H} Z`;
-  const last = data[data.length - 1];
-  return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500"><span className="font-display text-lg font-semibold text-white">Your money vs. your Number · 16 weeks</span><span className="flex items-center gap-3"><span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-white" />Balance</span><span className="flex items-center gap-1.5"><span className="w-4 border-t border-dashed border-zinc-400" />Your Number</span></span></div>
-      <svg viewBox={`0 0 ${W} ${H + 18}`} className="w-full" role="img" aria-label={`Balance over the last 16 weeks, now ${formatUSD(last.balance)}, against a Number of ${formatUSD(number)}`}>
-        <defs><linearGradient id="bal" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".22" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></linearGradient></defs>
-        <path d={area} fill="url(#bal)" />
-        <line x1={P} x2={W - P} y1={y(number)} y2={y(number)} stroke="#a1a1aa" strokeDasharray="5 5" strokeWidth="1.2" />
-        <path d={line} fill="none" stroke="#fff" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
-        <circle cx={x(data.length - 1)} cy={y(last.balance)} r="4.5" fill="#fff" />
-        <circle cx={x(data.length - 1)} cy={y(last.balance)} r="10" fill="#fff" opacity=".15" className="live-dot" />
-        {data.map((d, i) => i % 3 === 0 || i === data.length - 1 ? <text key={i} x={x(i)} y={H + 15} fontSize="11" textAnchor={i === 0 ? "start" : i === data.length - 1 ? "end" : "middle"} fill="#6b6b70">{i === data.length - 1 ? "now" : d.label}</text> : null)}
-      </svg>
-    </div>
-  );
-}
-
-function Rings({ j }: { j: ReturnType<typeof jars> }) {
-  const rings = [
-    { r: 78, pct: j.irsNeed ? j.irsHave / j.irsNeed : 1, c: "var(--ring-1)" },
-    { r: 60, pct: j.bizNeed ? j.bizHave / j.bizNeed : 1, c: "var(--ring-2)" },
-    { r: 42, pct: j.yours > 0 ? 1 : 0, c: "var(--ring-3)" },
-  ];
-  const irsPct = Math.round(rings[0].pct * 100);
-  return (
-    <svg viewBox="0 0 180 180" className="h-48 w-48" role="img" aria-label={`Taxes ${irsPct}% covered`}>
-      {rings.map((g) => {
-        const C = 2 * Math.PI * g.r;
-        return (
-          <g key={g.r} transform="rotate(-90 90 90)">
-            <circle cx="90" cy="90" r={g.r} fill="none" stroke="rgba(255,255,255,.07)" strokeWidth="12" />
-            {g.pct > 0 && <circle cx="90" cy="90" r={g.r} fill="none" stroke={g.c} strokeWidth="12" strokeLinecap="round" strokeDasharray={`${C * Math.min(1, g.pct)} ${C}`} style={{ transition: "stroke-dasharray .8s ease" }} />}
-          </g>
-        );
-      })}
-      <text x="90" y="88" textAnchor="middle" fontSize="26" fontWeight="600" fill="#fff" fontFamily="Geist, sans-serif">{irsPct}%</text>
-      <text x="90" y="106" textAnchor="middle" fontSize="10" fill="#8b8b91" fontFamily="Geist, sans-serif">taxes covered</text>
-    </svg>
-  );
-}
-
-function ActivityLog({ txns, events }: { txns: Txn[]; events: LogLine[] }) {
-  const kindWord: Record<Txn["kind"], string> = { business_income: "business income", business_expense: "business cost", personal: "personal", transfer: "moved between accounts", tax_payment: "irs", review: "needs your answer" };
-  const recent: LogLine[] = [...txns].filter((t) => !t.id.startsWith("sim-")).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 7).map((t) => ({
-    id: t.id, time: t.date.slice(5).replace("-", "/"), tone: t.kind === "review" ? "warn" : t.amountCents > 0 ? "in" : "out",
-    text: `${t.amountCents > 0 ? "got" : "paid"} ${formatUSD(Math.abs(t.amountCents), { cents: true })} · ${t.source.toLowerCase()} · ${(t.description || "no note").toLowerCase().slice(0, 24)} → ${kindWord[t.kind]}`,
-  }));
-  const lines = [...events, ...recent].slice(0, 8);
-  return (
-    <div className="card overflow-hidden p-0">
-      <div className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: "var(--line)" }}>
-        <span className="flex items-center gap-2 font-mono text-xs text-zinc-400"><Terminal size={14} />activity.log</span>
-        <span className="flex gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-zinc-700" /><span className="h-2.5 w-2.5 rounded-full bg-zinc-700" /><span className="h-2.5 w-2.5 rounded-full bg-zinc-700" /></span>
-      </div>
-      <ol className="space-y-2 p-5 font-mono text-[12px] leading-relaxed">
-        <li className="text-zinc-500">$ the-number watch --accounts all</li>
-        {lines.map((l) => (
-          <li key={l.id} className={`flex gap-3 ${l.tone === "in" ? "text-white" : l.tone === "warn" ? "text-zinc-200" : "text-zinc-400"}`}>
-            <span className="shrink-0 text-zinc-600">{l.time}</span>
-            <span className="min-w-0 break-words">{l.tone === "warn" && <span className="dot mr-1.5 !h-1.5 !w-1.5 align-middle" style={{ background: "var(--amber)" }} />}{l.text}</span>
-          </li>
-        ))}
-        <li className="text-zinc-500">$ <span className="live-dot inline-block h-3 w-1.5 translate-y-0.5 bg-white" /></li>
-      </ol>
-    </div>
-  );
-}
-
-function WeekBars({ data }: { data: { label: string; inflow: number }[] }) {
-  const max = Math.max(1, ...data.map((d) => d.inflow));
-  const now = data[data.length - 1];
-  const total = data.reduce((s, d) => s + d.inflow, 0);
-  return (
-    <div className="card flex flex-col p-6">
-      <Label icon={BookOpen}>Money in · per week</Label>
-      <div className="mt-4 flex items-baseline gap-2"><span className="font-display num text-5xl font-semibold">{formatUSD(total)}</span><span className="muted text-sm">12 weeks</span></div>
-      <div className="muted mt-1 text-sm">{formatUSD(now.inflow)} this week · best week {formatUSD(Math.max(...data.map((d) => d.inflow)))}</div>
-      <div className="mt-auto flex h-32 items-end gap-1.5 pt-6" role="img" aria-label="Money in per week, last 12 weeks">
-        {data.map((d, i) => (
-          <div key={i} className="group relative flex h-full flex-1 items-end">
-            <div className={`w-full rounded-md transition-all ${i === data.length - 1 ? "bg-white" : "bg-white/20 group-hover:bg-white/40"}`} style={{ height: `${Math.max(3, (d.inflow / max) * 100)}%` }} title={`Week of ${d.label}: ${formatUSD(d.inflow)}`} />
-          </div>
-        ))}
-      </div>
-      <div className="mt-2 flex justify-between text-[11px] text-zinc-600"><span>{data[0].label}</span><span>now</span></div>
-    </div>
   );
 }
 
@@ -515,20 +308,20 @@ function Alerts({ r, go, prefs, setPref }: { r: NumberResult; go: (t: Tab) => vo
   const Icon = { critical: Octagon, warning: AlertTriangle, info: Bell };
   const action = (id: string): [string, Tab] | null => id === "review" ? ["Sort them now", "money"] : id === "missed" || id === "next" ? ["How estimated taxes work", "learn"] : id === "below" ? ["See my jars", "home"] : id === "rule" ? ["Why it's wrong", "learn"] : null;
   const due = new Date(r.next.due + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const per100 = federalEstimate(r.netProfitCents + 10_000).totalTaxCents - r.fed.totalTaxCents;
+  const shown = r.alerts.filter((a) => a.id !== "below");
   const tips: [string, string][] = [
-    r.safeToSpendCents < 0
-      ? ["Top up today", `Move ${formatUSD(-r.safeToSpendCents)} into your business account and you're fully covered again.`]
-      : ["You have room", `${formatUSD(r.safeToSpendCents)} is above your Number. Reinvest some of it in gear before you spend it.`],
+    ["Set aside part of every job", `Right now about ${formatUSD(per100)} of every $100 you earn goes to taxes. Moving that into savings when you get paid means the bill is never a surprise.`],
     [r.missed.length ? "Pay the IRS now, not later" : "Pay a little every month", r.missed.length ? `${r.missed.length} payment${r.missed.length > 1 ? "s" : ""} already passed. Paying ${formatUSD(r.owedSoFarCents)} at irs.gov/payments before ${due} stops the late penalty from growing.` : `Set aside ${formatUSD(r.saveThisMonthCents)} a month and the ${due} payment is already covered.`],
     ...(r.reviewCount ? [["Sort your mystery payments", `${r.reviewCount} payment${r.reviewCount > 1 ? "s" : ""} could be business or personal. Answering takes about a minute and makes your Number exact.`] as [string, string]] : []),
     ["Keep a separate business profile", "A Cash App or Venmo business profile keeps customer money apart from your own. It makes tax time a lot easier."],
+    ["Keep receipts for business costs", "Gas, supplies and gear lower your profit, so they lower what you owe. A photo of the receipt is enough."],
   ];
   const settings: [string, string, string][] = [
-    ["below", "I drop below my Number", "The moment your balance dips under what's spoken for."],
     ["due", "An IRS payment is coming up", "14 days and 3 days before each due date, with the amount."],
-    ["big", "I spend more than $100 at once", "So a big purchase never surprises you later."],
-    ["paid", "A customer pays me", "Shows how much of it goes to the IRS jar."],
-    ["weekly", "Weekly money recap", "Sundays: what you earned, spent, and should set aside."],
+    ["late", "A payment is late", "Right after a due date passes, with what to pay."],
+    ["paid", "A customer pays me", "Shows how much of it you'll owe in tax."],
+    ["weekly", "Weekly recap", "Sundays: what you earned and what you owe now."],
     ["locks", "A tax payment locks in", "When a period ends and the amount you owe is final."],
   ];
   return (
@@ -536,8 +329,8 @@ function Alerts({ r, go, prefs, setPref }: { r: NumberResult; go: (t: Tab) => vo
       <h1 className="font-display text-4xl font-semibold">Alerts</h1>
       <div className="grid gap-4 lg:grid-cols-5">
         <div className="space-y-3 lg:col-span-3">
-          <Label>Right now</Label>
-          {r.alerts.map((a) => {
+          <Label>About what you owe</Label>
+          {shown.map((a) => {
             const act = action(a.id); const I = Icon[a.level];
             return (
               <div key={a.id} className="card flex gap-4 p-5">
@@ -644,23 +437,9 @@ function Money({ r, txns, setKind, profile }: { r: NumberResult; txns: Txn[]; se
           ) : <p className="mt-3 flex items-center gap-2 text-sm"><span className="dot" style={{ background: "var(--green)" }} />All sorted. Your Number is exact.</p>}
           <p className="muted mt-4 text-xs">Payment apps expect business money on a business profile. Sorting keeps your books, and your account, legit.</p>
         </div>
-        <div className="card p-6 lg:col-span-3"><h2 className="font-display text-xl font-semibold">Money in vs. business costs</h2><p className="muted mb-4 text-sm">2026 by month.</p><BarChart data={r.monthly} /></div>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-5">
-        <div className="card p-6 lg:col-span-2">
-          <h2 className="font-display text-xl font-semibold">Where business money goes</h2>
-          <ul className="mt-4 space-y-4">
-            {r.topCategories.slice(0, 6).map((c) => (
-              <li key={c.category}>
-                <div className="flex justify-between text-sm"><span className="text-zinc-300">{c.category}</span><span className="num font-semibold">{formatUSD(c.amountCents)}</span></div>
-                <div className="mt-1.5 h-1.5 rounded-full bg-white/10"><div className="h-1.5 rounded-full bg-white" style={{ width: `${Math.round((c.amountCents / (r.topCategories[0]?.amountCents || 1)) * 100)}%` }} /></div>
-              </li>
-            ))}
-          </ul>
-        </div>
         <div className="lg:col-span-3"><Cpa r={r} txns={txns} profile={profile} /></div>
       </section>
+
 
       <section className="card p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -673,32 +452,6 @@ function Money({ r, txns, setKind, profile }: { r: NumberResult; txns: Txn[]; se
         <ul className="mt-2 divide-y">{list.slice(0, 100).map((t) => <TxnRow key={t.id} t={t} />)}</ul>
       </section>
     </>
-  );
-}
-
-function BarChart({ data }: { data: NumberResult["monthly"] }) {
-  const max = Math.max(1, ...data.map((d) => Math.max(d.incomeCents, d.expensesCents)));
-  const W = 560, H = 190, pad = 34, bw = (W - pad) / Math.max(1, data.length);
-  const names = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
-  return (
-    <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${H + 24}`} className="w-full min-w-[300px]" role="img" aria-label="Monthly income and business costs">
-        {[0.25, 0.5, 0.75, 1].map((g) => <line key={g} x1={pad} x2={W} y1={H - H * g} y2={H - H * g} stroke="rgba(255,255,255,.07)" />)}
-        <text x={0} y={12} fontSize="10" fill="#6b6b70">{formatUSD(max)}</text>
-        {data.map((d, i) => {
-          const x = pad + i * bw + bw * 0.15, w = bw * 0.33;
-          const hi = (d.incomeCents / max) * (H - 8), he = (d.expensesCents / max) * (H - 8);
-          return (
-            <g key={d.month}>
-              <rect x={x} y={H - hi} width={w} height={hi} rx="3" fill="#fff"><title>{`${d.month} money in ${formatUSD(d.incomeCents)}`}</title></rect>
-              <rect x={x + w + 2} y={H - he} width={w} height={he} rx="3" fill="#52525b"><title>{`${d.month} costs ${formatUSD(d.expensesCents)}`}</title></rect>
-              <text x={x + w} y={H + 16} fontSize="11" textAnchor="middle" fill="#6b6b70">{names[Number(d.month.slice(5)) - 1]}</text>
-            </g>
-          );
-        })}
-      </svg>
-      <div className="muted mt-1 flex gap-4 text-xs"><span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-sm bg-white" /> Money in</span><span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-sm bg-zinc-600" /> Business costs</span></div>
-    </div>
   );
 }
 
@@ -740,10 +493,12 @@ const STATS: { big: string; what: string; means: (r: NumberResult) => string; sr
 function Learn({ r }: { r: NumberResult }) {
   const months = [3, 2, 3, 4];
   const cards: [string, string, React.ReactNode][] = [
-    ["01", "What is The Number?", <>The lowest your money should ever go. It's <b>taxes you owe</b> + <b>one month of business costs</b> + <b>bills due soon</b>. Everything above it is yours.</>],
+    ["01", "What is The Number?", <>How much you owe the IRS for your business this year, after anything you've already paid. One number, always up to date.</>],
+    ["00", "Am I a sole proprietor?", <>If you run a business by yourself and never formed an LLC or corporation, yes, automatically. You and the business are the same for taxes: profit goes on <b>Schedule C</b> of your own return, and nobody takes tax out for you (<a className="underline" href={SOURCES.soleProprietor} target="_blank" rel="noreferrer">IRS</a>).</>],
     ["02", "Self-employment tax (the one nobody tells you about)", <>When you have a job, your boss pays half your Social Security and Medicare. When you work for yourself, you pay both halves: <b>15.3% on 92.35% of your profit</b>. It starts at <b>$400 of profit, at any age</b> (<a className="underline" href={SOURCES.youngEntrepreneurs} target="_blank" rel="noreferrer">IRS</a>). For you that's <b>{formatUSD(r.fed.se.totalCents)}</b>.</>],
     ["03", "Why do I owe tax if I'm under the limit?", <>The {formatUSD(TAX_2026.standardDeductionCents)} standard deduction only shields you from <i>income</i> tax. That's why your income tax is {formatUSD(r.fed.incomeTaxCents)}. It doesn't cover self-employment tax at all.</>],
     ["04", "Paying the IRS during the year", <>Nobody withholds tax from your Cash App, so the IRS expects <b>estimated payments</b> four times a year. Pay at <a className="underline" href="https://www.irs.gov/payments" target="_blank" rel="noreferrer">irs.gov/payments</a>. Paying late adds a small penalty, and paying a bit each month avoids it.</>],
+    ["06", "The 20% small-business deduction", <>Sole proprietors can knock up to 20% off their business profit for income tax (the QBI deduction). We include it, so your number isn't inflated (<a className="underline" href={SOURCES.qbi} target="_blank" rel="noreferrer">IRS</a>).</>],
     ["05", "Business vs. personal on payment apps", <>Mixing them makes your profit look bigger (more tax) or smaller (trouble later). Tag every payment, or better, use a separate business profile.</>],
   ];
   return (
@@ -807,7 +562,7 @@ function WhySheet({ title, body, txns, onClose }: Why & { onClose: () => void })
         <button className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full border border-zinc-800 text-zinc-400 hover:text-white" onClick={onClose} aria-label="Close"><X size={16} /></button>
         <Label>Why?</Label>
         <h3 className="font-display mt-2 pr-10 text-2xl font-semibold">{title}</h3>
-        <p className="mt-3 leading-relaxed text-zinc-300">{body}</p>
+        <p className="mt-3 whitespace-pre-line leading-relaxed text-zinc-300">{body}</p>
         {txns && txns.length > 0 && (<><div className="muted mt-5 text-xs font-medium uppercase tracking-wider">From these transactions (latest)</div><ul className="divide-y">{txns.map((t) => <TxnRow key={t.id} t={t} />)}</ul></>)}
         <button className="btn btn-primary mt-6 w-full" onClick={onClose}>Got it</button>
       </div>

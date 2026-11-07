@@ -34,11 +34,14 @@ describe("income tax brackets (2026 single)", () => {
 describe("federal estimate", () => {
   it("hand-checked: $30,000 profit", () => {
     const r = federalEstimate(toCents("30000"));
-    // half SE = 2,119.44 (211,943.5 rounds to 211,944); AGI = 27,880.56; taxable = 11,780.56; tax = 1,178.06
+    // half SE = 2,119.44; AGI = 27,880.56; before QBI = 11,780.56
+    // QBI = min(20% x (30,000 - 2,119.44) = 5,576.11, 20% x 11,780.56 = 2,356.11) = 2,356.11
+    // taxable = 9,424.45; tax at 10% = 942.45 (942.445 rounds half up)
     expect(r.halfSeDeductionCents).toBe(211_944);
-    expect(r.taxableIncomeCents).toBe(1_178_056);
-    expect(r.incomeTaxCents).toBe(117_806);
-    expect(r.totalTaxCents).toBe(423_887 + 117_806);
+    expect(r.qbiDeductionCents).toBe(235_611);
+    expect(r.taxableIncomeCents).toBe(942_445);
+    expect(r.incomeTaxCents).toBe(94_245);
+    expect(r.totalTaxCents).toBe(423_887 + 94_245);
   });
   it("no income tax when profit is under the standard deduction", () => {
     expect(federalEstimate(toCents("10000")).incomeTaxCents).toBe(0);

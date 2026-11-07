@@ -42,10 +42,10 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
       </header>
 
       <main className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-4 pb-[34vh] pt-[7vh] text-center">
-        <span className="chip rise mb-6 uppercase tracking-[0.14em] text-zinc-300">For young business owners</span>
-        <h1 className="headline font-display rise text-[clamp(2.4rem,6vw,4.5rem)] font-semibold leading-[1]" style={{ textWrap: "balance" as never }}>Know your Number.</h1>
+        <span className="chip rise mb-6 uppercase tracking-[0.14em] text-zinc-300">For first-time business owners</span>
+        <h1 className="headline font-display rise text-[clamp(2.4rem,6vw,4.5rem)] font-semibold leading-[1]" style={{ textWrap: "balance" as never }}>Know what you owe.</h1>
         <p className="rise mt-5 max-w-2xl text-[clamp(1.2rem,2.4vw,1.6rem)] font-medium leading-snug text-white" style={{ textWrap: "balance" as never }}>
-          The Number connects to your bank, works out what you owe the IRS, and tells you the one number your money should never drop below.
+          Started a business? You're a sole proprietor, and nobody takes taxes out for you. The Number connects to your bank or QuickBooks and shows exactly what you owe the IRS, and when.
         </p>
         <div className="rise mt-9 w-full max-w-2xl rounded-[28px] border border-white/15 bg-white/[0.04] px-6 py-6 backdrop-blur sm:px-8">
           <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-6 sm:text-left">
@@ -59,6 +59,7 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
         </div>
         <div className="rise mt-9 flex flex-col items-center gap-4">
           <button className="btn btn-primary min-w-[220px] !rounded-xl !py-3.5 text-base" onClick={onStart}>Get Started <ArrowRight size={16} /></button>
+          <span className="text-xs text-zinc-500">Connects with your bank through Plaid, and with QuickBooks</span>
           <button className="text-sm text-zinc-400 underline-offset-4 hover:text-white hover:underline" onClick={onDemo} disabled={busy}>{busy ? "Loading a live example…" : "or see a live example first"}</button>
         </div>
       </main>
@@ -160,7 +161,7 @@ export function SignUp({ onDone, onBack }: { onDone: (a: Account) => void; onBac
 
 /* ---------------- Pricing (no subscriptions) ---------------- */
 
-const FEATURES = ["Your Number, updated every time money moves", "Every account: bank, Cash App, Venmo", "Text alerts before you dip below your Number", "IRS due-date reminders, planned monthly", "Business-or-personal sorting", "Parent view", "CPA-ready export at tax time"];
+const FEATURES = ["What you owe the IRS, always up to date", "Connect your bank (Plaid) or QuickBooks", "Type in cash jobs and see your tax update", "Due-date and late-payment alerts", "Business-or-personal sorting", "Built for sole proprietors (Schedule C)", "CPA-ready export at tax time"];
 const PLANS = [
   { id: "trial", name: "Free trial", blurb: "Try everything for 30 days.", price: "$0", unit: "30 days · no card needed", cta: "Start free trial", note: "Ends on its own. We never charge you automatically." },
   { id: "season", name: "Season Pass", blurb: "One payment covers the whole tax year.", price: "$120", unit: "one-time · per tax year", popular: true, cta: "Start now", note: "No auto-renew. If it doesn't save you more than it costs, next season is on us." },
@@ -197,6 +198,31 @@ export function Pricing({ onPick, onBack }: { name?: string; onPick: (plan: stri
   );
 }
 
+function QuickBooksButton() {
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function go() {
+    setBusy(true); setMsg("");
+    try {
+      const r = await fetch("/api/qbo/connect", { redirect: "manual" });
+      if (r.type === "opaqueredirect" || r.status === 0 || r.redirected) { window.location.href = "/api/qbo/connect"; return; }
+      const j = await r.json().catch(() => ({}));
+      setMsg(j.error || "QuickBooks couldn't start. Try again.");
+    } catch { setMsg("QuickBooks couldn't start. Try again."); }
+    setBusy(false);
+  }
+  return (
+    <div>
+      <div className="flex items-center gap-4">
+        <span className="grid h-12 w-12 place-items-center rounded-2xl border border-zinc-700 font-display text-lg font-bold">qb</span>
+        <div><div className="font-semibold">Connect QuickBooks</div><div className="text-sm text-zinc-400">Already use QuickBooks? We read your Profit &amp; Loss.</div></div>
+      </div>
+      <button className="btn btn-ghost mt-4 w-full !rounded-xl !py-3.5" onClick={go} disabled={busy}>{busy ? "Opening QuickBooks…" : "Connect QuickBooks"}</button>
+      {msg && <p className="mt-2 text-xs text-zinc-400">{msg}</p>}
+    </div>
+  );
+}
+
 /* ---------------- Connect ---------------- */
 
 export function Connect({ name, onSample, onFiles, onPlaid, busy, error, onBack }: { name: string; onSample: () => void; onFiles: (f: FileList | null) => void; onPlaid: (d: { txns: Txn[]; balances: Profile["balances"] }) => void; busy: string; error: string; onBack: () => void }) {
@@ -204,8 +230,8 @@ export function Connect({ name, onSample, onFiles, onPlaid, busy, error, onBack 
     <Shell step={2} onBack={onBack}>
       <div className="mx-auto max-w-3xl py-12 text-center">
         <span className="chip text-zinc-300">Last step</span>
-        <h1 className="headline font-display mt-5 text-[clamp(2.4rem,6vw,4.25rem)] font-semibold leading-[1]">Connect your money.</h1>
-        <p className="mx-auto mt-4 max-w-xl text-zinc-400">We read your transactions, sort business from personal, and work out your Number. Read-only. We can't move a cent.</p>
+        <h1 className="headline font-display mt-5 text-[clamp(2.4rem,6vw,4.25rem)] font-semibold leading-[1]">Connect your business money.</h1>
+        <p className="mx-auto mt-4 max-w-xl text-zinc-400">We read your income and business costs and work out what you owe the IRS. Read-only. We can't move a cent.</p>
         <div className="glass mx-auto mt-10 max-w-xl p-6 text-left sm:p-8">
           <div className="flex items-center gap-4">
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-black"><Landmark size={22} /></span>
@@ -213,7 +239,8 @@ export function Connect({ name, onSample, onFiles, onPlaid, busy, error, onBack 
           </div>
           <div className="mt-5"><PlaidButton onData={onPlaid} /></div>
           <div className="my-6 flex items-center gap-3 text-xs text-zinc-500"><span className="h-px flex-1 bg-zinc-800" />or<span className="h-px flex-1 bg-zinc-800" /></div>
-          <label className="flex cursor-pointer items-center justify-center gap-2 text-sm text-zinc-400 hover:text-white">
+          <QuickBooksButton />
+          <label className="mt-5 flex cursor-pointer items-center justify-center gap-2 text-sm text-zinc-400 hover:text-white">
             <FileUp size={16} /> Upload Chase / Cash App / Venmo CSVs (stays in your browser)
             <input type="file" accept=".csv,text/csv" multiple className="sr-only" onChange={(e) => onFiles(e.target.files)} />
           </label>
