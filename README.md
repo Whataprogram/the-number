@@ -37,7 +37,7 @@ ChatGPT doesn't see your account (you paste everything in, every time), never al
 | Tax rules and rates | **Real** 2026 IRS parameters for sole proprietors (SE tax, brackets, standard deduction, 20% QBI) with sources |
 | QuickBooks connection | **Sandbox demo**: opens the same Plaid Link sandbox window, labeled QuickBooks, then loads the same sample business. A tested QuickBooks Profit & Loss parser is in `lib/qbo.ts`. Real Intuit OAuth routes are built (`/api/qbo/*`) and switch on with `QBO_CLIENT_ID` / `QBO_CLIENT_SECRET` |
 | Sample business size | **Randomized each load** (income scaled 1.2x–4x, costs scale slower) so judges see different, realistic amounts; tax math is the same |
-| "Made or spent money?" box | **Real** parsing + tax math in the browser; entries aren't saved yet |
+| Box 2 live feed | **Simulated**: a random job (green) or business cost (red) every 30 seconds; the tax change on each one is real math |
 | Text-message alerts | Shown in-app; SMS delivery not wired up yet |
 | Plaid webhook | Endpoint acknowledges events; production would re-sync and text |
 

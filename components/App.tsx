@@ -7,7 +7,6 @@ import { latestBalance, normalize } from "@/lib/csv";
 import { DEMO_FILES, DEMO_PROFILE } from "@/lib/demo";
 import { computeNumber, type Alert, type Line, type NumberResult } from "@/lib/number";
 import { federalEstimate, formatUSD } from "@/lib/tax";
-import { parseEntry, type Entry } from "@/lib/entry";
 import { randomFactor, scaleBusiness } from "@/lib/scale";
 import { ASSUMPTIONS, SOURCES, TAX_2026, TAX_YEAR } from "@/lib/taxConfig";
 import type { Profile, Txn } from "@/lib/types";
@@ -212,24 +211,39 @@ function Home({ r, openLine, setWhy, txns }: { r: NumberResult; openLine: (l: Li
   const per100 = federalEstimate(r.netProfitCents + 10_000).totalTaxCents - r.fed.totalTaxCents;
   const taxLines = r.lines.filter((l) => l.key === "se" || l.key === "income" || l.key === "paid");
 
-  // Box 2: only what you type. Nothing else on the page moves.
-  const [extras, setExtras] = useState<(Entry & { id: string })[]>([]);
-  const sum = (k: Entry["kind"], list = extras) => list.filter((e) => e.kind === k).reduce((t, e) => t + e.amountCents, 0);
-  const taxOn = (list: typeof extras) => Math.max(0, federalEstimate(r.netProfitCents + sum("business_income", list) - sum("business_expense", list)).totalTaxCents - r.fed.totalTaxCents);
-  const newTax = taxOn(extras);
-  const newTaxShown = useCountUp(newTax);
-  const [entry, setEntry] = useState("");
-  const [entryMsg, setEntryMsg] = useState<{ ok: boolean; msg: string } | null>(null);
-  const submit = (ev: React.FormEvent) => {
-    ev.preventDefault();
-    const e = parseEntry(entry);
-    if ("error" in e) return setEntryMsg({ ok: false, msg: e.error });
-    const next = [...extras, { ...e, id: `x-${Date.now()}` }];
-    const delta = taxOn(next) - newTax;
-    const label = e.kind === "business_income" ? "business income" : e.kind === "business_expense" ? "business cost" : "personal";
-    setExtras(next); setEntry("");
-    setEntryMsg({ ok: true, msg: `${e.direction === "in" ? "+" : "−"}${formatUSD(e.amountCents)} ${e.description} (${label}): ${delta > 0 ? `you owe ${usd(delta)} more.` : delta < 0 ? `you owe ${usd(-delta)} less.` : "no change, personal money isn't taxed."}` });
+  // Box 2: a simulated live feed of new money. Every 30 seconds a job comes in (green) or a business cost goes out (red),
+  // and the "more you'll owe" counter moves. Nothing else on the page moves.
+  type Feed = { id: string; kind: "business_income" | "business_expense"; amountCents: number; description: string; deltaCents: number; time: string };
+  const [feed, setFeed] = useState<Feed[]>([]);
+  const [flash, setFlash] = useState<"in" | "out" | null>(null);
+  const feedRef = useRef<Feed[]>([]);
+  const taxFor = (list: Feed[]) => {
+    const net = list.reduce((t, e) => t + (e.kind === "business_income" ? e.amountCents : -e.amountCents), 0);
+    return federalEstimate(r.netProfitCents + net).totalTaxCents - r.fed.totalTaxCents;
   };
+  const newTax = taxFor(feed);
+  const newTaxShown = useCountUp(newTax);
+  useEffect(() => {
+    const JOBS = ["House wash", "Driveway wash", "Deck cleaning", "Gutter cleaning", "Window job", "Patio wash", "Fence wash", "Repeat customer"];
+    const COSTS = ["Gas for the truck", "Surface cleaner soap", "Pressure washer part", "Facebook ad", "Hose + nozzle", "Truck oil change"];
+    const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
+    let n = 0;
+    const tick = () => {
+      const isIn = n++ === 0 || Math.random() < 0.65;
+      const amountCents = isIn ? Math.round((90 + Math.random() * 510) * 100) : Math.round((12 + Math.random() * 110) * 100);
+      const prev = feedRef.current;
+      const base: Omit<Feed, "deltaCents"> = { id: `f-${Date.now()}`, kind: isIn ? "business_income" : "business_expense", amountCents, description: isIn ? pick(JOBS) : pick(COSTS), time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) };
+      const next = [...prev, { ...base, deltaCents: 0 }];
+      const e: Feed = { ...base, deltaCents: taxFor(next) - taxFor(prev) };
+      feedRef.current = [...prev, e];
+      setFeed(feedRef.current);
+      setFlash(isIn ? "in" : "out"); window.setTimeout(() => setFlash(null), 1200);
+    };
+    const first = window.setTimeout(tick, 2500);
+    const every = window.setInterval(tick, 30_000);
+    return () => { window.clearTimeout(first); window.clearInterval(every); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r.netProfitCents]);
 
   return (
     <>
@@ -264,30 +278,22 @@ function Home({ r, openLine, setWhy, txns }: { r: NumberResult; openLine: (l: Li
 
         <div className="card hero-glow flex flex-col p-6">
           <div className="flex items-center justify-between gap-2"><Label icon={CalendarClock}>2 · New money · through {live ? fmtDate(live.end) : fmtDate(payBy)}</Label><span className="flex items-center gap-1.5 text-xs text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />live</span></div>
-          <div className="mt-4 font-display num text-4xl font-semibold">{usd(newTaxShown)}</div>
-          <div className="mt-1 text-sm text-zinc-400">More you'll owe from new money until <b className="text-white">{live ? fmtDate(live.end, true) : fmtDate(payBy, true)}</b>{live && <> · {days(live.end)} days left</>}</div>
+          <div className="mt-4 font-display num text-4xl font-semibold transition-colors duration-500" style={{ color: flash === "in" ? "var(--green)" : flash === "out" ? "var(--red)" : undefined }}>{newTaxShown < 0 ? "−" : "+"}{usd(Math.abs(newTaxShown))}</div>
+          <div className="mt-1 text-sm text-zinc-400">{newTax < 0 ? "Less" : "More"} you'll owe from new money until <b className="text-white">{live ? fmtDate(live.end, true) : fmtDate(payBy, true)}</b>{live && <> · {days(live.end)} days left</>}</div>
           <p className="muted mt-2 text-sm">Rule of thumb right now: about <b className="text-white">{formatUSD(per100)} of every $100</b> you earn goes to taxes.</p>
-          {extras.length > 0 && (
-            <ul className="mt-3 max-h-32 space-y-1.5 overflow-y-auto text-sm">
-              {[...extras].reverse().map((x) => (
-                <li key={x.id} className="flex items-center justify-between gap-2">
-                  <span className="truncate text-zinc-300">{x.direction === "in" ? "+" : "−"}{formatUSD(x.amountCents)} · {x.description} <span className="muted text-xs">({x.kind === "business_income" ? "income" : x.kind === "business_expense" ? "business cost" : "personal"})</span></span>
-                  <button className="shrink-0 text-zinc-600 hover:text-white" aria-label={`Remove ${x.description}`} onClick={() => { setExtras((e) => e.filter((y) => y.id !== x.id)); setEntryMsg(null); }}><X size={14} /></button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <form onSubmit={submit} className="mt-auto pt-5">
-            <label htmlFor="entry" className="text-sm font-medium">Made or spent money? Type it.</label>
-            <div className="mt-2 flex gap-2">
-              <input id="entry" className="input !rounded-full !py-2.5" value={entry} onChange={(ev) => { setEntry(ev.target.value); setEntryMsg(null); }} placeholder="earned $350 on a house wash" autoComplete="off" />
-              <button className="btn btn-primary shrink-0 !px-4" aria-label="Add"><ArrowRight size={16} /></button>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {["earned $350 on a house wash", "$45 gas for the truck", "spent $180 on sneakers"].map((x) => <button type="button" key={x} onClick={() => { setEntry(x); setEntryMsg(null); }} className="rounded-full border border-zinc-800 px-2.5 py-1 text-[11px] text-zinc-400 hover:border-zinc-600 hover:text-white">{x}</button>)}
-            </div>
-            {entryMsg && <p role="status" className={`mt-2 text-sm ${entryMsg.ok ? "text-white" : "text-zinc-400"}`}>{entryMsg.msg}</p>}
-          </form>
+          <ul className="mt-4 flex-1 space-y-2 text-sm" aria-live="polite">
+            {feed.length === 0 && <li className="muted flex items-center gap-2 text-sm"><span className="dot live-dot" style={{ background: "var(--green)" }} />Watching your accounts for new money…</li>}
+            {[...feed].reverse().slice(0, 5).map((x, i) => (
+              <li key={x.id} className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2 ${i === 0 ? "rise border-zinc-700" : "border-transparent"}`}>
+                <span className="min-w-0 truncate"><span className="muted mr-2 text-xs">{x.time}</span>{x.description}</span>
+                <span className="flex shrink-0 items-center gap-3">
+                  <b className="num" style={{ color: x.kind === "business_income" ? "var(--green)" : "var(--red)" }}>{x.kind === "business_income" ? "+" : "−"}{usd(x.amountCents)}</b>
+                  <span className="num w-24 text-right text-xs text-zinc-400">{x.deltaCents >= 0 ? "+" : "−"}{usd(Math.abs(x.deltaCents))} owed</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-[11px] text-zinc-500">Demo: new money is simulated and updates every 30 seconds.</p>
         </div>
       </section>
 
