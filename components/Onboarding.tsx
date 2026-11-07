@@ -207,25 +207,51 @@ const BANKS = [
 
 function PickSheet({ pick, onPick, onClose, busy }: { pick: Pick; onPick: (name: string) => void; onClose: () => void; busy: boolean }) {
   const [chosen, setChosen] = useState("");
+  const [user, setUser] = useState(""), [pass, setPass] = useState(""), [err, setErr] = useState("");
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === "Escape" && !busy && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose, busy]);
+  const brand = pick.kind === "bank" ? "Plaid" : "QuickBooks";
+  // Sandbox test login: anything typed goes through. Nothing typed here is stored or sent anywhere.
+  const login = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user.trim() || !pass) return setErr("Type any username and password. It's a test login.");
+    setUser(""); setPass(""); onPick(chosen);
+  };
   return (
     <div className="fixed inset-0 z-40 grid place-items-end bg-black/70 backdrop-blur-sm sm:place-items-center" role="dialog" aria-modal="true" aria-label={pick.title} onClick={() => !busy && onClose()}>
       <div className="toast w-full max-w-md rounded-t-[28px] border border-zinc-800 bg-[#0b0b0b] p-6 text-left sm:rounded-[28px]" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between"><span className="chip text-zinc-300">{pick.kind === "bank" ? "Plaid · Sandbox" : "QuickBooks · Sandbox"}</span><button className="text-sm text-zinc-500 hover:text-white" onClick={onClose} disabled={busy}>Close</button></div>
-        <h3 className="font-display mt-4 text-2xl font-semibold">{busy ? "Connecting…" : pick.title}</h3>
-        <p className="muted mt-1 text-sm">{busy ? `Pulling ${chosen ? `${chosen}'s` : "your"} ${pick.kind === "bank" ? "transactions" : "Profit & Loss"}. Read-only.` : pick.sub}</p>
+        <div className="flex items-center justify-between"><span className="chip text-zinc-300">{brand} · Sandbox</span><button className="text-sm text-zinc-500 hover:text-white" onClick={() => (chosen && !busy ? setChosen("") : onClose())} disabled={busy}>{chosen && !busy ? "Back" : "Close"}</button></div>
         {busy ? (
-          <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-1/2 animate-pulse rounded-full bg-white" /></div>
+          <>
+            <h3 className="font-display mt-4 text-2xl font-semibold">Connecting…</h3>
+            <p className="muted mt-1 text-sm">{brand} is pulling your business transactions from {chosen || "your bank"}. Read-only.</p>
+            <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-1/2 animate-pulse rounded-full bg-white" /></div>
+          </>
+        ) : chosen ? (
+          <form onSubmit={login} autoComplete="off" noValidate>
+            <h3 className="font-display mt-4 text-2xl font-semibold">Test login · {chosen}</h3>
+            <p className="muted mt-1 text-sm">Sandbox: type any username and password and it goes through.</p>
+            <label className="mt-5 block text-sm font-medium" htmlFor="sb-user">Username</label>
+            <input id="sb-user" className="input mt-1.5" value={user} onChange={(e) => { setUser(e.target.value); setErr(""); }} placeholder="anything" autoComplete="off" />
+            <label className="mt-4 block text-sm font-medium" htmlFor="sb-pass">Password</label>
+            <input id="sb-pass" type="password" className="input mt-1.5" value={pass} onChange={(e) => { setPass(e.target.value); setErr(""); }} placeholder="anything" autoComplete="new-password" />
+            {err && <p className="mt-2 text-sm text-zinc-400">{err}</p>}
+            <button className="btn btn-primary mt-5 w-full !rounded-xl !py-3.5">Sign in and connect</button>
+            <p className="mt-3 text-[11px] text-zinc-500">Test login only. Don't use a real password. Nothing you type here is saved or sent.</p>
+          </form>
         ) : (
-          <ul className="mt-5 grid gap-2">
-            {pick.options.map((o) => (
-              <li key={o.name}><button className="flex w-full items-center justify-between rounded-2xl border border-zinc-800 px-4 py-3.5 text-left hover:border-zinc-500" onClick={() => { setChosen(o.name); onPick(o.name); }}>
-                <span><span className="block font-medium">{o.name}</span><span className="muted block text-xs">{o.note}</span></span><ArrowRight size={16} className="text-zinc-500" />
-              </button></li>
-            ))}
-          </ul>
+          <>
+            <h3 className="font-display mt-4 text-2xl font-semibold">{pick.title}</h3>
+            <p className="muted mt-1 text-sm">{pick.sub}</p>
+            <ul className="mt-5 grid gap-2">
+              {pick.options.map((o) => (
+                <li key={o.name}><button className="flex w-full items-center justify-between rounded-2xl border border-zinc-800 px-4 py-3.5 text-left hover:border-zinc-500" onClick={() => setChosen(o.name)}>
+                  <span><span className="block font-medium">{o.name}</span><span className="muted block text-xs">{o.note}</span></span><ArrowRight size={16} className="text-zinc-500" />
+                </button></li>
+              ))}
+            </ul>
+            <p className="mt-5 text-[11px] text-zinc-500">Sandbox mode: {brand} connects a test account for the bank you pick.</p>
+          </>
         )}
-        <p className="mt-5 text-[11px] text-zinc-500">{pick.kind === "bank" ? "Sandbox mode: no login needed. Plaid creates a test connection for the bank you pick." : "Sandbox mode: no login needed. QuickBooks connects a test bank account for the bank you pick."}</p>
       </div>
     </div>
   );
