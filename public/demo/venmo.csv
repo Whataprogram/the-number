@@ -1,0 +1,60 @@
+ID,Datetime,Type,Status,Note,From,To,Amount (total)
+4000136,2026-01-06T18:40:00,Payment,Complete,"split","Noah P","Jay W.",37.76
+4000137,2026-01-31T18:44:00,Payment,Complete,"concert tickets","Noah P","Jay W.",27.13
+4000138,2026-02-05T18:13:00,Payment,Complete,"split","Ethan K","Jay W.",15.42
+4000139,2026-04-08T18:57:00,Payment,Complete,"gutter clean","Tom Becker","Jay W.",400.00
+4000140,2026-04-10T18:12:00,Payment,Complete,"siding wash","Karen Ohlman","Jay W.",360.00
+4000141,2026-04-12T18:48:00,Payment,Complete,"patio wash","Priya Shah","Jay W.",160.00
+4000142,2026-04-28T18:33:00,Payment,Complete,"pizza","Ethan K","Jay W.",23.93
+4000143,2026-05-01T18:52:00,Payment,Complete,"pressure wash job","Dave Kessler","Jay W.",450.00
+4000144,2026-05-07T18:28:00,Payment,Complete,"concert tickets","Noah P","Jay W.",18.70
+4000145,2026-05-09T18:49:00,Payment,Complete,"bday 🎂","Mom","Jay W.",100.00
+4000146,2026-05-13T18:27:00,Payment,Complete,"driveway wash","Karen Ohlman","Jay W.",330.00
+4000147,2026-05-19T18:59:00,Payment,Complete,"concert tickets","Noah P","Jay W.",23.16
+4000148,2026-05-21T18:27:00,Payment,Complete,"house soft wash 🏠","Carlos Ruiz","Jay W.",340.00
+4000149,2026-05-22T18:29:00,Payment,Complete,"driveway wash","Greg Patel","Jay W.",270.00
+4000150,2026-05-22T18:53:00,Payment,Complete,"split","Noah P","Jay W.",32.76
+4000151,2026-05-31T18:44:00,Payment,Complete,"house wash","Steve Yoder","Jay W.",190.00
+4000152,2026-06-05T18:59:00,Payment,Complete,"pizza","Ethan K","Jay W.",36.59
+4000153,2026-06-16T18:10:00,Payment,Complete,"gutter clean","Mike Reyes","Jay W.",170.00
+4000154,2026-06-17T18:52:00,Payment,Complete,"patio wash","Carlos Ruiz","Jay W.",240.00
+4000155,2026-06-18T18:12:00,Payment,Complete,"house wash","Bill Hendricks","Jay W.",290.00
+4000156,2026-06-25T18:32:00,Payment,Complete,"🙏","Tom Becker","Jay W.",450.00
+4000157,2026-06-30T18:46:00,Payment,Complete,"deck + patio","Carlos Ruiz","Jay W.",290.00
+4000158,2026-07-04T18:15:00,Payment,Complete,"gutter clean","Steve Yoder","Jay W.",250.00
+4000159,2026-07-13T18:46:00,Payment,Complete,"driveway & sidewalk","Greg Patel","Jay W.",450.00
+4000160,2026-07-21T18:39:00,Payment,Complete,"deck + patio","Jen Walsh","Jay W.",450.00
+4000161,2026-07-22T18:26:00,Payment,Complete,"patio wash","Ray Dunn","Jay W.",310.00
+4000162,2026-07-27T18:51:00,Payment,Complete,"fence wash","Steve Yoder","Jay W.",390.00
+4000163,2026-07-29T18:53:00,Payment,Complete,"patio wash","Tom Becker","Jay W.",280.00
+4000164,2026-08-04T18:51:00,Payment,Complete,"house wash","Carlos Ruiz","Jay W.",390.00
+4000165,2026-08-06T18:46:00,Payment,Complete,"deck + patio","Bill Hendricks","Jay W.",290.00
+4000166,2026-08-13T18:54:00,Payment,Complete,"pizza","Ethan K","Jay W.",31.44
+4000167,2026-08-17T18:28:00,Payment,Complete,"driveway & sidewalk","Amy Turner","Jay W.",180.00
+4000168,2026-08-18T18:19:00,Payment,Complete,"fence wash","Dave Kessler","Jay W.",400.00
+4000169,2026-08-19T18:21:00,Payment,Complete,"🙏","Bill Hendricks","Jay W.",190.00
+4000170,2026-08-20T18:46:00,Payment,Complete,"deck + patio","Jen Walsh","Jay W.",320.00
+4000171,2026-08-22T18:19:00,Payment,Complete,"patio wash","Priya Shah","Jay W.",390.00
+4000172,2026-08-24T18:45:00,Payment,Complete,"deck + patio","Tom Becker","Jay W.",410.00
+4000173,2026-08-25T18:47:00,Payment,Complete,"deck + patio","Bill Hendricks","Jay W.",340.00
+4000174,2026-08-28T18:22:00,Payment,Complete,"gutter clean","Steve Yoder","Jay W.",430.00
+4000175,2026-08-29T18:21:00,Payment,Complete,"pressure wash job","Karen Ohlman","Jay W.",410.00
+4000176,2026-09-02T18:34:00,Payment,Complete,"concert tickets","Noah P","Jay W.",35.12
+4000177,2026-09-03T18:24:00,Payment,Complete,"driveway wash","Sarah Lindqvist","Jay W.",300.00
+4000178,2026-09-05T18:26:00,Payment,Complete,"siding wash","Karen Ohlman","Jay W.",440.00
+4000179,2026-09-06T18:54:00,Payment,Complete,"house soft wash 🏠","Greg Patel","Jay W.",380.00
+4000180,2026-09-07T18:24:00,Payment,Complete,"fence wash","Ray Dunn","Jay W.",410.00
+4000181,2026-09-09T18:49:00,Payment,Complete,"house wash","Megan Fox","Jay W.",230.00
+4000182,2026-09-15T18:14:00,Payment,Complete,"🙏","Megan Fox","Jay W.",250.00
+4000183,2026-09-16T18:24:00,Payment,Complete,"driveway & sidewalk","Sarah Lindqvist","Jay W.",320.00
+4000184,2026-09-19T18:37:00,Payment,Complete,"deck + patio","Bill Hendricks","Jay W.",330.00
+4000185,2026-09-23T18:43:00,Payment,Complete,"concert tickets","Noah P","Jay W.",33.51
+4000186,2026-09-28T18:28:00,Payment,Complete,"driveway wash","Steve Yoder","Jay W.",250.00
+4000187,2026-09-29T18:41:00,Payment,Complete,"pizza","Ethan K","Jay W.",23.07
+4000188,2026-10-01T18:54:00,Payment,Complete,"split","Ethan K","Jay W.",32.02
+4000189,2026-10-10T18:21:00,Payment,Complete,"pizza","Ethan K","Jay W.",15.40
+4000190,2026-10-16T18:34:00,Payment,Complete,"driveway wash","Nina Brooks","Jay W.",300.00
+4000191,2026-10-18T18:22:00,Payment,Complete,"house soft wash 🏠","Karen Ohlman","Jay W.",310.00
+4000192,2026-10-28T18:35:00,Payment,Complete,"pressure wash job","Ray Dunn","Jay W.",270.00
+4000193,2026-10-31T18:58:00,Payment,Complete,"siding wash","Megan Fox","Jay W.",360.00
+4000194,2026-11-01T18:22:00,Payment,Complete,"split","Noah P","Jay W.",36.76

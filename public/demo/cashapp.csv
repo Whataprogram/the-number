@@ -1,0 +1,136 @@
+Transaction ID,Date,Transaction Type,Currency,Amount,Fee,Net Amount,Asset Type,Asset Price,Asset Amount,Status,Notes,Name of sender/receiver,Account
+CA1,2026-01-16 14:27:00 EDT,P2P,USD,-31.22,0.00,-31.22,,,,COMPLETE,"gas money","Ethan K",Your Cash
+CA2,2026-01-21 14:58:00 EDT,P2P,USD,260.00,0.00,260.00,,,,COMPLETE,"patio wash","Amy Turner",Your Cash
+CA3,2026-02-11 14:38:00 EDT,P2P,USD,-33.32,0.00,-33.32,,,,COMPLETE,"split dinner","Ethan K",Your Cash
+CA4,2026-03-09 14:46:00 EDT,P2P,USD,-31.67,0.00,-31.67,,,,COMPLETE,"split dinner","Noah P",Your Cash
+CA5,2026-03-14 14:34:00 EDT,P2P,USD,430.00,0.00,430.00,,,,COMPLETE,"","Dave Kessler",Your Cash
+CA6,2026-03-19 14:26:00 EDT,P2P,USD,350.00,0.00,350.00,,,,COMPLETE,"fence wash","Nina Brooks",Your Cash
+CA7,2026-03-27 14:46:00 EDT,P2P,USD,230.00,0.00,230.00,,,,COMPLETE,"pressure wash job","Mike Reyes",Your Cash
+CA8,2026-04-03 14:42:00 EDT,P2P,USD,340.00,0.00,340.00,,,,COMPLETE,"siding wash","Karen Ohlman",Your Cash
+CA9,2026-04-03 14:38:00 EDT,P2P,USD,-25.83,0.00,-25.83,,,,COMPLETE,"tickets","Noah P",Your Cash
+CAA,2026-04-06 14:31:00 EDT,Cash out,USD,-495.17,0.00,-495.17,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CAB,2026-04-07 14:36:00 EDT,P2P,USD,330.00,0.00,330.00,,,,COMPLETE,"deck + patio","Priya Shah",Your Cash
+CAC,2026-04-09 14:50:00 EDT,P2P,USD,400.00,0.00,400.00,,,,COMPLETE,"","Steve Yoder",Your Cash
+CAD,2026-04-13 14:48:00 EDT,Cash out,USD,-855.79,0.00,-855.79,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CAE,2026-04-14 14:13:00 EDT,P2P,USD,280.00,0.00,280.00,,,,COMPLETE,"house wash","Amy Turner",Your Cash
+CAF,2026-04-15 14:30:00 EDT,P2P,USD,240.00,0.00,240.00,,,,COMPLETE,"deck + patio","Jen Walsh",Your Cash
+CAG,2026-04-18 14:55:00 EDT,P2P,USD,190.00,0.00,190.00,,,,COMPLETE,"house soft wash 🏠","Mike Reyes",Your Cash
+CAH,2026-04-19 14:55:00 EDT,P2P,USD,300.00,0.00,300.00,,,,COMPLETE,"","Steve Yoder",Your Cash
+CAI,2026-04-20 14:41:00 EDT,Cash out,USD,-488.28,0.00,-488.28,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CAJ,2026-04-27 14:56:00 EDT,Cash out,USD,-795.76,0.00,-795.76,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CAK,2026-04-30 14:38:00 EDT,P2P,USD,-13.17,0.00,-13.17,,,,COMPLETE,"gas money","Noah P",Your Cash
+CAL,2026-05-04 14:10:00 EDT,Cash out,USD,-309.60,0.00,-309.60,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CAM,2026-05-05 14:17:00 EDT,P2P,USD,450.00,0.00,450.00,,,,COMPLETE,"gutter clean","Bill Hendricks",Your Cash
+CAN,2026-05-06 14:47:00 EDT,P2P,USD,-27.21,0.00,-27.21,,,,COMPLETE,"pizza","Noah P",Your Cash
+CAO,2026-05-07 14:54:00 EDT,P2P,USD,420.00,0.00,420.00,,,,COMPLETE,"pressure wash job","Mike Reyes",Your Cash
+CAP,2026-05-09 14:40:00 EDT,P2P,USD,240.00,0.00,240.00,,,,COMPLETE,"driveway wash","Dave Kessler",Your Cash
+CAQ,2026-05-11 14:12:00 EDT,P2P,USD,340.00,0.00,340.00,,,,COMPLETE,"driveway wash","Mike Reyes",Your Cash
+CAR,2026-05-11 14:48:00 EDT,Cash out,USD,-378.18,0.00,-378.18,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CAS,2026-05-12 14:14:00 EDT,P2P,USD,410.00,0.00,410.00,,,,COMPLETE,"","Jen Walsh",Your Cash
+CAT,2026-05-14 14:59:00 EDT,P2P,USD,450.00,0.00,450.00,,,,COMPLETE,"fence wash","Tom Becker",Your Cash
+CAU,2026-05-18 14:35:00 EDT,P2P,USD,330.00,0.00,330.00,,,,COMPLETE,"house soft wash 🏠","Karen Ohlman",Your Cash
+CAV,2026-05-18 14:12:00 EDT,Cash out,USD,-798.81,0.00,-798.81,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CAW,2026-05-23 14:58:00 EDT,P2P,USD,220.00,0.00,220.00,,,,COMPLETE,"fence wash","Carlos Ruiz",Your Cash
+CAX,2026-05-24 14:33:00 EDT,P2P,USD,190.00,0.00,190.00,,,,COMPLETE,"driveway & sidewalk","Greg Patel",Your Cash
+CAY,2026-05-25 14:38:00 EDT,P2P,USD,300.00,0.00,300.00,,,,COMPLETE,"gutter clean","Ray Dunn",Your Cash
+CAZ,2026-05-25 14:33:00 EDT,Cash out,USD,-892.88,0.00,-892.88,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA10,2026-05-27 14:14:00 EDT,P2P,USD,270.00,0.00,270.00,,,,COMPLETE,"","Bill Hendricks",Your Cash
+CA11,2026-05-27 14:40:00 EDT,P2P,USD,-13.38,0.00,-13.38,,,,COMPLETE,"tickets","Luke M",Your Cash
+CA12,2026-06-01 14:29:00 EDT,P2P,USD,310.00,0.00,310.00,,,,COMPLETE,"patio wash","Bill Hendricks",Your Cash
+CA13,2026-06-01 14:58:00 EDT,Cash out,USD,-310.81,0.00,-310.81,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA14,2026-06-02 14:56:00 EDT,P2P,USD,450.00,0.00,450.00,,,,COMPLETE,"house wash","Steve Yoder",Your Cash
+CA15,2026-06-03 14:16:00 EDT,P2P,USD,340.00,0.00,340.00,,,,COMPLETE,"driveway & sidewalk","Nina Brooks",Your Cash
+CA16,2026-06-04 14:14:00 EDT,P2P,USD,150.00,0.00,150.00,,,,COMPLETE,"driveway wash","Dave Kessler",Your Cash
+CA17,2026-06-06 14:38:00 EDT,P2P,USD,380.00,0.00,380.00,,,,COMPLETE,"pressure wash job","Greg Patel",Your Cash
+CA18,2026-06-07 14:13:00 EDT,P2P,USD,-13.57,0.00,-13.57,,,,COMPLETE,"gas money","Luke M",Your Cash
+CA19,2026-06-08 14:42:00 EDT,Cash out,USD,-430.90,0.00,-430.90,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA1A,2026-06-09 14:38:00 EDT,P2P,USD,160.00,0.00,160.00,,,,COMPLETE,"siding wash","Bill Hendricks",Your Cash
+CA1B,2026-06-10 14:11:00 EDT,P2P,USD,270.00,0.00,270.00,,,,COMPLETE,"gutter clean","Greg Patel",Your Cash
+CA1C,2026-06-11 14:52:00 EDT,P2P,USD,170.00,0.00,170.00,,,,COMPLETE,"","Karen Ohlman",Your Cash
+CA1D,2026-06-12 14:23:00 EDT,P2P,USD,360.00,0.00,360.00,,,,COMPLETE,"house soft wash 🏠","Jen Walsh",Your Cash
+CA1E,2026-06-13 14:50:00 EDT,P2P,USD,240.00,0.00,240.00,,,,COMPLETE,"gutter clean","Priya Shah",Your Cash
+CA1F,2026-06-15 14:37:00 EDT,Cash out,USD,-522.15,0.00,-522.15,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA1G,2026-06-17 14:34:00 EDT,P2P,USD,-26.92,0.00,-26.92,,,,COMPLETE,"split dinner","Noah P",Your Cash
+CA1H,2026-06-19 14:11:00 EDT,P2P,USD,320.00,0.00,320.00,,,,COMPLETE,"gutter clean","Megan Fox",Your Cash
+CA1I,2026-06-21 14:14:00 EDT,P2P,USD,280.00,0.00,280.00,,,,COMPLETE,"patio wash","Karen Ohlman",Your Cash
+CA1J,2026-06-22 14:53:00 EDT,Cash out,USD,-388.57,0.00,-388.57,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA1K,2026-06-23 14:55:00 EDT,P2P,USD,200.00,0.00,200.00,,,,COMPLETE,"house soft wash 🏠","Priya Shah",Your Cash
+CA1L,2026-06-26 14:20:00 EDT,P2P,USD,340.00,0.00,340.00,,,,COMPLETE,"fence wash","Mike Reyes",Your Cash
+CA1M,2026-06-27 14:20:00 EDT,P2P,USD,330.00,0.00,330.00,,,,COMPLETE,"house wash","Karen Ohlman",Your Cash
+CA1N,2026-06-28 14:12:00 EDT,P2P,USD,320.00,0.00,320.00,,,,COMPLETE,"driveway wash","Linda Morris",Your Cash
+CA1O,2026-06-29 14:17:00 EDT,P2P,USD,330.00,0.00,330.00,,,,COMPLETE,"house soft wash 🏠","Dave Kessler",Your Cash
+CA1P,2026-06-29 14:13:00 EDT,Cash out,USD,-722.08,0.00,-722.08,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA1Q,2026-07-01 14:48:00 EDT,P2P,USD,350.00,0.00,350.00,,,,COMPLETE,"deck + patio","Dave Kessler",Your Cash
+CA1R,2026-07-02 14:38:00 EDT,P2P,USD,350.00,0.00,350.00,,,,COMPLETE,"pressure wash job","Tom Becker",Your Cash
+CA1S,2026-07-02 14:32:00 EDT,P2P,USD,-27.08,0.00,-27.08,,,,COMPLETE,"pizza","Noah P",Your Cash
+CA1T,2026-07-06 14:23:00 EDT,P2P,USD,190.00,0.00,190.00,,,,COMPLETE,"deck + patio","Tom Becker",Your Cash
+CA1U,2026-07-06 14:31:00 EDT,Cash out,USD,-829.08,0.00,-829.08,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA1V,2026-07-07 14:43:00 EDT,P2P,USD,-13.75,0.00,-13.75,,,,COMPLETE,"pizza","Luke M",Your Cash
+CA1W,2026-07-10 14:35:00 EDT,P2P,USD,280.00,0.00,280.00,,,,COMPLETE,"pressure wash job","Bill Hendricks",Your Cash
+CA1X,2026-07-11 14:23:00 EDT,P2P,USD,400.00,0.00,400.00,,,,COMPLETE,"house wash","Megan Fox",Your Cash
+CA1Y,2026-07-12 14:16:00 EDT,P2P,USD,150.00,0.00,150.00,,,,COMPLETE,"gutter clean","Bill Hendricks",Your Cash
+CA1Z,2026-07-13 14:38:00 EDT,Cash out,USD,-523.93,0.00,-523.93,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA20,2026-07-15 14:33:00 EDT,P2P,USD,280.00,0.00,280.00,,,,COMPLETE,"deck + patio","Sarah Lindqvist",Your Cash
+CA21,2026-07-17 14:40:00 EDT,P2P,USD,230.00,0.00,230.00,,,,COMPLETE,"fence wash","Ray Dunn",Your Cash
+CA22,2026-07-19 14:55:00 EDT,P2P,USD,450.00,0.00,450.00,,,,COMPLETE,"driveway & sidewalk","Jen Walsh",Your Cash
+CA23,2026-07-20 14:26:00 EDT,P2P,USD,220.00,0.00,220.00,,,,COMPLETE,"fence wash","Greg Patel",Your Cash
+CA24,2026-07-20 14:12:00 EDT,Cash out,USD,-478.90,0.00,-478.90,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA25,2026-07-23 14:50:00 EDT,P2P,USD,310.00,0.00,310.00,,,,COMPLETE,"fence wash","Nina Brooks",Your Cash
+CA26,2026-07-24 14:39:00 EDT,P2P,USD,180.00,0.00,180.00,,,,COMPLETE,"driveway wash","Priya Shah",Your Cash
+CA27,2026-07-25 14:37:00 EDT,P2P,USD,210.00,0.00,210.00,,,,COMPLETE,"house soft wash 🏠","Carlos Ruiz",Your Cash
+CA28,2026-07-26 14:25:00 EDT,P2P,USD,290.00,0.00,290.00,,,,COMPLETE,"siding wash","Nina Brooks",Your Cash
+CA29,2026-07-27 14:53:00 EDT,Cash out,USD,-382.75,0.00,-382.75,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA2A,2026-07-28 14:42:00 EDT,P2P,USD,280.00,0.00,280.00,,,,COMPLETE,"driveway wash","Amy Turner",Your Cash
+CA2B,2026-07-30 14:43:00 EDT,P2P,USD,370.00,0.00,370.00,,,,COMPLETE,"fence wash","Jen Walsh",Your Cash
+CA2C,2026-07-31 14:39:00 EDT,P2P,USD,280.00,0.00,280.00,,,,COMPLETE,"house soft wash 🏠","Bill Hendricks",Your Cash
+CA2D,2026-08-02 14:29:00 EDT,P2P,USD,200.00,0.00,200.00,,,,COMPLETE,"","Bill Hendricks",Your Cash
+CA2E,2026-08-03 14:56:00 EDT,Cash out,USD,-443.66,0.00,-443.66,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA2F,2026-08-04 14:15:00 EDT,P2P,USD,-11.10,0.00,-11.10,,,,COMPLETE,"tickets","Luke M",Your Cash
+CA2G,2026-08-05 14:51:00 EDT,P2P,USD,370.00,0.00,370.00,,,,COMPLETE,"deck + patio","Linda Morris",Your Cash
+CA2H,2026-08-08 14:20:00 EDT,P2P,USD,310.00,0.00,310.00,,,,COMPLETE,"","Priya Shah",Your Cash
+CA2I,2026-08-09 14:14:00 EDT,P2P,USD,160.00,0.00,160.00,,,,COMPLETE,"deck + patio","Karen Ohlman",Your Cash
+CA2J,2026-08-10 14:21:00 EDT,P2P,USD,330.00,0.00,330.00,,,,COMPLETE,"patio wash","Bill Hendricks",Your Cash
+CA2K,2026-08-10 14:11:00 EDT,Cash out,USD,-484.45,0.00,-484.45,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA2L,2026-08-13 14:20:00 EDT,P2P,USD,320.00,0.00,320.00,,,,COMPLETE,"driveway & sidewalk","Amy Turner",Your Cash
+CA2M,2026-08-15 14:27:00 EDT,P2P,USD,180.00,0.00,180.00,,,,COMPLETE,"fence wash","Dave Kessler",Your Cash
+CA2N,2026-08-16 14:21:00 EDT,P2P,USD,430.00,0.00,430.00,,,,COMPLETE,"driveway & sidewalk","Nina Brooks",Your Cash
+CA2O,2026-08-17 14:31:00 EDT,Cash out,USD,-839.99,0.00,-839.99,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA2P,2026-08-19 14:53:00 EDT,P2P,USD,-11.77,0.00,-11.77,,,,COMPLETE,"tickets","Noah P",Your Cash
+CA2Q,2026-08-23 14:51:00 EDT,P2P,USD,150.00,0.00,150.00,,,,COMPLETE,"house wash","Greg Patel",Your Cash
+CA2R,2026-08-24 14:31:00 EDT,Cash out,USD,-360.79,0.00,-360.79,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA2S,2026-08-26 14:12:00 EDT,P2P,USD,260.00,0.00,260.00,,,,COMPLETE,"pressure wash job","Karen Ohlman",Your Cash
+CA2T,2026-08-27 14:40:00 EDT,P2P,USD,220.00,0.00,220.00,,,,COMPLETE,"pressure wash job","Steve Yoder",Your Cash
+CA2U,2026-08-30 14:24:00 EDT,P2P,USD,150.00,0.00,150.00,,,,COMPLETE,"siding wash","Carlos Ruiz",Your Cash
+CA2V,2026-08-31 14:31:00 EDT,Cash out,USD,-744.48,0.00,-744.48,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA2W,2026-09-07 14:31:00 EDT,Cash out,USD,-580.18,0.00,-580.18,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA2X,2026-09-10 14:35:00 EDT,P2P,USD,190.00,0.00,190.00,,,,COMPLETE,"house soft wash 🏠","Linda Morris",Your Cash
+CA2Y,2026-09-12 14:21:00 EDT,P2P,USD,290.00,0.00,290.00,,,,COMPLETE,"fence wash","Linda Morris",Your Cash
+CA2Z,2026-09-13 14:54:00 EDT,P2P,USD,400.00,0.00,400.00,,,,COMPLETE,"deck + patio","Greg Patel",Your Cash
+CA30,2026-09-14 14:23:00 EDT,P2P,USD,300.00,0.00,300.00,,,,COMPLETE,"house soft wash 🏠","Carlos Ruiz",Your Cash
+CA31,2026-09-14 14:45:00 EDT,Cash out,USD,-883.84,0.00,-883.84,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA32,2026-09-15 14:40:00 EDT,P2P,USD,-17.04,0.00,-17.04,,,,COMPLETE,"tickets","Noah P",Your Cash
+CA33,2026-09-18 14:17:00 EDT,P2P,USD,420.00,0.00,420.00,,,,COMPLETE,"driveway & sidewalk","Bill Hendricks",Your Cash
+CA34,2026-09-21 14:59:00 EDT,P2P,USD,230.00,0.00,230.00,,,,COMPLETE,"siding wash","Amy Turner",Your Cash
+CA35,2026-09-21 14:40:00 EDT,Cash out,USD,-424.76,0.00,-424.76,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA36,2026-09-23 14:59:00 EDT,P2P,USD,220.00,0.00,220.00,,,,COMPLETE,"gutter clean","Megan Fox",Your Cash
+CA37,2026-09-24 14:17:00 EDT,P2P,USD,330.00,0.00,330.00,,,,COMPLETE,"deck + patio","Jen Walsh",Your Cash
+CA38,2026-09-24 14:58:00 EDT,P2P,USD,-19.32,0.00,-19.32,,,,COMPLETE,"split dinner","Luke M",Your Cash
+CA39,2026-09-28 14:21:00 EDT,Cash out,USD,-880.42,0.00,-880.42,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA3A,2026-09-29 14:35:00 EDT,P2P,USD,220.00,0.00,220.00,,,,COMPLETE,"house soft wash 🏠","Mike Reyes",Your Cash
+CA3B,2026-09-30 14:44:00 EDT,P2P,USD,450.00,0.00,450.00,,,,COMPLETE,"","Nina Brooks",Your Cash
+CA3C,2026-10-01 14:54:00 EDT,P2P,USD,280.00,0.00,280.00,,,,COMPLETE,"","Mike Reyes",Your Cash
+CA3D,2026-10-03 14:36:00 EDT,P2P,USD,170.00,0.00,170.00,,,,COMPLETE,"gutter clean","Tom Becker",Your Cash
+CA3E,2026-10-04 14:53:00 EDT,P2P,USD,240.00,0.00,240.00,,,,COMPLETE,"house soft wash 🏠","Nina Brooks",Your Cash
+CA3F,2026-10-05 14:15:00 EDT,Cash out,USD,-543.26,0.00,-543.26,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA3G,2026-10-08 14:48:00 EDT,P2P,USD,370.00,0.00,370.00,,,,COMPLETE,"deck + patio","Steve Yoder",Your Cash
+CA3H,2026-10-11 14:43:00 EDT,P2P,USD,420.00,0.00,420.00,,,,COMPLETE,"","Mike Reyes",Your Cash
+CA3I,2026-10-12 14:32:00 EDT,Cash out,USD,-753.39,0.00,-753.39,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA3J,2026-10-13 14:37:00 EDT,P2P,USD,290.00,0.00,290.00,,,,COMPLETE,"fence wash","Ray Dunn",Your Cash
+CA3K,2026-10-15 14:14:00 EDT,P2P,USD,300.00,0.00,300.00,,,,COMPLETE,"patio wash","Sarah Lindqvist",Your Cash
+CA3L,2026-10-19 14:53:00 EDT,Cash out,USD,-897.44,0.00,-897.44,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA3M,2026-10-21 14:19:00 EDT,P2P,USD,180.00,0.00,180.00,,,,COMPLETE,"gutter clean","Bill Hendricks",Your Cash
+CA3N,2026-10-22 14:45:00 EDT,P2P,USD,200.00,0.00,200.00,,,,COMPLETE,"driveway & sidewalk","Carlos Ruiz",Your Cash
+CA3O,2026-10-23 14:12:00 EDT,P2P,USD,440.00,0.00,440.00,,,,COMPLETE,"gutter clean","Jen Walsh",Your Cash
+CA3P,2026-10-26 14:59:00 EDT,Cash out,USD,-306.09,0.00,-306.09,,,,COMPLETE,"Cash Out","Chase Checking",Your Cash
+CA3Q,2026-10-27 14:43:00 EDT,P2P,USD,360.00,0.00,360.00,,,,COMPLETE,"siding wash","Tom Becker",Your Cash
+CA3R,2026-11-04 14:29:00 EDT,P2P,USD,170.00,0.00,170.00,,,,COMPLETE,"fence wash","Greg Patel",Your Cash

@@ -2,26 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Design tokens (UI/UX Pro Max: "Personal Finance Tracker" — trust blue + profit green, dark-first, no AI purple). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0b1220;
+  --bg-2: #0f172a;
+  --card: #151f33;
+  --card-2: #1a2640;
+  --line: rgba(255, 255, 255, 0.08);
+  --fg: #f4f7fb;
+  --muted: #94a3b8;
+  --blue: #3b82f6;
+  --blue-deep: #1e40af;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #f5f7fb;
+  --bg-2: #eef2f8;
+  --card: #ffffff;
+  --card-2: #f2f5fa;
+  --line: rgba(15, 23, 42, 0.09);
+  --fg: #0b1220;
+  --muted: #5b6b82;
+  --blue: #1d4ed8;
+  --blue-deep: #1e3a8a;
+  --green: #047857;
+  --amber: #b45309;
+  --red: #dc2626;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+.font-display { font-family: var(--font-display); }
+.num { font-variant-numeric: tabular-nums; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; }
+.muted { color: var(--muted); }
+.btn { display: inline-flex; align-items: center; gap: .5rem; border-radius: 12px; padding: .7rem 1.1rem; font-weight: 600; transition: transform .15s ease, background .15s ease, opacity .15s; }
+.btn:active { transform: scale(.98); }
+.btn:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { opacity: .92; }
+.btn-ghost { background: var(--card-2); color: var(--fg); border: 1px solid var(--line); }
+.btn-ghost:hover { border-color: var(--blue); }
+.chip { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; font-weight: 600; padding: .2rem .55rem; border-radius: 999px; }
+.hero-glow { background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--blue) 22%, transparent), transparent 60%), var(--card); }
+@keyframes rise { from { transform: translateY(8px); opacity: .0; } to { transform: none; opacity: 1; } }
+.toast { animation: rise .35s ease both; }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } * { transition: none !important; } }
