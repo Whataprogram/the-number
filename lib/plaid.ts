@@ -4,8 +4,9 @@ import type { Txn } from "./types";
 
 // Server-only. Keys come from environment variables (never committed, never sent to the browser).
 export function plaidClient() {
-  const id = process.env.PLAID_CLIENT_ID, secret = process.env.PLAID_SECRET;
-  const env = (process.env.PLAID_ENV || "sandbox") as keyof typeof PlaidEnvironments;
+  // Trim in case a key was pasted with a stray space or newline.
+  const id = process.env.PLAID_CLIENT_ID?.trim(), secret = process.env.PLAID_SECRET?.trim();
+  const env = ((process.env.PLAID_ENV || "sandbox").trim() as keyof typeof PlaidEnvironments);
   if (!id || !secret) return null;
   return new PlaidApi(new Configuration({
     basePath: PlaidEnvironments[env],
