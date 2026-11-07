@@ -419,9 +419,21 @@ export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, er
             <div className="mt-4"><PlaidButton onSandbox={onQuickBooksSandbox} label="Connect QuickBooks" primary={false} /></div>
           </div>
           <div className="flex items-center gap-3 text-xs text-zinc-500"><span className="h-px flex-1 bg-zinc-800" />payment apps<span className="h-px flex-1 bg-zinc-800" /></div>
-          <div className="flex items-center gap-4 rounded-2xl border border-white/15 bg-white/[0.04] px-4 py-3">
-            <div className="font-display num shrink-0 text-4xl font-semibold text-white">74%</div>
-            <div className="text-sm leading-snug text-zinc-300">of freelancers and app sellers don't know when Venmo, Cash App and PayPal report their income to the IRS. <a className="text-[11px] text-zinc-500 underline" href="https://finance.yahoo.com/news/gig-workers-may-unprepared-2025-123000859.html" target="_blank" rel="noreferrer">Avalara survey</a></div>
+          <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="font-display num text-4xl font-semibold text-white">2M+</div>
+                <div className="mt-1 text-xs leading-snug text-zinc-400">businesses take payments on Venmo alone, and every one is reported to the IRS.</div>
+              </div>
+              <div className="border-l border-white/10 pl-4">
+                <div className="font-display num text-4xl font-semibold text-white">74%</div>
+                <div className="mt-1 text-xs leading-snug text-zinc-400">of sellers don't know when these apps report that income to the IRS.</div>
+              </div>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-x-3 text-[10px] text-zinc-600">
+              <a className="underline" href="https://www.businessofapps.com/data/venmo-statistics/" target="_blank" rel="noreferrer">Business of Apps</a>
+              <a className="underline" href="https://finance.yahoo.com/news/gig-workers-may-unprepared-2025-123000859.html" target="_blank" rel="noreferrer">Avalara survey</a>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {(["Venmo", "Cash App", "PayPal", "Stripe"] as const).map((app) => (
