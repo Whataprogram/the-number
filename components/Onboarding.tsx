@@ -49,13 +49,16 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
         </p>
         <div className="rise mt-9 w-full max-w-2xl rounded-[28px] border border-white/15 bg-white/[0.04] px-6 py-6 backdrop-blur sm:px-8">
           <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-6 sm:text-left">
-            <div className="font-display num shrink-0 text-[clamp(3.5rem,9vw,5.5rem)] font-semibold leading-none">1 in 3</div>
+            <div className="font-display num shrink-0 text-[clamp(3.5rem,9vw,5.5rem)] font-semibold leading-none">15.7M</div>
             <div>
-              <div className="text-lg font-semibold leading-snug">small business owners don't know if they're supposed to pay the IRS every quarter.</div>
-              <div className="muted mt-1 text-sm">And 37% say taxes leave them anxious and confused.</div>
+              <div className="text-lg font-semibold leading-snug">IRS penalties last year for not paying quarterly taxes.</div>
+              <div className="muted mt-1 text-sm">And 1 in 3 small business owners don't even know they're supposed to pay quarterly. You can't pay what nobody told you about.</div>
             </div>
           </div>
-          <a className="mt-3 block text-[11px] text-zinc-500 underline-offset-2 hover:underline sm:text-left" href="https://american.edu/media/news/20230418_CarolineBrucknerTaxLiteracySurvey.cfm" target="_blank" rel="noreferrer">Source: American University Kogod School of Business, Small Business Tax Literacy Survey</a>
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-500 sm:text-left">
+            <a className="underline-offset-2 hover:underline" href="https://galek.tax/insights/data-analysis/irs-penalty-trends" target="_blank" rel="noreferrer">Source: IRS Data Book FY2025, estimated-tax penalties</a>
+            <a className="underline-offset-2 hover:underline" href="https://american.edu/media/news/20230418_CarolineBrucknerTaxLiteracySurvey.cfm" target="_blank" rel="noreferrer">American University Kogod, Small Business Tax Literacy Survey</a>
+          </div>
         </div>
         <div className="rise mt-9 flex flex-col items-center gap-4">
           <button className="btn btn-primary min-w-[220px] !rounded-xl !py-3.5 text-base" onClick={onStart}>Get Started <ArrowRight size={16} /></button>
