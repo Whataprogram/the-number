@@ -25,9 +25,12 @@ describe("demo dataset", () => {
   it("transfers between your own accounts are not income", () => {
     expect(txns.filter((t) => /cash out/i.test(t.description)).every((t) => t.kind === "transfer")).toBe(true);
   });
-  it("demo story holds: above dad's $8K rule but below the real Number", () => {
+  it("demo story holds: $0 income tax but real self-employment tax, and below the Number", () => {
     console.log(JSON.stringify({ income: r.incomeCents, expenses: r.expensesCents, net: r.netProfitCents, se: r.fed.se.totalCents, incomeTax: r.fed.incomeTaxCents, owed: r.owedSoFarCents, cushion: r.cushionCents, bills: r.billsCents, number: r.theNumberCents, balance: r.balanceCents, safe: r.safeToSpendCents, review: r.reviewCount }));
-    expect(r.balanceCents).toBeGreaterThan(800_000);
+    expect(r.fed.incomeTaxCents).toBe(0);
+    expect(r.fed.se.totalCents).toBeGreaterThan(0);
+    expect(r.incomeCents).toBeGreaterThan(1_000_000); // $10K–$20K range
+    expect(r.incomeCents).toBeLessThan(2_000_000);
     expect(r.safeToSpendCents).toBeLessThan(0);
   });
 });

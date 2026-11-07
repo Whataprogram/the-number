@@ -11,7 +11,7 @@ export async function syncAll(plaid: PlaidApi, access_token: string) {
   const names = new Map(accounts.map((a) => [a.account_id, a.name]));
   let cursor: string | undefined;
   const added: Parameters<typeof mapPlaidTxn>[0][] = [];
-  for (let attempt = 0; attempt < 8; attempt++) {
+  for (let attempt = 0; attempt < 12; attempt++) {
     let hasMore = true;
     while (hasMore) {
       const r = await plaid.transactionsSync({ access_token, cursor, count: 500 });

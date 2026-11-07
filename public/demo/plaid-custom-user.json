@@ -1,0 +1,1190 @@
+{
+  "override_accounts": [
+    {
+      "type": "depository",
+      "subtype": "checking",
+      "starting_balance": 2650,
+      "meta": {
+        "name": "Jay's Pressure Washing Checking"
+      },
+      "transactions": [
+        {
+          "date_transacted": "2026-01-08",
+          "date_posted": "2026-01-08",
+          "amount": 21.05,
+          "description": "TACO BELL 3321",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-01-10",
+          "date_posted": "2026-01-10",
+          "amount": 13.76,
+          "description": "CHIPOTLE 2291",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-01-12",
+          "date_posted": "2026-01-12",
+          "amount": 11.99,
+          "description": "SPOTIFY USA",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-01-16",
+          "date_posted": "2026-01-16",
+          "amount": 9.21,
+          "description": "TACO BELL 3321",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-01-17",
+          "date_posted": "2026-01-17",
+          "amount": 31.22,
+          "description": "CASH APP TO ETHAN K - gas money",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-01-20",
+          "date_posted": "2026-01-20",
+          "amount": 45,
+          "description": "VERIZON WIRELESS AUTOPAY",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-01-23",
+          "date_posted": "2026-01-23",
+          "amount": -29.91,
+          "description": "VENMO FROM ETHAN K - split",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-01-29",
+          "date_posted": "2026-01-29",
+          "amount": 60.91,
+          "description": "TARGET 00012",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-02-02",
+          "date_posted": "2026-02-02",
+          "amount": 24.23,
+          "description": "CASH APP TO NOAH P - tickets",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-02-04",
+          "date_posted": "2026-02-04",
+          "amount": 16.28,
+          "description": "TACO BELL 3321",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-02-10",
+          "date_posted": "2026-02-10",
+          "amount": 9.25,
+          "description": "CHIPOTLE 2291",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-02-12",
+          "date_posted": "2026-02-12",
+          "amount": 11.99,
+          "description": "SPOTIFY USA",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-02-20",
+          "date_posted": "2026-02-20",
+          "amount": 45,
+          "description": "VERIZON WIRELESS AUTOPAY",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-02-27",
+          "date_posted": "2026-02-27",
+          "amount": 23.37,
+          "description": "STARBUCKS #1180",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-03-01",
+          "date_posted": "2026-03-01",
+          "amount": 25,
+          "description": "GOOGLE ADS 8844",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-03-03",
+          "date_posted": "2026-03-03",
+          "amount": -240,
+          "description": "Zelle payment from DAVE KESSLER",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-03-03",
+          "date_posted": "2026-03-03",
+          "amount": 35,
+          "description": "NEXT INSURANCE GENERAL LIAB",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-03-06",
+          "date_posted": "2026-03-06",
+          "amount": -210,
+          "description": "CASH APP FROM PRIYA SHAH - patio wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-03-08",
+          "date_posted": "2026-03-08",
+          "amount": 26.32,
+          "description": "CASH APP TO ETHAN K - split dinner",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-03-12",
+          "date_posted": "2026-03-12",
+          "amount": 11.99,
+          "description": "SPOTIFY USA",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-03-20",
+          "date_posted": "2026-03-20",
+          "amount": 45,
+          "description": "VERIZON WIRELESS AUTOPAY",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-03-21",
+          "date_posted": "2026-03-21",
+          "amount": 189,
+          "description": "NORTHERN TOOL + EQUIPMENT - SURFACE CLEANER",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-03-23",
+          "date_posted": "2026-03-23",
+          "amount": -260,
+          "description": "CASH APP FROM TOM BECKER - pressure wash job",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-01",
+          "date_posted": "2026-04-01",
+          "amount": 25,
+          "description": "GOOGLE ADS 8844",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-02",
+          "date_posted": "2026-04-02",
+          "amount": -397.81,
+          "description": "SQUARE INC DEPOSIT",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-03",
+          "date_posted": "2026-04-03",
+          "amount": 35,
+          "description": "NEXT INSURANCE GENERAL LIAB",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-03",
+          "date_posted": "2026-04-03",
+          "amount": 16.82,
+          "description": "TACO BELL 3321",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-04",
+          "date_posted": "2026-04-04",
+          "amount": 27.64,
+          "description": "MARATHON PETRO 2231",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-09",
+          "date_posted": "2026-04-09",
+          "amount": -400,
+          "description": "CASH APP FROM JEN WALSH",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-11",
+          "date_posted": "2026-04-11",
+          "amount": 44.39,
+          "description": "SPEEDWAY 9183 AMELIA OH",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-12",
+          "date_posted": "2026-04-12",
+          "amount": 11.99,
+          "description": "SPOTIFY USA",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-14",
+          "date_posted": "2026-04-14",
+          "amount": -329.84,
+          "description": "SQUARE INC DEPOSIT",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-14",
+          "date_posted": "2026-04-14",
+          "amount": 11.64,
+          "description": "STARBUCKS #1180",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-15",
+          "date_posted": "2026-04-15",
+          "amount": 54.68,
+          "description": "THE HOME DEPOT #3812",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-17",
+          "date_posted": "2026-04-17",
+          "amount": 9.1,
+          "description": "TACO BELL 3321",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-18",
+          "date_posted": "2026-04-18",
+          "amount": -330,
+          "description": "CASH APP FROM PRIYA SHAH - deck + patio",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-20",
+          "date_posted": "2026-04-20",
+          "amount": 45,
+          "description": "VERIZON WIRELESS AUTOPAY",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-25",
+          "date_posted": "2026-04-25",
+          "amount": 28.19,
+          "description": "MARATHON PETRO 2231",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-25",
+          "date_posted": "2026-04-25",
+          "amount": 44.93,
+          "description": "THE HOME DEPOT #3812",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-04-30",
+          "date_posted": "2026-04-30",
+          "amount": -280,
+          "description": "VENMO FROM KAREN OHLMAN - driveway wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-01",
+          "date_posted": "2026-05-01",
+          "amount": 64.45,
+          "description": "SH SUPPLY CO - SODIUM HYPOCHLORITE",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-01",
+          "date_posted": "2026-05-01",
+          "amount": 25,
+          "description": "GOOGLE ADS 8844",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-03",
+          "date_posted": "2026-05-03",
+          "amount": 35,
+          "description": "NEXT INSURANCE GENERAL LIAB",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-06",
+          "date_posted": "2026-05-06",
+          "amount": -220,
+          "description": "CASH APP FROM LINDA MORRIS - gutter clean",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-07",
+          "date_posted": "2026-05-07",
+          "amount": 14.89,
+          "description": "TACO BELL 3321",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-07",
+          "date_posted": "2026-05-07",
+          "amount": -210,
+          "description": "CASH APP FROM PRIYA SHAH - house wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-08",
+          "date_posted": "2026-05-08",
+          "amount": -360,
+          "description": "VENMO FROM MIKE REYES - 🙏",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-09",
+          "date_posted": "2026-05-09",
+          "amount": 38.59,
+          "description": "SPEEDWAY 9183 AMELIA OH",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-09",
+          "date_posted": "2026-05-09",
+          "amount": 16.58,
+          "description": "STARBUCKS #1180",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-09",
+          "date_posted": "2026-05-09",
+          "amount": -100,
+          "description": "VENMO FROM MOM - bday 🎂",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-10",
+          "date_posted": "2026-05-10",
+          "amount": -213.32,
+          "description": "SQUARE INC DEPOSIT",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-12",
+          "date_posted": "2026-05-12",
+          "amount": 11.99,
+          "description": "SPOTIFY USA",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-12",
+          "date_posted": "2026-05-12",
+          "amount": -240,
+          "description": "CASH APP FROM NINA BROOKS - siding wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-14",
+          "date_posted": "2026-05-14",
+          "amount": 68.59,
+          "description": "THE HOME DEPOT #3812",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-16",
+          "date_posted": "2026-05-16",
+          "amount": -388.1,
+          "description": "SQUARE INC DEPOSIT",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-16",
+          "date_posted": "2026-05-16",
+          "amount": 27.54,
+          "description": "SHELL OIL 5741",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-16",
+          "date_posted": "2026-05-16",
+          "amount": 117.63,
+          "description": "NIKE.COM",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-19",
+          "date_posted": "2026-05-19",
+          "amount": -270,
+          "description": "CASH APP FROM STEVE YODER - fence wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-20",
+          "date_posted": "2026-05-20",
+          "amount": 45,
+          "description": "VERIZON WIRELESS AUTOPAY",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-20",
+          "date_posted": "2026-05-20",
+          "amount": -160,
+          "description": "VENMO FROM NINA BROOKS - patio wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-22",
+          "date_posted": "2026-05-22",
+          "amount": 20.56,
+          "description": "DOORDASH*MCDONALDS",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-24",
+          "date_posted": "2026-05-24",
+          "amount": 19.33,
+          "description": "TACO BELL 3321",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-24",
+          "date_posted": "2026-05-24",
+          "amount": -170,
+          "description": "CASH APP FROM AMY TURNER - pressure wash job",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-26",
+          "date_posted": "2026-05-26",
+          "amount": -380,
+          "description": "Zelle payment from LINDA MORRIS",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-27",
+          "date_posted": "2026-05-27",
+          "amount": -340,
+          "description": "CASH APP FROM BILL HENDRICKS",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-05-30",
+          "date_posted": "2026-05-30",
+          "amount": -340,
+          "description": "CASH APP FROM MIKE REYES - driveway wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-01",
+          "date_posted": "2026-06-01",
+          "amount": 25,
+          "description": "GOOGLE ADS 8844",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-01",
+          "date_posted": "2026-06-01",
+          "amount": -270,
+          "description": "CASH APP FROM RAY DUNN - patio wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-03",
+          "date_posted": "2026-06-03",
+          "amount": 35,
+          "description": "NEXT INSURANCE GENERAL LIAB",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-03",
+          "date_posted": "2026-06-03",
+          "amount": -240,
+          "description": "VENMO FROM STEVE YODER - 🙏",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-04",
+          "date_posted": "2026-06-04",
+          "amount": -270,
+          "description": "Zelle payment from MEGAN FOX",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-06",
+          "date_posted": "2026-06-06",
+          "amount": 32.44,
+          "description": "SPEEDWAY 9183 AMELIA OH",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-10",
+          "date_posted": "2026-06-10",
+          "amount": -430,
+          "description": "CASH APP FROM CARLOS RUIZ - driveway & sidewalk",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-11",
+          "date_posted": "2026-06-11",
+          "amount": -420,
+          "description": "Zelle payment from CARLOS RUIZ",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-12",
+          "date_posted": "2026-06-12",
+          "amount": 11.99,
+          "description": "SPOTIFY USA",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-13",
+          "date_posted": "2026-06-13",
+          "amount": 26.93,
+          "description": "MARATHON PETRO 2231",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-13",
+          "date_posted": "2026-06-13",
+          "amount": -310,
+          "description": "CASH APP FROM TOM BECKER - siding wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-14",
+          "date_posted": "2026-06-14",
+          "amount": -370,
+          "description": "Zelle payment from RAY DUNN",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-16",
+          "date_posted": "2026-06-16",
+          "amount": 9.93,
+          "description": "TACO BELL 3321",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-16",
+          "date_posted": "2026-06-16",
+          "amount": -350,
+          "description": "CASH APP FROM PRIYA SHAH - driveway & sidewalk",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-20",
+          "date_posted": "2026-06-20",
+          "amount": 45,
+          "description": "VERIZON WIRELESS AUTOPAY",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-21",
+          "date_posted": "2026-06-21",
+          "amount": 10.17,
+          "description": "CHIPOTLE 2291",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-22",
+          "date_posted": "2026-06-22",
+          "amount": -160,
+          "description": "VENMO FROM PRIYA SHAH - pressure wash job",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-24",
+          "date_posted": "2026-06-24",
+          "amount": -200,
+          "description": "VENMO FROM RAY DUNN - deck + patio",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-25",
+          "date_posted": "2026-06-25",
+          "amount": 9.02,
+          "description": "STARBUCKS #1180",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-06-29",
+          "date_posted": "2026-06-29",
+          "amount": 10.33,
+          "description": "CASH APP TO LUKE M - gas money",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-03",
+          "date_posted": "2026-07-03",
+          "amount": 35,
+          "description": "NEXT INSURANCE GENERAL LIAB",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-04",
+          "date_posted": "2026-07-04",
+          "amount": 40.55,
+          "description": "MARATHON PETRO 2231",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-04",
+          "date_posted": "2026-07-04",
+          "amount": 19.73,
+          "description": "DOORDASH*MCDONALDS",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-04",
+          "date_posted": "2026-07-04",
+          "amount": -160,
+          "description": "VENMO FROM GREG PATEL - house soft wash 🏠",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-05",
+          "date_posted": "2026-07-05",
+          "amount": 21.96,
+          "description": "STARBUCKS #1180",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-08",
+          "date_posted": "2026-07-08",
+          "amount": 98.7,
+          "description": "THE HOME DEPOT #3812",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-11",
+          "date_posted": "2026-07-11",
+          "amount": 31.77,
+          "description": "SPEEDWAY 9183 AMELIA OH",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-12",
+          "date_posted": "2026-07-12",
+          "amount": 11.99,
+          "description": "SPOTIFY USA",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-14",
+          "date_posted": "2026-07-14",
+          "amount": 120,
+          "description": "MIKES SMALL ENGINE REPAIR - PUMP",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-15",
+          "date_posted": "2026-07-15",
+          "amount": -160,
+          "description": "CASH APP FROM DAVE KESSLER - patio wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-18",
+          "date_posted": "2026-07-18",
+          "amount": 34.77,
+          "description": "SHELL OIL 5741",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-18",
+          "date_posted": "2026-07-18",
+          "amount": -350,
+          "description": "CASH APP FROM DAVE KESSLER - driveway & sidewalk",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-20",
+          "date_posted": "2026-07-20",
+          "amount": 45,
+          "description": "VERIZON WIRELESS AUTOPAY",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-22",
+          "date_posted": "2026-07-22",
+          "amount": 13.98,
+          "description": "TACO BELL 3321",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-25",
+          "date_posted": "2026-07-25",
+          "amount": 39.76,
+          "description": "MARATHON PETRO 2231",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-25",
+          "date_posted": "2026-07-25",
+          "amount": -310,
+          "description": "VENMO FROM CARLOS RUIZ - driveway wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-26",
+          "date_posted": "2026-07-26",
+          "amount": -190,
+          "description": "VENMO FROM AMY TURNER - driveway & sidewalk",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-27",
+          "date_posted": "2026-07-27",
+          "amount": -380,
+          "description": "Zelle payment from MIKE REYES",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-28",
+          "date_posted": "2026-07-28",
+          "amount": -390,
+          "description": "VENMO FROM CARLOS RUIZ - deck + patio",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-29",
+          "date_posted": "2026-07-29",
+          "amount": -380,
+          "description": "VENMO FROM DAVE KESSLER - pressure wash job",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-07-31",
+          "date_posted": "2026-07-31",
+          "amount": -240,
+          "description": "CASH APP FROM PRIYA SHAH - driveway wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-02",
+          "date_posted": "2026-08-02",
+          "amount": -200,
+          "description": "CASH APP FROM BILL HENDRICKS",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-03",
+          "date_posted": "2026-08-03",
+          "amount": 35,
+          "description": "NEXT INSURANCE GENERAL LIAB",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-04",
+          "date_posted": "2026-08-04",
+          "amount": -240,
+          "description": "CASH APP FROM AMY TURNER",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-05",
+          "date_posted": "2026-08-05",
+          "amount": -380,
+          "description": "CASH APP FROM MEGAN FOX - patio wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-06",
+          "date_posted": "2026-08-06",
+          "amount": 89.03,
+          "description": "SH SUPPLY CO - SODIUM HYPOCHLORITE",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-07",
+          "date_posted": "2026-08-07",
+          "amount": 10.29,
+          "description": "STARBUCKS #1180",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-07",
+          "date_posted": "2026-08-07",
+          "amount": -30.14,
+          "description": "VENMO FROM NOAH P - concert tickets",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-12",
+          "date_posted": "2026-08-12",
+          "amount": 11.99,
+          "description": "SPOTIFY USA",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-15",
+          "date_posted": "2026-08-15",
+          "amount": 94.65,
+          "description": "LOWE'S #1452",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-15",
+          "date_posted": "2026-08-15",
+          "amount": 14.04,
+          "description": "STARBUCKS #1180",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-15",
+          "date_posted": "2026-08-15",
+          "amount": -36.27,
+          "description": "VENMO FROM NOAH P - pizza",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-16",
+          "date_posted": "2026-08-16",
+          "amount": -360,
+          "description": "CASH APP FROM SARAH LINDQVIST - patio wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-19",
+          "date_posted": "2026-08-19",
+          "amount": 11.02,
+          "description": "TACO BELL 3321",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-20",
+          "date_posted": "2026-08-20",
+          "amount": -291,
+          "description": "SQUARE INC DEPOSIT",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-20",
+          "date_posted": "2026-08-20",
+          "amount": 45,
+          "description": "VERIZON WIRELESS AUTOPAY",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-22",
+          "date_posted": "2026-08-22",
+          "amount": -190,
+          "description": "Zelle payment from RAY DUNN",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-22",
+          "date_posted": "2026-08-22",
+          "amount": 44.74,
+          "description": "KROGER FUEL #412",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-24",
+          "date_posted": "2026-08-24",
+          "amount": 86.77,
+          "description": "THE HOME DEPOT #3812",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-25",
+          "date_posted": "2026-08-25",
+          "amount": 12.68,
+          "description": "CASH APP TO ETHAN K - pizza",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-26",
+          "date_posted": "2026-08-26",
+          "amount": -310,
+          "description": "VENMO FROM MIKE REYES - house soft wash 🏠",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-08-28",
+          "date_posted": "2026-08-28",
+          "amount": 88.72,
+          "description": "LOWE'S #1452",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-03",
+          "date_posted": "2026-09-03",
+          "amount": 35,
+          "description": "NEXT INSURANCE GENERAL LIAB",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-04",
+          "date_posted": "2026-09-04",
+          "amount": -210,
+          "description": "Zelle payment from MEGAN FOX",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-05",
+          "date_posted": "2026-09-05",
+          "amount": 29.26,
+          "description": "SHELL OIL 5741",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-06",
+          "date_posted": "2026-09-06",
+          "amount": 78.86,
+          "description": "TARGET 00012",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-06",
+          "date_posted": "2026-09-06",
+          "amount": -180,
+          "description": "CASH APP FROM AMY TURNER - deck + patio",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-07",
+          "date_posted": "2026-09-07",
+          "amount": -440,
+          "description": "CASH APP FROM STEVE YODER - gutter clean",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-08",
+          "date_posted": "2026-09-08",
+          "amount": -340,
+          "description": "VENMO FROM TOM BECKER - driveway & sidewalk",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-09",
+          "date_posted": "2026-09-09",
+          "amount": -240,
+          "description": "VENMO FROM SARAH LINDQVIST - pressure wash job",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-10",
+          "date_posted": "2026-09-10",
+          "amount": 16.77,
+          "description": "DOORDASH*MCDONALDS",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-11",
+          "date_posted": "2026-09-11",
+          "amount": 15.84,
+          "description": "CHIPOTLE 2291",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-12",
+          "date_posted": "2026-09-12",
+          "amount": 27.53,
+          "description": "SPEEDWAY 9183 AMELIA OH",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-12",
+          "date_posted": "2026-09-12",
+          "amount": 11.99,
+          "description": "SPOTIFY USA",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-13",
+          "date_posted": "2026-09-13",
+          "amount": -290,
+          "description": "CASH APP FROM DAVE KESSLER - house wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-15",
+          "date_posted": "2026-09-15",
+          "amount": -440,
+          "description": "CASH APP FROM TOM BECKER - pressure wash job",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-16",
+          "date_posted": "2026-09-16",
+          "amount": -450,
+          "description": "VENMO FROM DAVE KESSLER - fence wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-19",
+          "date_posted": "2026-09-19",
+          "amount": 34.12,
+          "description": "KROGER FUEL #412",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-19",
+          "date_posted": "2026-09-19",
+          "amount": 43.98,
+          "description": "LOWE'S #1452",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-20",
+          "date_posted": "2026-09-20",
+          "amount": 45,
+          "description": "VERIZON WIRELESS AUTOPAY",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-21",
+          "date_posted": "2026-09-21",
+          "amount": -420,
+          "description": "Zelle payment from MIKE REYES",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-24",
+          "date_posted": "2026-09-24",
+          "amount": -250,
+          "description": "CASH APP FROM GREG PATEL - fence wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-27",
+          "date_posted": "2026-09-27",
+          "amount": -400,
+          "description": "VENMO FROM NINA BROOKS - driveway & sidewalk",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-29",
+          "date_posted": "2026-09-29",
+          "amount": -220,
+          "description": "VENMO FROM NINA BROOKS - siding wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-30",
+          "date_posted": "2026-09-30",
+          "amount": 13.37,
+          "description": "STARBUCKS #1180",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-30",
+          "date_posted": "2026-09-30",
+          "amount": -160,
+          "description": "CASH APP FROM STEVE YODER - gutter clean",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-09-30",
+          "date_posted": "2026-09-30",
+          "amount": 31.59,
+          "description": "CASH APP TO LUKE M - split dinner",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-01",
+          "date_posted": "2026-10-01",
+          "amount": -450,
+          "description": "VENMO FROM CARLOS RUIZ - driveway & sidewalk",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-03",
+          "date_posted": "2026-10-03",
+          "amount": 40.48,
+          "description": "SPEEDWAY 9183 AMELIA OH",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-03",
+          "date_posted": "2026-10-03",
+          "amount": 35,
+          "description": "NEXT INSURANCE GENERAL LIAB",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-04",
+          "date_posted": "2026-10-04",
+          "amount": 14.15,
+          "description": "CHIPOTLE 2291",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-06",
+          "date_posted": "2026-10-06",
+          "amount": -340,
+          "description": "Zelle payment from JEN WALSH",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-10",
+          "date_posted": "2026-10-10",
+          "amount": 36.94,
+          "description": "KROGER FUEL #412",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-10",
+          "date_posted": "2026-10-10",
+          "amount": -370,
+          "description": "CASH APP FROM DAVE KESSLER - pressure wash job",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-11",
+          "date_posted": "2026-10-11",
+          "amount": -34.42,
+          "description": "VENMO FROM NOAH P - pizza",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-12",
+          "date_posted": "2026-10-12",
+          "amount": 11.99,
+          "description": "SPOTIFY USA",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-12",
+          "date_posted": "2026-10-12",
+          "amount": -350,
+          "description": "VENMO FROM MIKE REYES - driveway wash",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-17",
+          "date_posted": "2026-10-17",
+          "amount": 31.48,
+          "description": "SPEEDWAY 9183 AMELIA OH",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-20",
+          "date_posted": "2026-10-20",
+          "amount": 45,
+          "description": "VERIZON WIRELESS AUTOPAY",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-10-22",
+          "date_posted": "2026-10-22",
+          "amount": 45.67,
+          "description": "LOWE'S #1452",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-11-03",
+          "date_posted": "2026-11-03",
+          "amount": 35,
+          "description": "NEXT INSURANCE GENERAL LIAB",
+          "currency": "USD"
+        },
+        {
+          "date_transacted": "2026-11-06",
+          "date_posted": "2026-11-06",
+          "amount": 23.69,
+          "description": "CASH APP TO ETHAN K - pizza",
+          "currency": "USD"
+        }
+      ]
+    }
+  ]
+}
