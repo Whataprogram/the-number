@@ -37,6 +37,18 @@ const isoDate = (v: string) => {
   throw new Error(`Unrecognized date: ${v}`);
 };
 
+// Most recent running balance from a Chase checking export (it lists newest first), if present.
+export function latestBalance(text: string): number | null {
+  try {
+    const recs = parseCSV(text);
+    if (!("Balance" in recs[0]) || !("Posting Date" in recs[0])) return null;
+    const withBal = recs.filter((r) => r["Balance"] && r["Balance"].trim() !== "");
+    if (!withBal.length) return null;
+    const newest = withBal.reduce((a, b) => (isoDate(b["Posting Date"]) > isoDate(a["Posting Date"]) ? b : a));
+    return toCents(newest["Balance"]);
+  } catch { return null; }
+}
+
 // Normalize a bank / Cash App / Venmo export into raw transactions (unclassified).
 export function normalize(text: string, fileName = "statement.csv"): Omit<Txn, "kind" | "reason">[] {
   const recs = parseCSV(text);

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { classify } from "@/lib/classify";
-import { normalize } from "@/lib/csv";
+import { latestBalance, normalize } from "@/lib/csv";
 import { DEMO_FILES, DEMO_PROFILE } from "@/lib/demo";
 import { computeNumber, type Alert, type Line, type NumberResult } from "@/lib/number";
 import { federalEstimate, formatUSD } from "@/lib/tax";
@@ -41,9 +41,12 @@ export default function App() {
     if (!files?.length) return;
     setError("");
     try {
-      const parts = await Promise.all([...files].map(async (f) => normalize(await f.text(), f.name)));
-      const all = parts.flat().map(classify);
-      setProfile({ ...DEMO_PROFILE, ownerName: "You", businessName: "Your business", parentRule: undefined, balances: [{ name: "Your accounts (edit in settings)", balanceCents: DEMO_PROFILE.balances.reduce((s, b) => s + b.balanceCents, 0) }] });
+      // Files are read and processed only in this browser. Nothing is uploaded to a server.
+      const texts = await Promise.all([...files].map(async (f) => ({ name: f.name, text: await f.text() })));
+      const all = texts.flatMap((f) => normalize(f.text, f.name)).map(classify);
+      const balances = texts.map((f) => ({ name: f.name.replace(/\.csv$/i, ""), balanceCents: latestBalance(f.text) ?? 0 }));
+      const last = all.reduce((m, t) => (t.date > m ? t.date : m), "2026-01-01");
+      setProfile({ ...DEMO_PROFILE, ownerName: "You", businessName: "Your business", age: 0, parentRule: undefined, balances, bills: [], asOf: last });
       setTxns(all); setSource(`Uploaded: ${[...files].map((f) => f.name).join(", ")}`); setTab("home");
     } catch (e) { setError((e as Error).message); }
   }
