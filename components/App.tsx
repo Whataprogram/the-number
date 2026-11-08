@@ -146,7 +146,7 @@ export default function App() {
       </header>
 
       <main className="relative z-10 mx-auto max-w-6xl space-y-4">
-        {tab === "home" && <Home r={result} openLine={openLine} setWhy={setWhy} txns={txns} />}
+        {tab === "home" && <Home r={result} openLine={openLine} setWhy={setWhy} txns={txns} go={setTab} />}
         {tab === "alerts" && <Alerts r={result} go={setTab} prefs={prefs} setPref={setPref} />}
         {tab === "settle" && <Settle r={result} />}
         {tab === "learn" && <Learn r={result} />}
@@ -201,7 +201,7 @@ function Label({ children, icon: I }: { children: React.ReactNode; icon?: typeof
 
 /* ---------- Home: one number, two boxes ---------- */
 
-function Home({ r, openLine, setWhy, txns }: { r: NumberResult; openLine: (l: Line) => void; setWhy: (w: Why) => void; txns: Txn[] }) {
+function Home({ r, openLine, setWhy, txns, go }: { r: NumberResult; openLine: (l: Line) => void; setWhy: (w: Why) => void; txns: Txn[]; go: (t: Tab) => void }) {
   const shown = useCountUp(r.owedSoFarCents);
   const usd = (c: number) => formatUSD(c, { cents: true });
   const fmtDate = (iso: string, year = false) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", ...(year ? { year: "numeric" } : {}) });
@@ -275,7 +275,7 @@ function Home({ r, openLine, setWhy, txns }: { r: NumberResult; openLine: (l: Li
             </ul>
           )}
           {anyLate && <p className="muted mt-3 text-xs">Late parts add a small IRS penalty until they're paid. Paying sooner keeps it small.</p>}
-          <a href="https://www.irs.gov/payments" target="_blank" rel="noreferrer" className="btn btn-primary w-full" style={{ marginTop: "auto" }}>Pay at irs.gov <ArrowUpRight size={15} /></a>
+          <button className="btn btn-primary w-full" style={{ marginTop: "auto" }} onClick={() => go("settle")}><Sparkles size={15} />Settle this now <ArrowRight size={15} /></button>
         </div>
 
         <div className="card hero-glow flex flex-col p-6">
@@ -317,28 +317,29 @@ function Settle({ r }: { r: NumberResult }) {
 
   const lines: React.ReactNode[] = [
     <>You owe <b className="text-white">{usd(r.owedSoFarCents)}</b> in federal tax for {TAX_YEAR}.</>,
-    <>As a sole proprietor, the IRS calls this <b className="text-white">estimated tax</b>, paid on <b className="text-white">Form 1040-ES</b>.</>,
-    <>You <b className="text-white">don&apos;t need an IRS account or ID.me</b>. You can pay as a guest.</>,
-    <>Pay straight from your bank and the processing fee is <b className="text-white">$0</b>.</>,
+    <>It&apos;s <b className="text-white">estimated tax</b>, IRS <b className="text-white">Form 1040-ES</b>.</>,
+    <>No IRS account or ID.me needed. <b className="text-white">Pay as a guest.</b></>,
+    <>Pay from your bank. Fee: <b className="text-white">$0</b>.</>,
     late.length
       ? <><b style={{ color: "var(--red)" }}>{late.length} payment{late.length > 1 ? "s are" : " is"} past due.</b> Pay now to stop the penalty from growing.</>
       : <>Your next payment is due <b className="text-white">{dueStr}</b>.</>,
-    <>On the IRS page pick: <b className="text-white">Estimated Tax → 1040-ES → {TAX_YEAR}</b>. We filled the rest in for you.</>,
+    <>On the IRS page: <b className="text-white">Estimated Tax → 1040-ES → {TAX_YEAR}</b>. We did the rest.</>,
   ];
   const [n, setN] = useState(0);
   useEffect(() => { if (n >= lines.length) return; const t = window.setTimeout(() => setN((v) => v + 1), 520); return () => window.clearTimeout(t); }, [n, lines.length]);
 
   const steps: [string, string][] = [
-    ["Open IRS Direct Pay", "The free government page. No account, no card fee."],
+    ["Open IRS Direct Pay", "Free government page. No account."],
     ["Pick the three options", `Reason: Estimated Tax · Apply to: 1040-ES · Period: ${TAX_YEAR}.`],
-    ["Enter the amount + your bank", `Type ${usd(r.owedSoFarCents)}, add your routing and account number, submit.`],
+    ["Enter amount + bank", `${usd(r.owedSoFarCents)}, your account number, submit.`],
   ];
 
   return (
     <section className="mx-auto max-w-3xl space-y-4">
       <div>
-        <h1 className="font-display text-4xl font-semibold">Settle up</h1>
-        <p className="muted mt-1">Paying the IRS looks like a 20-minute maze. We read the {TAX_YEAR} rules for your business and make it two minutes.</p>
+        <span className="chip text-zinc-300"><Sparkles size={13} />The game-changer</span>
+        <h1 className="font-display mt-3 text-4xl font-semibold">Settle up</h1>
+        <p className="muted mt-1">The IRS makes paying a maze. We make it one tap.</p>
       </div>
 
       {/* AI copilot briefing */}
