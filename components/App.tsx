@@ -337,9 +337,9 @@ function Settle({ r }: { r: NumberResult }) {
       </div>
 
       <div className="text-center">
-        <p className="text-[15px] font-semibold"><span className="num">40+ hrs a year</span> &rarr; <span className="num">~30 seconds</span>.</p>
+        <p className="text-[15px] font-semibold">Your exact number, then the IRS maze in <span className="num">~30 seconds</span>.</p>
         <p className="muted mx-auto mt-1 max-w-xs text-[11px] leading-relaxed">
-          The yearly federal-tax scramble owners dread &mdash; The Number runs your number and guides the payment. Over half of small-business owners spend 40+ hrs/yr on federal taxes. <a className="underline underline-offset-2 hover:text-white" href="https://taxfoundation.org/tax-complexity-expensive-small-businesses" target="_blank" rel="noreferrer">Tax Foundation, NSBA Small Business Taxation Survey</a>.
+          Over half of small-business owners lose <span className="text-zinc-300">40+ hours a year</span> to federal taxes &mdash; and most don&apos;t even know what they owe. The Number computes it and walks you through paying. <a className="underline underline-offset-2 hover:text-white" href="https://taxfoundation.org/tax-complexity-expensive-small-businesses" target="_blank" rel="noreferrer">Tax Foundation, NSBA Small Business Taxation Survey</a>.
         </p>
       </div>
 
