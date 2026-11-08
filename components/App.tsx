@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowRight, Check, Lightbulb, Lock, ArrowUpRight, Bell, BookOpen, Briefcase, CalendarClock, Download, Eye, EyeOff, GraduationCap, Home as HomeIcon, Info, Landmark, LogOut, Octagon, Printer, ShoppingBag, Terminal, User, Users, Wallet, X, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Lightbulb, Lock, ArrowUpRight, Bell, BookOpen, Briefcase, CalendarClock, Download, Eye, EyeOff, GraduationCap, Home as HomeIcon, Copy, Info, Landmark, LogOut, Octagon, Sparkles, Printer, ShoppingBag, Terminal, User, Users, Wallet, X, Zap } from "lucide-react";
 import { classify } from "@/lib/classify";
 import { latestBalance, normalize } from "@/lib/csv";
 import { DEMO_FILES, DEMO_PROFILE } from "@/lib/demo";
@@ -12,7 +12,7 @@ import { ASSUMPTIONS, SOURCES, TAX_2026, TAX_YEAR } from "@/lib/taxConfig";
 import type { Profile, Txn } from "@/lib/types";
 import { Connect, Landing, Logo, Pricing, SignUp, ThemeToggle, type Account } from "./Onboarding";
 
-type Tab = "home" | "alerts" | "learn" | "profile";
+type Tab = "home" | "alerts" | "learn" | "settle" | "profile";
 type Stage = "landing" | "signup" | "pricing" | "connect" | "app";
 type Why = { title: string; body: string; txns?: Txn[] };
 
@@ -117,7 +117,7 @@ export default function App() {
   const byId = new Map(txns.map((t) => [t.id, t]));
   const openLine = (l: Line) => setWhy({ title: l.label, body: l.why, txns: l.txnIds?.map((i) => byId.get(i)!).filter(Boolean).slice(-6) });
   const alertDot = result.alerts.some((a) => a.level !== "info");
-  const NAV: [Tab, typeof HomeIcon, string][] = [["home", HomeIcon, "Home"], ["alerts", Bell, "Alerts"], ["learn", GraduationCap, "Learn"], ["profile", User, "Profile"]];
+  const NAV: [Tab, typeof HomeIcon, string][] = [["home", HomeIcon, "Home"], ["alerts", Bell, "Alerts"], ["settle", Sparkles, "Settle"], ["learn", GraduationCap, "Learn"], ["profile", User, "Profile"]];
 
   return (
     <div className="relative min-h-screen pb-28 sm:pb-10" style={{ paddingLeft: "max(16px, env(safe-area-inset-left))", paddingRight: "max(16px, env(safe-area-inset-right))" }}>
@@ -148,6 +148,7 @@ export default function App() {
       <main className="relative z-10 mx-auto max-w-6xl space-y-4">
         {tab === "home" && <Home r={result} openLine={openLine} setWhy={setWhy} txns={txns} />}
         {tab === "alerts" && <Alerts r={result} go={setTab} prefs={prefs} setPref={setPref} />}
+        {tab === "settle" && <Settle r={result} />}
         {tab === "learn" && <Learn r={result} />}
         {tab === "profile" && <Profile account={account} source={source} plan={PLAN_NAME[account?.plan || "free"]} onReconnect={() => setStage("connect")} onEditInfo={() => setStage("signup")} onSignOut={signOut} />}
         <p className="muted pb-4 pt-2 text-center text-xs">Data: {source}. Educational estimate, not tax advice.</p>
@@ -300,6 +301,93 @@ function Home({ r, openLine, setWhy, txns }: { r: NumberResult; openLine: (l: Li
 
       <Breakdown r={r} />
     </>
+  );
+}
+
+/* ---------- Settle: AI copilot + one-tap pay ---------- */
+
+function Settle({ r }: { r: NumberResult }) {
+  const usd = (c: number) => formatUSD(c, { cents: true });
+  const live = r.quarters.find((q) => q.status === "building");
+  const payBy = live?.due ?? r.next.due;
+  const dueStr = new Date(payBy + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const late = r.quarters.filter((q) => q.status === "missed" && q.remainingCents > 0);
+  const [copied, setCopied] = useState(false);
+  const copy = async () => { try { await navigator.clipboard.writeText((r.owedSoFarCents / 100).toFixed(2)); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* fine */ } };
+
+  const lines: React.ReactNode[] = [
+    <>You owe <b className="text-white">{usd(r.owedSoFarCents)}</b> in federal tax for {TAX_YEAR}.</>,
+    <>As a sole proprietor, the IRS calls this <b className="text-white">estimated tax</b>, paid on <b className="text-white">Form 1040-ES</b>.</>,
+    <>You <b className="text-white">don&apos;t need an IRS account or ID.me</b>. You can pay as a guest.</>,
+    <>Pay straight from your bank and the processing fee is <b className="text-white">$0</b>.</>,
+    late.length
+      ? <><b style={{ color: "var(--red)" }}>{late.length} payment{late.length > 1 ? "s are" : " is"} past due.</b> Pay now to stop the penalty from growing.</>
+      : <>Your next payment is due <b className="text-white">{dueStr}</b>.</>,
+    <>On the IRS page pick: <b className="text-white">Estimated Tax → 1040-ES → {TAX_YEAR}</b>. We filled the rest in for you.</>,
+  ];
+  const [n, setN] = useState(0);
+  useEffect(() => { if (n >= lines.length) return; const t = window.setTimeout(() => setN((v) => v + 1), 520); return () => window.clearTimeout(t); }, [n, lines.length]);
+
+  const steps: [string, string][] = [
+    ["Open IRS Direct Pay", "The free government page. No account, no card fee."],
+    ["Pick the three options", `Reason: Estimated Tax · Apply to: 1040-ES · Period: ${TAX_YEAR}.`],
+    ["Enter the amount + your bank", `Type ${usd(r.owedSoFarCents)}, add your routing and account number, submit.`],
+  ];
+
+  return (
+    <section className="mx-auto max-w-3xl space-y-4">
+      <div>
+        <h1 className="font-display text-4xl font-semibold">Settle up</h1>
+        <p className="muted mt-1">Paying the IRS looks like a 20-minute maze. We read the {TAX_YEAR} rules for your business and make it two minutes.</p>
+      </div>
+
+      {/* AI copilot briefing */}
+      <div className="card hero-glow p-6 sm:p-8">
+        <div className="flex items-center gap-2 text-sm text-zinc-400">
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-black"><Sparkles size={13} /></span>
+          Copilot {n < lines.length ? <span className="muted">· reading the IRS rules for you<span className="live-dot">…</span></span> : <span className="muted">· here&apos;s your plan</span>}
+        </div>
+        <ul className="mt-5 space-y-3">
+          {lines.slice(0, n).map((l, i) => (
+            <li key={i} className="rise flex gap-3 text-[15px] leading-snug text-zinc-200">
+              <Check size={18} className="mt-0.5 shrink-0 text-white" />
+              <span>{l}</span>
+            </li>
+          ))}
+          {n < lines.length && <li className="flex gap-3 text-zinc-600"><span className="live-dot mt-1 h-3 w-1.5 bg-white" /></li>}
+        </ul>
+      </div>
+
+      {/* Pay action */}
+      <div className="card p-6 sm:p-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="muted text-xs font-medium uppercase tracking-[0.12em]">Pay the IRS</div>
+            <div className="font-display num mt-1 text-5xl font-semibold">{usd(r.owedSoFarCents)}</div>
+            <div className="muted mt-1 text-sm">Estimated tax · 1040-ES · due {dueStr}</div>
+          </div>
+          <button className="btn btn-ghost" onClick={copy}>{copied ? <><Check size={15} />Copied</> : <><Copy size={15} />Copy amount</>}</button>
+        </div>
+        <a href="https://www.irs.gov/payments/direct-pay" target="_blank" rel="noreferrer" className="btn btn-primary mt-5 w-full !rounded-xl !py-4 text-base">
+          Pay {usd(r.owedSoFarCents)} at IRS Direct Pay <ArrowUpRight size={17} />
+        </a>
+        <p className="muted mt-2 text-center text-xs">Opens the IRS&apos;s own free page in a new tab. We never see or move your money.</p>
+      </div>
+
+      {/* 3 steps */}
+      <div className="card p-6 sm:p-8">
+        <h2 className="font-display text-xl font-semibold">What happens on the IRS page</h2>
+        <ol className="mt-4 space-y-4">
+          {steps.map(([t, d], i) => (
+            <li key={t} className="flex gap-4">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/70 text-sm font-semibold">{i + 1}</span>
+              <div><div className="font-medium">{t}</div><div className="muted text-sm">{d}</div></div>
+            </li>
+          ))}
+        </ol>
+        <p className="muted mt-5 border-t pt-4 text-xs">Not tax advice. The Number is not affiliated with the IRS. Amounts are an educational estimate; confirm on the IRS page before you pay.</p>
+      </div>
+    </section>
   );
 }
 
