@@ -314,9 +314,13 @@ function Settle({ r }: { r: NumberResult }) {
   const payBy = live?.due ?? r.next.due;
   const dueStr = new Date(payBy + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   const amountFmt = usd(r.owedSoFarCents);
+  const amountRaw = (r.owedSoFarCents / 100).toFixed(2);
   const [open, setOpen] = useState(false);
 
-  const start = () => { try { window.open(PAY_URL, "_blank", "noopener,noreferrer"); } catch { /* fine */ } setOpen(true); };
+  // Opens the IRS Direct Pay step with your values in the URL hash, so the
+  // Settle Assist extension can fill each field. (Demo uses a replica of that page.)
+  const payUrl = `/demo/irs#reason=${encodeURIComponent("Estimated Tax")}&apply=1040ES&period=${TAX_YEAR}&amount=${amountRaw}`;
+  const start = () => { try { window.open(payUrl, "_blank", "noopener"); } catch { /* fine */ } };
 
   return (
     <section className="mx-auto max-w-md space-y-5">
@@ -333,7 +337,8 @@ function Settle({ r }: { r: NumberResult }) {
         <button className="btn btn-primary mt-6 w-full !rounded-xl !py-4 text-base" onClick={start}>
           Pay guided <ArrowRight size={16} />
         </button>
-        <p className="muted mt-2 text-xs">Free &middot; straight from your bank &middot; we never touch your money.</p>
+        <p className="muted mt-2 text-xs">Opens the IRS form &mdash; Settle Assist fills it for you. We never touch your money.</p>
+        <button className="muted mt-3 text-xs underline underline-offset-2 hover:text-white" onClick={() => setOpen(true)}>No extension? Walk me through it here</button>
       </div>
 
       <div className="text-center">
