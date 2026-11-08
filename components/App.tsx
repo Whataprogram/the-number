@@ -537,26 +537,36 @@ function Breakdown({ r }: { r: NumberResult }) {
         </li>
       </ol>
 
-      <details className="group mt-6 rounded-2xl border border-zinc-800 p-4 text-sm">
-        <summary className="flex cursor-pointer list-none items-center justify-between font-medium">See the exact math<span className="text-zinc-500 transition group-open:rotate-180">⌄</span></summary>
-        <dl className="mt-3 space-y-1.5 text-zinc-300">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Income tax</div>
-          {([
-            ["Profit", f.netProfitCents], ["× 92.35% = counted for self-employment tax", f.se.netEarningsCents],
-            ["Social Security 12.4%", f.se.socialSecurityCents], ["Medicare 2.9%", f.se.medicareCents],
-            ["Profit − half of self-employment tax", f.agiCents], ["− standard deduction", -Math.min(f.standardDeductionCents, f.agiCents)],
-            ["− 20% small-business (QBI) deduction", -f.qbiDeductionCents], ["= taxed income", f.taxableIncomeCents],
-            ...f.incomeTaxLines.filter((b) => b.amountCents > 0).map((b) => [`${b.rateBps / 100}% on ${usd(b.amountCents)}`, b.taxCents] as [string, number]),
-          ] as [string, number][]).map(([l, v]) => (
-            <div key={l} className="flex justify-between gap-3"><dt>{l}</dt><dd className="num">{v < 0 ? `−${usd(-v)}` : usd(v)}</dd></div>
-          ))}
-          <div className="!mt-3 h-px bg-zinc-700" />
-          <div className="!mt-3 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Add it up</div>
-          <div className="flex justify-between gap-3"><dt>Self-employment tax</dt><dd className="num">{usd(f.se.totalCents)}</dd></div>
-          <div className="flex justify-between gap-3"><dt>+ Income tax</dt><dd className="num">{usd(f.incomeTaxCents)}</dd></div>
-          {r.taxPaidCents > 0 && <div className="flex justify-between gap-3"><dt>− Already paid</dt><dd className="num">−{usd(r.taxPaidCents)}</dd></div>}
-          <div className="!mt-2 flex items-center justify-between gap-3 rounded-xl bg-white px-3.5 py-2.5 text-black"><dt className="flex items-center gap-1.5 font-semibold"><ArrowRight size={15} strokeWidth={2.75} />You owe the IRS</dt><dd className="num text-base font-semibold">{usd(r.owedSoFarCents)}</dd></div>
-        </dl>
+      <details className="group mt-6 rounded-2xl border border-zinc-800 p-4 text-sm" open>
+        <summary className="flex cursor-pointer list-none items-center justify-between font-medium">See how it adds up<span className="text-zinc-500 transition group-open:rotate-180">⌄</span></summary>
+        <p className="muted mt-3 text-sm">Your number is just two taxes, added together.</p>
+        <div className="mt-3 space-y-2.5">
+          <div className="rounded-xl border border-zinc-800 p-4">
+            <div className="flex items-center justify-between gap-3"><span className="font-medium">Self-employment tax</span><span className="font-display num text-lg font-semibold">{usd(f.se.totalCents)}</span></div>
+            <p className="muted mt-1 text-xs leading-relaxed">You made {usd(f.netProfitCents)} in profit. This tax takes about <b className="text-zinc-300">14&cent; of every dollar</b>.</p>
+          </div>
+          <div className="flex justify-center text-lg text-zinc-600">+</div>
+          <div className="rounded-xl border border-zinc-800 p-4">
+            <div className="flex items-center justify-between gap-3"><span className="font-medium">Income tax</span><span className="font-display num text-lg font-semibold">{usd(f.incomeTaxCents)}</span></div>
+            <p className="muted mt-1 text-xs leading-relaxed">Your write-offs take {usd(f.netProfitCents - f.taxableIncomeCents)} off the top first. Only the {usd(f.taxableIncomeCents)} left over gets taxed, starting at just <b className="text-zinc-300">10%</b>.</p>
+          </div>
+          {r.taxPaidCents > 0 && <div className="flex items-center justify-between gap-3 px-1"><span>Already paid to the IRS</span><span className="num">−{usd(r.taxPaidCents)}</span></div>}
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 text-black"><span className="flex items-center gap-1.5 font-semibold"><ArrowRight size={17} strokeWidth={2.75} />You owe the IRS</span><span className="font-display num text-xl font-semibold">{usd(r.owedSoFarCents)}</span></div>
+        </div>
+        <details className="mt-3 border-t border-zinc-800 pt-3 text-xs">
+          <summary className="muted cursor-pointer list-none hover:text-zinc-300">Full IRS calculation (for the accountants)</summary>
+          <dl className="mt-2.5 space-y-1 text-zinc-400">
+            {([
+              ["Profit", f.netProfitCents], ["× 92.35% = counted for self-employment tax", f.se.netEarningsCents],
+              ["Social Security 12.4%", f.se.socialSecurityCents], ["Medicare 2.9%", f.se.medicareCents],
+              ["Profit − half of self-employment tax", f.agiCents], ["− standard deduction", -Math.min(f.standardDeductionCents, f.agiCents)],
+              ["− 20% small-business (QBI) deduction", -f.qbiDeductionCents], ["= taxed income", f.taxableIncomeCents],
+              ...f.incomeTaxLines.filter((b) => b.amountCents > 0).map((b) => [`${b.rateBps / 100}% on ${usd(b.amountCents)}`, b.taxCents] as [string, number]),
+            ] as [string, number][]).map(([l, v]) => (
+              <div key={l} className="flex justify-between gap-3"><dt>{l}</dt><dd className="num">{v < 0 ? `−${usd(-v)}` : usd(v)}</dd></div>
+            ))}
+          </dl>
+        </details>
       </details>
     </section>
   );
