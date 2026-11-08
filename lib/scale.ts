@@ -14,5 +14,6 @@ export function scaleBusiness(txns: Txn[], factor: number): Txn[] {
   });
 }
 
-/** Random factor for the sample business: lands what's owed in the ~$2.5K to ~$13K range. */
-export const randomFactor = () => Math.round((1.2 + Math.random() * 2.8) * 100) / 100;
+/** Fixed demo size so the numbers match the pitch deck every run (owed ~= $5,281). */
+export const DEMO_FACTOR = 1.8;
+export const randomFactor = () => DEMO_FACTOR;
