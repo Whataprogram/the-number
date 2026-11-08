@@ -371,12 +371,12 @@ function Settle({ r }: { r: NumberResult }) {
       {/* Time-wasted stat */}
       <div className="card flex items-center gap-5 p-6 sm:p-7">
         <div className="shrink-0 text-center">
-          <div className="font-display num text-5xl font-semibold leading-none sm:text-6xl">~15<span className="text-2xl sm:text-3xl"> min</span></div>
+          <div className="font-display num text-5xl font-semibold leading-none sm:text-6xl">35<span className="text-2xl sm:text-3xl">+ min</span></div>
           <div className="muted mt-1 text-[11px]">down to ~30 sec</div>
         </div>
         <div className="min-w-0">
-          <div className="text-[15px] font-semibold leading-snug">Hunting for the right IRS payment page, then guessing which &ldquo;Reason&rdquo; and &ldquo;Apply to&rdquo; to pick.</div>
-          <div className="muted mt-1 text-sm">The Number hands you the link below and the three exact answers right under it &mdash; no searching, no guessing. <a className="underline underline-offset-2 hover:text-white" href="https://directpay.irs.gov/directpay/payment" target="_blank" rel="noreferrer">Estimate, based on IRS Direct Pay&apos;s 5-step guest flow</a>.</div>
+          <div className="text-[15px] font-semibold leading-snug">Working out what you actually owe, finding the right IRS page, then guessing which &ldquo;Reason&rdquo; and &ldquo;Apply to&rdquo; to pick &mdash; and that&apos;s if you get it right the first time.</div>
+          <div className="muted mt-1 text-sm">Settle does all of it: the number is already run, the link is one tap below, and the three exact answers sit right under it. <a className="underline underline-offset-2 hover:text-white" href="https://directpay.irs.gov/directpay/payment" target="_blank" rel="noreferrer">Estimate, based on IRS Direct Pay&apos;s 5-step guest flow</a>.</div>
         </div>
       </div>
 
