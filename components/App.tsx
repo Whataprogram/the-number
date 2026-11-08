@@ -358,8 +358,8 @@ function Settle({ r }: { r: NumberResult }) {
 function PayAssist({ r, amountFmt, year, onClose }: { r: NumberResult; amountFmt: string; year: number; onClose: () => void }) {
   const amountRaw = (r.owedSoFarCents / 100).toFixed(2);
   const fields = [
-    { label: "Reason for Payment", verb: "Pick in the 1st dropdown", show: "Balance Due", copy: "Balance Due" },
-    { label: "Apply Payment To", verb: "Pick in the 2nd dropdown", show: "Form 1040 — Income Tax", copy: "Form 1040 - Income Tax" },
+    { label: "Apply Payment To", verb: "Pick the form in the 1st dropdown", show: "1040-ES", copy: "1040ES" },
+    { label: "Reason for Payment", verb: "Then pick the reason", show: "Estimated Tax", copy: "Estimated Tax" },
     { label: "Tax Period for Payment", verb: "Pick the year", show: String(year), copy: String(year) },
     { label: "Amount", verb: "Type or paste this exact amount", show: amountFmt, copy: amountRaw },
   ];
@@ -411,7 +411,7 @@ function PayAssist({ r, amountFmt, year, onClose }: { r: NumberResult; amountFmt
           <a className="muted inline-flex items-center gap-1 hover:text-white" href={PAY_URL} target="_blank" rel="noreferrer">IRS page <ArrowUpRight size={12} /></a>
           <details className="text-right">
             <summary className="muted cursor-pointer list-none hover:text-white">Why these?</summary>
-            <p className="muted mt-2 max-w-[15rem] text-left text-[11px] leading-relaxed">You&apos;re paying your {TAX_YEAR} federal income tax, so it&apos;s Balance Due &rarr; Form 1040 Income Tax &rarr; {TAX_YEAR}. The amount is your number &mdash; income minus expenses, run through SE tax, the deduction and your bracket.</p>
+            <p className="muted mt-2 max-w-[15rem] text-left text-[11px] leading-relaxed">You&apos;re making a quarterly estimated payment, so it&apos;s 1040-ES &rarr; Estimated Tax &rarr; {TAX_YEAR}. The amount is your number &mdash; income minus expenses, run through SE tax, the deduction and your bracket.</p>
           </details>
         </div>
       </div>
