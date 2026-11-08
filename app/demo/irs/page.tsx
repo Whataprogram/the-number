@@ -68,9 +68,12 @@ export default function DirectPayReplica() {
             <Field label="Apply Payment To" htmlFor="tn-apply">
               <select id="tn-apply" defaultValue="" style={input}>
                 <option value="" disabled>- Select -</option>
-                <option value="1040">1040, 1040A, 1040EZ</option>
-                <option value="1040ES">1040ES (Estimated Tax)</option>
-                <option value="4868">4868 (Extension)</option>
+                <option>Form 1040 - Income Tax</option>
+                <option>Form 1040 - Health Care</option>
+                <option>MFT 31 Separate Assessment (Form 1040)</option>
+                <option>Form 5329 - Retirement Plans/Tax Favored Accounts</option>
+                <option>Civil Penalty</option>
+                <option>Other</option>
               </select>
             </Field>
 

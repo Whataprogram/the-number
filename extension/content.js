@@ -12,8 +12,8 @@
   // ---- read values The Number handed off via the URL hash ----
   var hash = new URLSearchParams((location.hash || "").replace(/^#/, ""));
   var data = {
-    reason: hash.get("reason") || "Estimated Tax",
-    apply: hash.get("apply") || "1040ES",
+    reason: hash.get("reason") || "Balance Due",
+    apply: hash.get("apply") || "Form 1040 - Income Tax",
     period: hash.get("period") || String(new Date().getFullYear()),
     amount: hash.get("amount") || "5281.02",
   };
@@ -121,7 +121,6 @@
   }
   function displayValue(s) {
     if (s.label === "Amount") return "$" + s.value;
-    if (s.value === "1040ES") return "1040ES";
     return s.value;
   }
   function escapeHtml(t) { var d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
