@@ -100,11 +100,11 @@ export function computeNumber(txns: Txn[], profile: Profile): NumberResult {
 
   const reviewCount = inYear.filter((t) => t.kind === "review").length;
   const seWhy = fed.se.belowThreshold
-    ? `Your net self-employment earnings are under $400, so you don't owe self-employment tax yet.`
-    : `You work for yourself, so no boss pays half your Social Security and Medicare. You pay both halves: 15.3% on 92.35% of your profit (${formatUSD(fed.se.netEarningsCents)}). That's ${formatUSD(fed.se.totalCents)}. Most young owners have never heard of this tax. It applies at any age once you clear $400.`;
+    ? `Good news — you've made under $400 in profit, so you don't owe this one yet.`
+    : `This is the big one nobody warns you about. At a regular job, your boss quietly covers half of your Social Security and Medicare. Working for yourself, you pay both halves — a little over 14 cents on every dollar of profit. On your ${formatUSD(net)} profit, that's ${formatUSD(fed.se.totalCents)}. It kicks in once you make $400, at any age.`;
   const itWhy = fed.taxableIncomeCents === 0
-    ? `Your profit after the standard deduction (${formatUSD(fed.standardDeductionCents)}) is $0, so no federal income tax yet.`
-    : `Profit ${formatUSD(net)} minus half your self-employment tax (${formatUSD(fed.halfSeDeductionCents)}) minus the ${formatUSD(fed.standardDeductionCents)} standard deduction${fed.qbiDeductionCents ? ` and the ${formatUSD(fed.qbiDeductionCents)} small-business (QBI) deduction` : ""} leaves ${formatUSD(fed.taxableIncomeCents)} that gets taxed at 10%, then 12% above $12,400. That's ${formatUSD(fed.incomeTaxCents)}.`;
+    ? `Your write-offs cover all of your profit, so there's no income tax to pay here.`
+    : `This is regular income tax — but you don't pay it on everything. Normal write-offs (a ${formatUSD(fed.standardDeductionCents)} standard deduction everyone gets${fed.qbiDeductionCents ? `, plus a 20% small-business discount` : ""}) bring your profit down to about ${formatUSD(fed.taxableIncomeCents)}. Only that part gets taxed, starting at just 10%. That comes to ${formatUSD(fed.incomeTaxCents)}.`;
 
   const lines: Line[] = [
     { key: "se", label: "Self-employment tax", amountCents: fed.se.totalCents, why: seWhy },
