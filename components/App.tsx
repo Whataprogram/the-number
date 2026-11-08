@@ -304,114 +304,104 @@ function Home({ r, openLine, setWhy, txns, go }: { r: NumberResult; openLine: (l
   );
 }
 
-/* ---------- Settle: AI copilot + one-tap pay ---------- */
+/* ---------- Settle: guided one-tap pay ---------- */
 
-function FillRow({ label, value }: { label: string; value: string }) {
-  const [c, setC] = useState(false);
-  const copy = async () => { try { await navigator.clipboard.writeText(value); setC(true); setTimeout(() => setC(false), 1500); } catch { /* fine */ } };
-  return (
-    <li className="flex items-center justify-between gap-3 py-3">
-      <div className="min-w-0"><div className="muted text-xs">{label}</div><div className="font-display num text-lg font-semibold">{value}</div></div>
-      <button className="btn btn-ghost shrink-0 !px-3 !py-2 text-xs" onClick={copy}>{c ? <><Check size={14} />Copied</> : <><Copy size={14} />Copy</>}</button>
-    </li>
-  );
-}
+const PAY_URL = "https://directpay.irs.gov/directpay/payment";
 
 function Settle({ r }: { r: NumberResult }) {
   const usd = (c: number) => formatUSD(c, { cents: true });
   const live = r.quarters.find((q) => q.status === "building");
   const payBy = live?.due ?? r.next.due;
   const dueStr = new Date(payBy + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-  const [copied, setCopied] = useState(false);
-  const copy = async () => { try { await navigator.clipboard.writeText((r.owedSoFarCents / 100).toFixed(2)); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* fine */ } };
+  const amountFmt = usd(r.owedSoFarCents);
+  const [open, setOpen] = useState(false);
 
-  const lines: React.ReactNode[] = [
-    <>You owe <b className="text-white">{usd(r.owedSoFarCents)}</b> in federal tax for {TAX_YEAR}.</>,
-    <>It&apos;s <b className="text-white">estimated tax</b>, IRS <b className="text-white">Form 1040-ES</b>.</>,
-    <>No IRS account or ID.me needed. <b className="text-white">Pay as a guest.</b></>,
-    <>Pay from your bank. Fee: <b className="text-white">$0</b>.</>,
-    <>Next payment due <b className="text-white">{dueStr}</b>.</>,
-    <>On the IRS page: <b className="text-white">Estimated Tax → 1040-ES → {TAX_YEAR}</b>. We did the rest.</>,
-  ];
-  const [n, setN] = useState(0);
-  useEffect(() => { if (n >= lines.length) return; const t = window.setTimeout(() => setN((v) => v + 1), 520); return () => window.clearTimeout(t); }, [n, lines.length]);
-
-  const fill: [string, string][] = [
-    ["Reason for Payment", "Estimated Tax"],
-    ["Apply Payment To", "1040ES"],
-    ["Tax Period for Payment", String(TAX_YEAR)],
-    ["Amount", usd(r.owedSoFarCents)],
-  ];
+  const start = () => { try { window.open(PAY_URL, "_blank", "noopener,noreferrer"); } catch { /* fine */ } setOpen(true); };
 
   return (
-    <section className="mx-auto max-w-3xl space-y-4">
-      <div>
+    <section className="mx-auto max-w-md space-y-5">
+      <div className="text-center">
         <span className="chip text-zinc-300"><Sparkles size={13} />The game-changer</span>
         <h1 className="font-display mt-3 text-4xl font-semibold">Settle up</h1>
-        <p className="muted mt-1">The IRS makes paying a maze. We make it one tap.</p>
+        <p className="muted mt-1">Pay the IRS without the maze.</p>
       </div>
 
-      {/* AI copilot briefing */}
-      <div className="card hero-glow p-6 sm:p-8">
-        <div className="flex items-center gap-2 text-sm text-zinc-400">
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-black"><Sparkles size={13} /></span>
-          Copilot {n < lines.length ? <span className="muted">· reading the IRS rules for you<span className="live-dot">…</span></span> : <span className="muted">· here&apos;s your plan</span>}
-        </div>
-        <ul className="mt-5 space-y-3">
-          {lines.slice(0, n).map((l, i) => (
-            <li key={i} className="rise flex gap-3 text-[15px] leading-snug text-zinc-200">
-              <Check size={18} className="mt-0.5 shrink-0 text-white" />
-              <span>{l}</span>
-            </li>
-          ))}
-          {n < lines.length && <li className="flex gap-3 text-zinc-600"><span className="live-dot mt-1 h-3 w-1.5 bg-white" /></li>}
-        </ul>
+      <div className="card hero-glow p-7 text-center sm:p-8">
+        <div className="muted text-xs font-medium uppercase tracking-[0.14em]">You owe</div>
+        <div className="font-display num mt-1 text-6xl font-semibold leading-none">{amountFmt}</div>
+        <div className="muted mt-2 text-sm">Estimated tax &middot; due {dueStr}</div>
+        <button className="btn btn-primary mt-6 w-full !rounded-xl !py-4 text-base" onClick={start}>
+          Pay guided <ArrowRight size={16} />
+        </button>
+        <p className="muted mt-2 text-xs">Free &middot; straight from your bank &middot; we never touch your money.</p>
       </div>
 
-      {/* Time-wasted stat */}
-      <div className="card flex items-center gap-5 p-6 sm:p-7">
-        <div className="shrink-0 text-center">
-          <div className="font-display num text-5xl font-semibold leading-none sm:text-6xl">40<span className="text-2xl sm:text-3xl">+ hrs</span></div>
-          <div className="muted mt-1 text-[11px]">a year · over half of owners</div>
-        </div>
-        <div className="min-w-0">
-          <div className="text-[15px] font-semibold leading-snug">Over half of small-business owners lose 40+ hours a year to federal taxes &mdash; and the worst of it is figuring out what the IRS wants and where each number goes.</div>
-          <div className="muted mt-1 text-sm">Settle collapses that to one screen: the link is one tap below and the exact fields sit right under it. <a className="underline underline-offset-2 hover:text-white" href="https://taxfoundation.org/tax-complexity-expensive-small-businesses" target="_blank" rel="noreferrer">Tax Foundation, citing the NSBA Small Business Taxation Survey</a>.</div>
-        </div>
-      </div>
-
-      {/* Pay action */}
-      <div className="card p-6 sm:p-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="muted text-xs font-medium uppercase tracking-[0.12em]">Pay the IRS</div>
-            <div className="font-display num mt-1 text-5xl font-semibold">{usd(r.owedSoFarCents)}</div>
-            <div className="muted mt-1 text-sm">Estimated tax · 1040-ES · due {dueStr}</div>
-          </div>
-          <button className="btn btn-ghost" onClick={copy}>{copied ? <><Check size={15} />Copied</> : <><Copy size={15} />Copy amount</>}</button>
-        </div>
-        <a href="https://directpay.irs.gov/directpay/payment" target="_blank" rel="noreferrer" className="btn btn-primary mt-5 w-full !rounded-xl !py-4 text-base">
-          Pay {usd(r.owedSoFarCents)} at IRS Direct Pay <ArrowUpRight size={17} />
-        </a>
-        <p className="muted mt-2 text-center text-xs">Opens the IRS&apos;s own free page in a new tab. We never see or move your money.</p>
-      </div>
-
-      {/* Exact fields to enter */}
-      <div className="card p-6 sm:p-8">
-        <h2 className="font-display text-xl font-semibold">Enter exactly this</h2>
-        <p className="muted mt-1 text-sm">Step 1 of the IRS page asks three things. Here are your answers. Tap to copy.</p>
-        <ul className="mt-4 divide-y">
-          {fill.map(([label, value]) => <FillRow key={label} label={label} value={value} />)}
-        </ul>
-        <div className="mt-5 flex gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-          <Info size={16} className="mt-0.5 shrink-0 text-zinc-400" />
-          <p className="muted text-xs leading-relaxed">
-            <b className="text-zinc-200">How does it know what to put?</b> These aren&apos;t guesses. For a sole proprietor paying federal tax, the IRS always wants <b className="text-zinc-200">Estimated Tax</b> &rarr; <b className="text-zinc-200">1040-ES</b> &rarr; the current tax year &mdash; that&apos;s fixed by the rules. The only variable is the amount, and that&apos;s your number: income minus business expenses, run through self-employment tax, the standard deduction and your bracket.
-          </p>
-        </div>
-        <p className="muted mt-4 border-t pt-4 text-xs">Not tax advice. The Number isn&apos;t affiliated with the IRS. Educational estimate &mdash; confirm on the IRS page before you pay.</p>
-      </div>
+      {open && <PayAssist r={r} amountFmt={amountFmt} year={TAX_YEAR} onClose={() => setOpen(false)} />}
     </section>
+  );
+}
+
+function PayAssist({ r, amountFmt, year, onClose }: { r: NumberResult; amountFmt: string; year: number; onClose: () => void }) {
+  const amountRaw = (r.owedSoFarCents / 100).toFixed(2);
+  const fields = [
+    { label: "Reason for Payment", verb: "Pick in the 1st dropdown", show: "Estimated Tax", copy: "Estimated Tax" },
+    { label: "Apply Payment To", verb: "Pick in the 2nd dropdown", show: "1040-ES", copy: "1040ES" },
+    { label: "Tax Period for Payment", verb: "Pick the year", show: String(year), copy: String(year) },
+    { label: "Amount", verb: "Type or paste this exact amount", show: amountFmt, copy: amountRaw },
+  ];
+  const TOTAL = fields.length + 1;
+  const [i, setI] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(fields[i].copy); setCopied(true); setTimeout(() => setCopied(false), 1400); } catch { /* fine */ }
+  };
+  const pct = Math.round((i / (TOTAL - 1)) * 100);
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="card w-full max-w-sm p-6">
+        <div className="flex items-center justify-between">
+          <div className="muted text-xs font-medium uppercase tracking-[0.12em]">Step {Math.min(i + 1, TOTAL)} of {TOTAL}</div>
+          <button className="text-zinc-500 hover:text-white" onClick={onClose} aria-label="Close"><X size={18} /></button>
+        </div>
+        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10">
+          <div className="h-full bg-white transition-all duration-300" style={{ width: `${pct}%` }} />
+        </div>
+
+        {i < fields.length ? (
+          <div className="mt-6">
+            <div className="muted text-xs">{fields[i].verb}</div>
+            <div className="mt-1 text-sm font-medium text-zinc-300">{fields[i].label}</div>
+            <div className="mt-3 rounded-xl border border-white/15 bg-white/[0.05] p-5 text-center">
+              <div className="font-display num text-3xl font-semibold">{fields[i].show}</div>
+            </div>
+            <button className="btn btn-primary mt-4 w-full !rounded-xl !py-3.5" onClick={copy}>
+              {copied ? <><Check size={16} />Copied &mdash; paste it in</> : <><Copy size={16} />Copy</>}
+            </button>
+            <div className="mt-3 flex items-center justify-between">
+              <button className="btn btn-ghost !px-3 !py-2 text-xs disabled:opacity-40" onClick={() => setI(i - 1)} disabled={i === 0}>Back</button>
+              <button className="btn btn-ghost !px-3 !py-2 text-xs" onClick={() => setI(i + 1)}>Next field <ArrowRight size={14} /></button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6 text-center">
+            <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-white text-black"><Check size={22} /></span>
+            <h3 className="font-display mt-4 text-xl font-semibold">One step left &mdash; on the IRS page</h3>
+            <p className="muted mt-1 text-sm">Enter your bank routing + account number, then hit <b className="text-white">Submit</b>. That pays {amountFmt}.</p>
+            <button className="btn btn-primary mt-5 w-full !rounded-xl !py-3.5" onClick={onClose}>Done</button>
+          </div>
+        )}
+
+        <div className="mt-4 flex items-center justify-between border-t pt-3 text-xs">
+          <a className="muted inline-flex items-center gap-1 hover:text-white" href={PAY_URL} target="_blank" rel="noreferrer">IRS page <ArrowUpRight size={12} /></a>
+          <details className="text-right">
+            <summary className="muted cursor-pointer list-none hover:text-white">Why these?</summary>
+            <p className="muted mt-2 max-w-[15rem] text-left text-[11px] leading-relaxed">For a sole proprietor, federal estimated tax is always Estimated Tax &rarr; 1040-ES &rarr; this year. The amount is your number &mdash; income minus expenses, run through SE tax, the deduction and your bracket.</p>
+          </details>
+        </div>
+      </div>
+    </div>
   );
 }
 
