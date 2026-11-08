@@ -337,12 +337,20 @@ const APP_THEME: Record<string, { color: string; initial: string }> = {
 
 /* A branded connect window, modeled on how aggregator flows look (phone step, permissions), in each app's color. */
 export function AppConnect({ app, onClose, onDone, standalone = false }: { app: string; onClose: () => void; onDone: (app: string) => void; standalone?: boolean }) {
-  const [step, setStep] = useState<"phone" | "consent" | "login" | "sync">("phone");
+  const [step, setStep] = useState<"phone" | "consent" | "login" | "accounts" | "sync">("phone");
   const [phone, setPhone] = useState(""), [user, setUser] = useState(""), [pass, setPass] = useState(""), [err, setErr] = useState("");
   const [done, setDone] = useState(0);
+  const [sel, setSel] = useState<string[]>([`${app} balance`]);
+  const toggle = (id: string) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   const slug = app.toLowerCase().replace(/\s+/g, "");
   const theme = APP_THEME[app] || { color: "#7c7c85", initial: app[0] };
-  const tasks = [`Verifying your ${app} account`, `Reading 2026 payments`, "Sorting business from personal", "Working out what you owe"];
+  const accts = [
+    { id: `${app} balance`, label: `${app} balance`, note: "Business payments", logo: true },
+    { id: "chk", label: "Chase", note: "Checking · ••1847", logo: false },
+    { id: "sav", label: "Chase", note: "Savings · ••3302", logo: false },
+    { id: "biz", label: "Chase", note: "Business credit · ••9021", logo: false },
+  ];
+  const tasks = [`Verifying ${sel.length} account${sel.length === 1 ? "" : "s"}`, `Reading 2026 payments`, "Sorting business from personal", "Working out what you owe"];
   useEffect(() => {
     if (step !== "sync") return;
     const t = window.setInterval(() => setDone((d) => d + 1), 650);
@@ -350,7 +358,7 @@ export function AppConnect({ app, onClose, onDone, standalone = false }: { app: 
   }, [step]);
   useEffect(() => { if (step === "sync" && done === tasks.length) { const t = window.setTimeout(() => onDone(app), 400); return () => window.clearTimeout(t); } }, [done, step, app, onDone, tasks.length]);
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === "Escape" && step !== "sync" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose, step]);
-  const login = (e: React.FormEvent) => { e.preventDefault(); if (!user.trim() || !pass) return setErr("Enter a username and password."); setUser(""); setPass(""); setStep("sync"); };
+  const login = (e: React.FormEvent) => { e.preventDefault(); if (!user.trim() || !pass) return setErr("Enter a username and password."); setUser(""); setPass(""); setStep("accounts"); };
   const btn = { background: theme.color, color: "#fff" };
   return (
     <div className={standalone ? "grid min-h-screen place-items-center bg-black p-4" : "fixed inset-0 z-40 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"} role="dialog" aria-modal="true" aria-label={`Connect ${app}`}>
@@ -408,6 +416,28 @@ export function AppConnect({ app, onClose, onDone, standalone = false }: { app: 
               {err && <p className="mt-2 text-sm text-zinc-400">{err}</p>}
               <button className="btn mt-5 w-full !rounded-xl !py-3 font-semibold" style={btn}>Sign in</button>
             </form>
+          )}
+
+          {step === "accounts" && (
+            <>
+              <h3 className="font-display mt-5 text-center text-xl font-semibold">Select accounts to connect</h3>
+              <p className="muted mt-1 text-center text-xs">Pair your {app} with a bank account for the full picture.</p>
+              <ul className="mt-5 space-y-2">
+                {accts.map((a) => {
+                  const on = sel.includes(a.id);
+                  return (
+                    <li key={a.id}>
+                      <button type="button" onClick={() => toggle(a.id)} className="flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-colors" style={{ borderColor: on ? theme.color : "#27272a", background: on ? `${theme.color}14` : "transparent" }}>
+                        {a.logo ? <img src={`/${slug}logo.png`} alt="" width={30} height={30} className="rounded-lg bg-white object-contain p-0.5" /> : <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-lg bg-white text-black"><Landmark size={16} /></span>}
+                        <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{a.label}</span><span className="muted block truncate text-xs">{a.note}</span></span>
+                        <span className="grid h-5 w-5 shrink-0 place-items-center rounded-md border" style={{ background: on ? theme.color : "transparent", borderColor: on ? theme.color : "#52525b" }}>{on && <Check size={13} strokeWidth={3} className="text-white" />}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <button className="btn mt-6 w-full !rounded-xl !py-3 font-semibold disabled:opacity-40" style={btn} disabled={sel.length === 0} onClick={() => setStep("sync")}>Connect {sel.length} account{sel.length === 1 ? "" : "s"}</button>
+            </>
           )}
 
           {step === "sync" && (
