@@ -306,12 +306,22 @@ function Home({ r, openLine, setWhy, txns, go }: { r: NumberResult; openLine: (l
 
 /* ---------- Settle: AI copilot + one-tap pay ---------- */
 
+function FillRow({ label, value }: { label: string; value: string }) {
+  const [c, setC] = useState(false);
+  const copy = async () => { try { await navigator.clipboard.writeText(value); setC(true); setTimeout(() => setC(false), 1500); } catch { /* fine */ } };
+  return (
+    <li className="flex items-center justify-between gap-3 py-3">
+      <div className="min-w-0"><div className="muted text-xs">{label}</div><div className="font-display num text-lg font-semibold">{value}</div></div>
+      <button className="btn btn-ghost shrink-0 !px-3 !py-2 text-xs" onClick={copy}>{c ? <><Check size={14} />Copied</> : <><Copy size={14} />Copy</>}</button>
+    </li>
+  );
+}
+
 function Settle({ r }: { r: NumberResult }) {
   const usd = (c: number) => formatUSD(c, { cents: true });
   const live = r.quarters.find((q) => q.status === "building");
   const payBy = live?.due ?? r.next.due;
   const dueStr = new Date(payBy + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-  const late = r.quarters.filter((q) => q.status === "missed" && q.remainingCents > 0);
   const [copied, setCopied] = useState(false);
   const copy = async () => { try { await navigator.clipboard.writeText((r.owedSoFarCents / 100).toFixed(2)); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* fine */ } };
 
@@ -320,18 +330,17 @@ function Settle({ r }: { r: NumberResult }) {
     <>It&apos;s <b className="text-white">estimated tax</b>, IRS <b className="text-white">Form 1040-ES</b>.</>,
     <>No IRS account or ID.me needed. <b className="text-white">Pay as a guest.</b></>,
     <>Pay from your bank. Fee: <b className="text-white">$0</b>.</>,
-    late.length
-      ? <><b style={{ color: "var(--red)" }}>{late.length} payment{late.length > 1 ? "s are" : " is"} past due.</b> Pay now to stop the penalty from growing.</>
-      : <>Your next payment is due <b className="text-white">{dueStr}</b>.</>,
+    <>Next payment due <b className="text-white">{dueStr}</b>.</>,
     <>On the IRS page: <b className="text-white">Estimated Tax → 1040-ES → {TAX_YEAR}</b>. We did the rest.</>,
   ];
   const [n, setN] = useState(0);
   useEffect(() => { if (n >= lines.length) return; const t = window.setTimeout(() => setN((v) => v + 1), 520); return () => window.clearTimeout(t); }, [n, lines.length]);
 
-  const steps: [string, string][] = [
-    ["Open IRS Direct Pay", "Free government page. No account."],
-    ["Pick the three options", `Reason: Estimated Tax · Apply to: 1040-ES · Period: ${TAX_YEAR}.`],
-    ["Enter amount + bank", `${usd(r.owedSoFarCents)}, your account number, submit.`],
+  const fill: [string, string][] = [
+    ["Reason for Payment", "Estimated Tax"],
+    ["Apply Payment To", "1040ES"],
+    ["Tax Period for Payment", String(TAX_YEAR)],
+    ["Amount", usd(r.owedSoFarCents)],
   ];
 
   return (
@@ -369,24 +378,20 @@ function Settle({ r }: { r: NumberResult }) {
           </div>
           <button className="btn btn-ghost" onClick={copy}>{copied ? <><Check size={15} />Copied</> : <><Copy size={15} />Copy amount</>}</button>
         </div>
-        <a href="https://www.irs.gov/payments/direct-pay" target="_blank" rel="noreferrer" className="btn btn-primary mt-5 w-full !rounded-xl !py-4 text-base">
+        <a href="https://directpay.irs.gov/directpay/payment" target="_blank" rel="noreferrer" className="btn btn-primary mt-5 w-full !rounded-xl !py-4 text-base">
           Pay {usd(r.owedSoFarCents)} at IRS Direct Pay <ArrowUpRight size={17} />
         </a>
         <p className="muted mt-2 text-center text-xs">Opens the IRS&apos;s own free page in a new tab. We never see or move your money.</p>
       </div>
 
-      {/* 3 steps */}
+      {/* Exact fields to enter */}
       <div className="card p-6 sm:p-8">
-        <h2 className="font-display text-xl font-semibold">What happens on the IRS page</h2>
-        <ol className="mt-4 space-y-4">
-          {steps.map(([t, d], i) => (
-            <li key={t} className="flex gap-4">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/70 text-sm font-semibold">{i + 1}</span>
-              <div><div className="font-medium">{t}</div><div className="muted text-sm">{d}</div></div>
-            </li>
-          ))}
-        </ol>
-        <p className="muted mt-5 border-t pt-4 text-xs">Not tax advice. The Number is not affiliated with the IRS. Amounts are an educational estimate; confirm on the IRS page before you pay.</p>
+        <h2 className="font-display text-xl font-semibold">Enter exactly this</h2>
+        <p className="muted mt-1 text-sm">Step 1 of the IRS page asks three things. Here are your answers. Tap to copy.</p>
+        <ul className="mt-4 divide-y">
+          {fill.map(([label, value]) => <FillRow key={label} label={label} value={value} />)}
+        </ul>
+        <p className="muted mt-5 border-t pt-4 text-xs">Not tax advice. The Number isn&apos;t affiliated with the IRS. Educational estimate &mdash; confirm on the IRS page before you pay.</p>
       </div>
     </section>
   );
