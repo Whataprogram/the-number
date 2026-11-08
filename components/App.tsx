@@ -210,7 +210,8 @@ function Home({ r, openLine, setWhy, txns, go }: { r: NumberResult; openLine: (l
   const owedRows = r.quarters.filter((q) => (q.status === "missed" || q.status === "locked" || q.status === "building") && q.remainingCents > 0);
   const payBy = live?.due ?? r.next.due;
   const anyLate = owedRows.some((q) => q.status === "missed");
-  const per100 = federalEstimate(r.netProfitCents + 10_000).totalTaxCents - r.fed.totalTaxCents;
+  const effRate = r.netProfitCents > 0 ? r.fed.totalTaxCents / r.netProfitCents : 0; // one rate, same basis as the breakdown
+  const per100 = Math.round(effRate * 100); // whole dollars of tax per $100 earned
   const taxLines = r.lines.filter((l) => l.key === "se" || l.key === "income" || l.key === "paid");
 
   // Box 2: a simulated live feed of new money. Every 10 seconds a job comes in (green) or a business cost goes out (red),
@@ -221,7 +222,7 @@ function Home({ r, openLine, setWhy, txns, go }: { r: NumberResult; openLine: (l
   const feedRef = useRef<Feed[]>([]);
   const taxFor = (list: Feed[]) => {
     const net = list.reduce((t, e) => t + (e.kind === "business_income" ? e.amountCents : -e.amountCents), 0);
-    return federalEstimate(r.netProfitCents + net).totalTaxCents - r.fed.totalTaxCents;
+    return Math.round(net * effRate); // same rate we show, so every row reconciles with the headline
   };
   const newTax = taxFor(feed);
   const newTaxShown = useCountUp(newTax);
@@ -281,8 +282,8 @@ function Home({ r, openLine, setWhy, txns, go }: { r: NumberResult; openLine: (l
         <div className="card hero-glow flex flex-col p-6">
           <div className="flex items-center justify-between gap-2"><Label icon={CalendarClock}>2 · New money · through {live ? fmtDate(live.end) : fmtDate(payBy)}</Label><span className="flex items-center gap-1.5 text-xs text-zinc-400"><span className="dot live-dot" style={{ background: "var(--green)" }} />live</span></div>
           <div className="mt-4 font-display num text-4xl font-semibold transition-colors duration-500" style={{ color: flash === "in" ? "var(--green)" : flash === "out" ? "var(--red)" : undefined }}>{newTaxShown < 0 ? "−" : "+"}{usd(Math.abs(newTaxShown))}</div>
-          <div className="mt-1 text-sm text-zinc-400">{newTax < 0 ? "Less" : "More"} you'll owe from new money until <b className="text-white">{live ? fmtDate(live.end, true) : fmtDate(payBy, true)}</b>{live && <> · {days(live.end)} days left</>}</div>
-          <p className="muted mt-2 text-sm">Rule of thumb right now: about <b className="text-white">{formatUSD(per100)} of every $100</b> you earn goes to taxes.</p>
+          <div className="mt-1 text-sm text-zinc-400">Extra tax on what you earn from now through <b className="text-white">{live ? fmtDate(live.end, true) : fmtDate(payBy, true)}</b>{live && <> &mdash; {days(live.end)} days to go</>}.</div>
+          <p className="muted mt-2 text-sm">Simple rule: set aside about <b className="text-white">${per100}</b> of every <b className="text-white">$100</b> you make, and you&apos;re covered.</p>
           <ul className="mt-4 flex-1 space-y-2 text-sm" aria-live="polite">
             {feed.length === 0 && <li className="muted flex items-center gap-2 text-sm"><span className="dot live-dot" style={{ background: "var(--green)" }} />Watching your accounts for new money…</li>}
             {[...feed].reverse().slice(0, 5).map((x, i) => (

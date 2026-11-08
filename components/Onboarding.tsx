@@ -162,13 +162,12 @@ export function MoneyBackdrop() {
             </g>
           ))}
 
-          {/* the # hub */}
+          {/* the # hub — just the logo mark, so nothing gets cut at the screen edge */}
           <g transform={`translate(${HUB_X - 10},${HUB_Y - 30})`}>
-            <rect x="-3" y="-3" width="166" height="66" rx="17" fill="none" stroke="rgba(110,231,160,.2)" />
-            <rect x="0" y="0" width="160" height="60" rx="14" fill="#101012" stroke="rgba(255,255,255,.24)" />
-            <rect x="15" y="15" width="30" height="30" rx="8" fill="#fafafa" />
-            <text x="30" y="36" textAnchor="middle" fontSize="19" fontWeight="800" fill="#000">#</text>
-            <text x="58" y="34" fontSize="12.5" letterSpacing="1.5" fontWeight="700" fill="rgba(255,255,255,.72)">THE NUMBER</text>
+            <rect x="-4" y="-4" width="68" height="68" rx="18" fill="none" stroke="rgba(110,231,160,.2)" />
+            <rect x="0" y="0" width="60" height="60" rx="15" fill="#101012" stroke="rgba(255,255,255,.24)" />
+            <rect x="14" y="14" width="32" height="32" rx="9" fill="#fafafa" />
+            <text x="30" y="37" textAnchor="middle" fontSize="20" fontWeight="800" fill="#000">#</text>
           </g>
 
           {/* number card (upper right) */}
