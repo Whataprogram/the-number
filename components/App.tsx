@@ -372,11 +372,11 @@ function Settle({ r }: { r: NumberResult }) {
       <div className="card flex items-center gap-5 p-6 sm:p-7">
         <div className="shrink-0 text-center">
           <div className="font-display num text-5xl font-semibold leading-none sm:text-6xl">40<span className="text-2xl sm:text-3xl">+ hrs</span></div>
-          <div className="muted mt-1 text-[11px]">a work week, every year</div>
+          <div className="muted mt-1 text-[11px]">a year · over half of owners</div>
         </div>
         <div className="min-w-0">
-          <div className="text-[15px] font-semibold leading-snug">Hunting down the right IRS page, figuring out what each field even wants, then filling it all in without a misstep &mdash; the part new owners dread most.</div>
-          <div className="muted mt-1 text-sm">Over half of small-business owners lose 40+ hours a year to federal taxes. Settle collapses it: the link is one tap below and the exact fields sit right under it. <a className="underline underline-offset-2 hover:text-white" href="https://taxfoundation.org/tax-complexity-expensive-small-businesses" target="_blank" rel="noreferrer">Tax Foundation, citing the NSBA Small Business Taxation Survey</a>.</div>
+          <div className="text-[15px] font-semibold leading-snug">Over half of small-business owners lose 40+ hours a year to federal taxes &mdash; and the worst of it is figuring out what the IRS wants and where each number goes.</div>
+          <div className="muted mt-1 text-sm">Settle collapses that to one screen: the link is one tap below and the exact fields sit right under it. <a className="underline underline-offset-2 hover:text-white" href="https://taxfoundation.org/tax-complexity-expensive-small-businesses" target="_blank" rel="noreferrer">Tax Foundation, citing the NSBA Small Business Taxation Survey</a>.</div>
         </div>
       </div>
 
@@ -403,7 +403,13 @@ function Settle({ r }: { r: NumberResult }) {
         <ul className="mt-4 divide-y">
           {fill.map(([label, value]) => <FillRow key={label} label={label} value={value} />)}
         </ul>
-        <p className="muted mt-5 border-t pt-4 text-xs">Not tax advice. The Number isn&apos;t affiliated with the IRS. Educational estimate &mdash; confirm on the IRS page before you pay.</p>
+        <div className="mt-5 flex gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <Info size={16} className="mt-0.5 shrink-0 text-zinc-400" />
+          <p className="muted text-xs leading-relaxed">
+            <b className="text-zinc-200">How does it know what to put?</b> These aren&apos;t guesses. For a sole proprietor paying federal tax, the IRS always wants <b className="text-zinc-200">Estimated Tax</b> &rarr; <b className="text-zinc-200">1040-ES</b> &rarr; the current tax year &mdash; that&apos;s fixed by the rules. The only variable is the amount, and that&apos;s your number: income minus business expenses, run through self-employment tax, the standard deduction and your bracket.
+          </p>
+        </div>
+        <p className="muted mt-4 border-t pt-4 text-xs">Not tax advice. The Number isn&apos;t affiliated with the IRS. Educational estimate &mdash; confirm on the IRS page before you pay.</p>
       </div>
     </section>
   );
