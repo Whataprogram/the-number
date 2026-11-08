@@ -375,8 +375,8 @@ function Settle({ r }: { r: NumberResult }) {
           <div className="muted mt-1 text-[11px]">a work week, every year</div>
         </div>
         <div className="min-w-0">
-          <div className="text-[15px] font-semibold leading-snug">Over half of small-business owners lose a full work week a year to federal taxes &mdash; learning what they owe, hunting down the numbers, figuring out what goes where, and filing it.</div>
-          <div className="muted mt-1 text-sm">Settle collapses it: the number is already run, the right IRS link is one tap below, and the exact fields to enter sit right under it. <a className="underline underline-offset-2 hover:text-white" href="https://taxfoundation.org/tax-complexity-expensive-small-businesses" target="_blank" rel="noreferrer">Tax Foundation, citing the NSBA Small Business Taxation Survey</a>.</div>
+          <div className="text-[15px] font-semibold leading-snug">Hunting down the right IRS page, figuring out what each field even wants, then filling it all in without a misstep &mdash; the part new owners dread most.</div>
+          <div className="muted mt-1 text-sm">Over half of small-business owners lose 40+ hours a year to federal taxes. Settle collapses it: the link is one tap below and the exact fields sit right under it. <a className="underline underline-offset-2 hover:text-white" href="https://taxfoundation.org/tax-complexity-expensive-small-businesses" target="_blank" rel="noreferrer">Tax Foundation, citing the NSBA Small Business Taxation Survey</a>.</div>
         </div>
       </div>
 
