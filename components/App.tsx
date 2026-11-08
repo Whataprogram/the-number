@@ -336,6 +336,13 @@ function Settle({ r }: { r: NumberResult }) {
         <p className="muted mt-2 text-xs">Free &middot; straight from your bank &middot; we never touch your money.</p>
       </div>
 
+      <div className="text-center">
+        <p className="text-[15px] font-semibold"><span className="num">40+ hrs a year</span> &rarr; <span className="num">~30 seconds</span>.</p>
+        <p className="muted mx-auto mt-1 max-w-xs text-[11px] leading-relaxed">
+          The yearly federal-tax scramble owners dread &mdash; The Number runs your number and guides the payment. Over half of small-business owners spend 40+ hrs/yr on federal taxes. <a className="underline underline-offset-2 hover:text-white" href="https://taxfoundation.org/tax-complexity-expensive-small-businesses" target="_blank" rel="noreferrer">Tax Foundation, NSBA Small Business Taxation Survey</a>.
+        </p>
+      </div>
+
       {open && <PayAssist r={r} amountFmt={amountFmt} year={TAX_YEAR} onClose={() => setOpen(false)} />}
     </section>
   );
