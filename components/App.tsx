@@ -338,8 +338,12 @@ function Settle({ r }: { r: NumberResult }) {
 
       <div className="text-center">
         <p className="text-[15px] font-semibold">Your exact number, then the IRS maze in <span className="num">~30 seconds</span>.</p>
-        <p className="muted mx-auto mt-1 max-w-xs text-[11px] leading-relaxed">
-          Over half of small-business owners lose <span className="text-zinc-300">40+ hours a year</span> to federal taxes &mdash; and most don&apos;t even know what they owe. The Number computes it and walks you through paying. <a className="underline underline-offset-2 hover:text-white" href="https://taxfoundation.org/tax-complexity-expensive-small-businesses" target="_blank" rel="noreferrer">Tax Foundation, NSBA Small Business Taxation Survey</a>.
+        <p className="muted mx-auto mt-1 max-w-sm text-[11px] leading-relaxed">
+          Over half of small-business owners lose <span className="text-zinc-300">40+ hours a year</span> to federal taxes, and about <span className="text-zinc-300">1 in 3</span> aren&apos;t even sure they owe estimated tax. The Number computes it and walks you through paying.
+          <br />
+          <a className="underline underline-offset-2 hover:text-white" href="https://taxfoundation.org/tax-complexity-expensive-small-businesses" target="_blank" rel="noreferrer">Tax Foundation / NSBA Survey</a>
+          <span className="mx-1">&middot;</span>
+          <a className="underline underline-offset-2 hover:text-white" href="https://american.edu/media/news/20230418_CarolineBrucknerTaxLiteracySurvey.cfm" target="_blank" rel="noreferrer">Kogod Tax Literacy Survey</a>
         </p>
       </div>
 
