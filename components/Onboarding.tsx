@@ -57,7 +57,7 @@ const pad = { paddingLeft: "max(16px, env(safe-area-inset-left))", paddingRight:
 export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => void; onDemo: () => void; onSignIn: () => void; busy?: boolean }) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-black">
-      <div className="grid-bg pointer-events-none absolute inset-0" />
+      <MoneyBackdrop />
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-5" style={pad}>
         <Wordmark size={36} />
         <div className="flex items-center gap-3"><ThemeToggle /><button className="text-sm font-medium text-zinc-300 hover:text-white" onClick={onSignIn}>Sign in</button></div>
@@ -94,6 +94,102 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
   );
 }
 
+/* ---------------- Money-flow backdrop (original, animated) ---------------- */
+
+export function MoneyBackdrop() {
+  // Money comes in from the left (bank, Cash App, card, P2P), flows green into the # hub,
+  // which shows the number and sends a red slice to the IRS on the right. The centre column
+  // is dimmed so page text stays readable; the flow lives bright in the margins.
+  const HUB_X = 980, HUB_Y = 384;
+  const nodes: [number, number, string][] = [
+    [120, 150, "bank"], [96, 330, "cash"], [150, 548, "card"], [250, 232, "dot"], [224, 452, "pay"],
+  ];
+  const S = nodes.map(([x, y]) => `M${x + 20},${y} C${(x + HUB_X) / 2 + 40},${y} ${(x + HUB_X) / 2 - 10},${HUB_Y} ${HUB_X - 10},${HUB_Y + (y - 330) * 0.06}`);
+  const HUB_NUM = `M${HUB_X + 150},${HUB_Y - 18} C${HUB_X + 230},${HUB_Y - 40} ${HUB_X + 250},${HUB_Y - 150} ${HUB_X + 196},${HUB_Y - 196}`;
+  const HUB_IRS = `M${HUB_X + 150},${HUB_Y + 18} C${HUB_X + 220},${HUB_Y + 46} ${HUB_X + 250},${HUB_Y + 150} ${HUB_X + 224},${HUB_Y + 196}`;
+  return (
+    <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
+      <style>{`
+        @keyframes mbDash{to{stroke-dashoffset:-22}}
+        .mb-dash{stroke-dasharray:2 7;animation:mbDash 1.8s linear infinite}
+        .mb-float{animation:mbFloat 7s ease-in-out infinite}
+        @keyframes mbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+        @keyframes mbPulse{0%,100%{opacity:.45}50%{opacity:1}}
+        .mb-pulse{animation:mbPulse 2.6s ease-in-out infinite}
+        @media (prefers-reduced-motion:reduce){.mb-dash,.mb-float,.mb-pulse{animation:none}.mb-pkt{display:none}}
+      `}</style>
+      {/* diagonal hatch + green (money in) / red (owed) corner glows */}
+      <div className="absolute inset-0 opacity-[0.5]" style={{ backgroundImage: "repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 1px, transparent 1px 11px)" }} />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(60% 55% at 6% 2%, color-mix(in srgb, var(--green) 20%, transparent), transparent 70%), radial-gradient(60% 55% at 100% 104%, color-mix(in srgb, var(--red) 17%, transparent), transparent 70%)" }} />
+      <svg className="absolute left-1/2 top-1/2 h-[135%] w-[135%] min-w-[1240px] -translate-x-1/2 -translate-y-1/2" viewBox="0 0 1240 760" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          {/* dim a vertical column down the middle, where page text sits */}
+          <linearGradient id="mb-col" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#fff" stopOpacity="1" /><stop offset=".3" stopColor="#fff" stopOpacity=".92" />
+            <stop offset=".5" stopColor="#fff" stopOpacity=".12" /><stop offset=".7" stopColor="#fff" stopOpacity=".92" /><stop offset="1" stopColor="#fff" stopOpacity="1" />
+          </linearGradient>
+          <mask id="mb-mask"><rect width="1240" height="760" fill="url(#mb-col)" /></mask>
+          <radialGradient id="mb-hub" cx="50%" cy="50%" r="50%"><stop offset="0" stopColor="rgba(255,255,255,.12)" /><stop offset="1" stopColor="transparent" /></radialGradient>
+        </defs>
+        <g mask="url(#mb-mask)" opacity="0.72">
+          <circle cx={HUB_X + 60} cy={HUB_Y} r="250" fill="url(#mb-hub)" />
+
+          {/* connectors */}
+          <g fill="none" strokeWidth="1.3">
+            {S.map((d, i) => <path key={i} d={d} stroke="rgba(110,231,160,.26)" className="mb-dash" />)}
+            <path d={HUB_NUM} stroke="rgba(255,255,255,.26)" className="mb-dash" />
+            <path d={HUB_IRS} stroke="rgba(248,113,113,.5)" className="mb-dash" />
+          </g>
+
+          {/* travelling packets */}
+          {S.map((d, i) => (
+            <circle key={i} r="3.4" className="mb-pkt" fill="var(--green)">
+              <animateMotion dur={`${2.6 + i * 0.35}s`} begin={`${i * 0.45}s`} repeatCount="indefinite" path={d} />
+            </circle>
+          ))}
+          <circle r="3.4" className="mb-pkt" fill="#ffffff"><animateMotion dur="2.9s" repeatCount="indefinite" path={HUB_NUM} /></circle>
+          <circle r="3.6" className="mb-pkt" fill="var(--red)"><animateMotion dur="3.1s" begin=".4s" repeatCount="indefinite" path={HUB_IRS} /></circle>
+
+          {/* source nodes (left) */}
+          {nodes.map(([x, y, kind], i) => (
+            <g key={i} transform={`translate(${x},${y})`} className="mb-float" style={{ animationDelay: `${i * 0.8}s`, transformBox: "fill-box", transformOrigin: "center" } as React.CSSProperties}>
+              <rect x="-18" y="-18" width="36" height="36" rx="10" fill="#0d0d0d" stroke="rgba(255,255,255,.18)" />
+              {kind === "cash" && <text x="0" y="6" textAnchor="middle" fontSize="18" fontWeight="800" fill="var(--green)">$</text>}
+              {kind === "pay" && <text x="0" y="5" textAnchor="middle" fontSize="13" fontWeight="800" fill="rgba(255,255,255,.78)">P2P</text>}
+              {kind === "bank" && <g stroke="rgba(255,255,255,.75)" strokeWidth="1.5" fill="none" strokeLinecap="round"><path d="M-9,-3 L0,-10 L9,-3" /><path d="M-7,-2 V7 M-2.5,-2 V7 M2.5,-2 V7 M7,-2 V7" /><path d="M-10,9 H10" /></g>}
+              {kind === "card" && <g stroke="rgba(255,255,255,.75)" strokeWidth="1.5" fill="none"><rect x="-10" y="-7" width="20" height="14" rx="2.5" /><path d="M-10,-1.5 H10" /></g>}
+              {kind === "dot" && <circle r="4.5" fill="var(--green)" className="mb-pulse" />}
+            </g>
+          ))}
+
+          {/* the # hub */}
+          <g transform={`translate(${HUB_X - 10},${HUB_Y - 30})`}>
+            <rect x="-3" y="-3" width="166" height="66" rx="17" fill="none" stroke="rgba(110,231,160,.2)" />
+            <rect x="0" y="0" width="160" height="60" rx="14" fill="#101012" stroke="rgba(255,255,255,.24)" />
+            <rect x="15" y="15" width="30" height="30" rx="8" fill="#fafafa" />
+            <text x="30" y="36" textAnchor="middle" fontSize="19" fontWeight="800" fill="#000">#</text>
+            <text x="58" y="34" fontSize="12.5" letterSpacing="1.5" fontWeight="700" fill="rgba(255,255,255,.72)">THE NUMBER</text>
+          </g>
+
+          {/* number card (upper right) */}
+          <g transform={`translate(${HUB_X + 58},${HUB_Y - 338})`} className="mb-float" style={{ animationDelay: "1.2s", transformBox: "fill-box", transformOrigin: "center" } as React.CSSProperties}>
+            <rect x="0" y="0" width="240" height="152" rx="14" fill="#0b0b0c" stroke="rgba(255,255,255,.18)" />
+            <text x="20" y="40" fontSize="11" letterSpacing="1.5" fill="rgba(255,255,255,.42)" fontFamily="ui-monospace, monospace">YOU OWE THE IRS</text>
+            <text x="20" y="84" fontSize="38" fontWeight="800" fill="#fafafa" fontFamily="ui-sans-serif, system-ui">$5,281</text>
+            {[26, 40, 22, 46, 32, 50, 38].map((h, j) => <rect key={j} x={20 + j * 29} y={134 - h} width="15" height={h} rx="2" fill="rgba(255,255,255,.28)" />)}
+          </g>
+
+          {/* IRS node (lower right, red) */}
+          <g transform={`translate(${HUB_X + 196},${HUB_Y + 176})`} className="mb-pulse">
+            <rect x="0" y="0" width="66" height="38" rx="11" fill="#140c0c" stroke="rgba(248,113,113,.55)" />
+            <text x="33" y="25" textAnchor="middle" fontSize="13" fontWeight="800" fill="var(--red)">IRS</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 /* ---------------- Starfield (shared background) ---------------- */
 
 export function Starfield() {
@@ -121,7 +217,7 @@ export function Starfield() {
 function Shell({ children, step, onBack }: { children: React.ReactNode; step: number; onBack?: () => void }) {
   return (
     <div className="relative min-h-screen bg-black" style={pad}>
-      <Starfield />
+      <MoneyBackdrop />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[60vh]" style={{ background: "radial-gradient(60% 60% at 50% 0%, rgba(255,255,255,.08), transparent 70%)" }} />
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-5">
         <button onClick={onBack}><Wordmark size={34} /></button>
