@@ -56,20 +56,20 @@ const pad = { paddingLeft: "max(16px, env(safe-area-inset-left))", paddingRight:
 
 export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => void; onDemo: () => void; onSignIn: () => void; busy?: boolean }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black">
+    <div className="relative flex h-screen flex-col overflow-hidden bg-black">
       <MoneyBackdrop />
-      <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-5" style={pad}>
+      <header className="relative z-10 mx-auto flex w-full max-w-6xl shrink-0 items-center justify-between py-5" style={pad}>
         <Wordmark size={36} />
         <div className="flex items-center gap-3"><ThemeToggle /><button className="text-sm font-medium text-zinc-300 hover:text-white" onClick={onSignIn}>Sign in</button></div>
       </header>
 
-      <main className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-4 pb-[34vh] pt-[7vh] text-center">
-        <span className="chip rise mb-6 uppercase tracking-[0.14em] text-zinc-300">For first-time business owners</span>
+      <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-4 pb-8 text-center">
+        <span className="chip rise mb-4 uppercase tracking-[0.14em] text-zinc-300">For first-time business owners</span>
         <h1 className="headline font-display rise text-[clamp(2.4rem,6vw,4.5rem)] font-semibold leading-[1]" style={{ textWrap: "balance" as never }}>Know how much you owe.</h1>
-        <p className="rise mt-5 max-w-2xl text-[clamp(1.2rem,2.4vw,1.6rem)] font-medium leading-snug text-white" style={{ textWrap: "balance" as never }}>
+        <p className="rise mt-4 max-w-2xl text-[clamp(1.15rem,2.4vw,1.55rem)] font-medium leading-snug text-white" style={{ textWrap: "balance" as never }}>
           See exactly what you owe the IRS, and when. Built for first-time business owners.
         </p>
-        <div className="rise mt-9 w-full max-w-2xl rounded-[28px] border border-white/15 bg-white/[0.04] px-6 py-6 backdrop-blur sm:px-8">
+        <div className="rise mt-6 w-full max-w-2xl rounded-[28px] border border-white/15 bg-white/[0.04] px-6 py-5 backdrop-blur sm:px-8">
           <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-6 sm:text-left">
             <div className="font-display num shrink-0 text-[clamp(3.5rem,9vw,5.5rem)] font-semibold leading-none">15.7M</div>
             <div>
@@ -83,7 +83,7 @@ export function Landing({ onStart, onDemo, onSignIn, busy }: { onStart: () => vo
             <a className="underline-offset-2 hover:underline" href="https://american.edu/media/news/20230418_CarolineBrucknerTaxLiteracySurvey.cfm" target="_blank" rel="noreferrer">American University Kogod, Small Business Tax Literacy Survey</a>
           </div>
         </div>
-        <div className="rise mt-9 flex flex-col items-center gap-4">
+        <div className="rise mt-7 flex flex-col items-center gap-3">
           <button className="btn btn-primary min-w-[220px] !rounded-xl !py-3.5 text-base" onClick={onStart}>Get Started <ArrowRight size={16} /></button>
           <span className="text-xs text-zinc-500">Connects with your bank through Plaid, and with QuickBooks</span>
           <button className="text-sm text-zinc-400 underline-offset-4 hover:text-white hover:underline" onClick={onDemo} disabled={busy}>{busy ? "Loading a live example…" : "or see a live example first"}</button>
