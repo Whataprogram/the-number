@@ -272,7 +272,7 @@ export function AppConnect({ app, onClose, onDone, standalone = false }: { app: 
           <div className="flex items-center justify-center gap-3">
             <Logo size={44} />
             <span className="flex gap-1">{[0, 1, 2].map((i) => <span key={i} className={`h-1.5 w-1.5 rounded-full ${step === "sync" ? "live-dot" : ""}`} style={{ background: theme.color, animationDelay: `${i * 0.2}s` }} />)}</span>
-            <span className="grid h-11 w-11 place-items-center rounded-[13px] font-display text-xl font-bold text-white shadow-lg" style={{ background: theme.color }}>{theme.initial}</span>
+            <img src={`/${slug}logo.png`} alt={app} width={44} height={44} className="rounded-[13px] bg-white object-contain p-0.5" />
           </div>
           <div className="mt-2 text-center"><span className="chip text-[10px]" style={{ color: theme.color, borderColor: theme.color }}>{app} · Sandbox</span></div>
 
@@ -444,7 +444,7 @@ export function Connect({ onPlaidSandbox, onQuickBooksSandbox, onPlaid, busy, er
                   const pop = window.open(`/connect/${slug}`, "tn-connect", `popup=yes,width=${w},height=${h},left=${left},top=${top}`);
                   if (!pop) setPick({ kind: "app", title: app, sub: "", options: [], preset: app });
                 }}>
-                <span className="grid h-10 w-10 place-items-center rounded-xl border border-zinc-700 font-display text-base font-bold">{app === "Venmo" ? "V" : app === "Cash App" ? "$" : app === "PayPal" ? "P" : "S"}</span>
+                <img src={`/${app.toLowerCase().replace(/\s+/g, "")}logo.png`} alt={app} width={40} height={40} className="rounded-xl bg-white object-contain p-1" />
                 {app}
               </button>
             ))}
