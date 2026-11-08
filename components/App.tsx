@@ -371,12 +371,12 @@ function Settle({ r }: { r: NumberResult }) {
       {/* Time-wasted stat */}
       <div className="card flex items-center gap-5 p-6 sm:p-7">
         <div className="shrink-0 text-center">
-          <div className="font-display num text-5xl font-semibold leading-none sm:text-6xl">24<span className="text-2xl sm:text-3xl"> hrs</span></div>
-          <div className="muted mt-1 text-[11px]">a year · IRS&apos;s own estimate</div>
+          <div className="font-display num text-5xl font-semibold leading-none sm:text-6xl">40<span className="text-2xl sm:text-3xl">+ hrs</span></div>
+          <div className="muted mt-1 text-[11px]">a work week, every year</div>
         </div>
         <div className="min-w-0">
-          <div className="text-[15px] font-semibold leading-snug">What a business filer spends a year on federal taxes &mdash; the numbers, the bracket, the deductions, the rules, the forms, and the IRS website.</div>
-          <div className="muted mt-1 text-sm">Settle runs the number for you and drops you one tap from paying, with the exact fields right under it. <a className="underline underline-offset-2 hover:text-white" href="https://www.irs.gov/pub/irs-pdf/i1040gi.pdf" target="_blank" rel="noreferrer">IRS, 2023 Form 1040 Instructions &mdash; estimated taxpayer burden: 24 hrs &amp; ~$560 for business filers</a>.</div>
+          <div className="text-[15px] font-semibold leading-snug">Over half of small-business owners lose a full work week a year to federal taxes &mdash; learning what they owe, hunting down the numbers, figuring out what goes where, and filing it.</div>
+          <div className="muted mt-1 text-sm">Settle collapses it: the number is already run, the right IRS link is one tap below, and the exact fields to enter sit right under it. <a className="underline underline-offset-2 hover:text-white" href="https://taxfoundation.org/tax-complexity-expensive-small-businesses" target="_blank" rel="noreferrer">Tax Foundation, citing the NSBA Small Business Taxation Survey</a>.</div>
         </div>
       </div>
 
