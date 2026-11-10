@@ -1,5 +1,7 @@
-import App from "@/components/App";
+import WorkspaceApp from "@/components/WorkspaceApp";
+import { connection } from "next/server";
 
-export default function Page() {
-  return <App />;
+export default async function Page() {
+  await connection();
+  return <WorkspaceApp />;
 }

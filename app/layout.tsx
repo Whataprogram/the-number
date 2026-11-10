@@ -1,21 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
 
+const geist = localFont({ src: "./fonts/GeistVF.woff", variable: "--font-geist", display: "swap" });
+const geistMono = localFont({ src: "./fonts/GeistMonoVF.woff", variable: "--font-geist-mono", display: "swap" });
+
 export const metadata: Metadata = {
-  title: "The Number",
-  description: "Know what's actually yours. A tax and cash coach for young business owners.",
+  title: "The Number — a clearer picture of your business",
+  description: "Import your transactions, review what belongs to your business, and leave with clear records. Explore an explainable federal tax estimate with the sample workspace.",
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#000000" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#111512" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem("the-number:theme")==="light")document.documentElement.dataset.theme="light"}catch(e){}` }} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" />
-      </head>
+    <html lang="en" className={`${geist.variable} ${geistMono.variable}`}>
       <body>{children}</body>
     </html>
   );

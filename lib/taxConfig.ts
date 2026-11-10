@@ -1,17 +1,19 @@
 // Every tax parameter The Number uses lives here, with its source.
 // Money is in integer cents. Rates are in basis points (1 bp = 0.01%).
-// Verified against the sources below on Nov 7, 2026.
+// Basic 2026 parameters checked against primary sources during the November 10, 2026 audit.
+// This is not an independently reviewed tax policy. Personal estimates remain disabled in engine.ts.
 
 export const TAX_YEAR = 2026;
 
 export const SOURCES = {
   irs2026: "https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill",
-  ssWageBase: "https://www.journalofaccountancy.com/news/2025/oct/social-security-wage-base-and-cola-announced-for-2026/",
+  ssWageBase: "https://www.ssa.gov/oact/cola/cbb.html",
   seTax: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes",
   youngEntrepreneurs: "https://www.irs.gov/ht/newsroom/when-the-lemonade-stand-makes-bank-young-entrepreneurs-and-taxes",
   estimatedTaxes: "https://www.irs.gov/businesses/small-businesses-self-employed/estimated-taxes",
   soleProprietor: "https://www.irs.gov/businesses/small-businesses-self-employed/sole-proprietorships",
   qbi: "https://www.irs.gov/newsroom/qualified-business-income-deduction",
+  smallBusiness: "https://www.irs.gov/publications/p334",
 };
 
 export const TAX_2026 = {
@@ -26,7 +28,8 @@ export const TAX_2026 = {
   // 2026 standard deduction, single filer: $16,100.
   standardDeductionCents: 1_610_000,
   // Sole proprietors: qualified business income (QBI) deduction, 20%, made permanent by the 2025 law (Section 199A).
-  // Capped at 20% of taxable income before the deduction. Our users sit far below the income levels where extra limits apply.
+  // Simplified example: capped at 20% of taxable income before the deduction.
+  // The workspace gate limits profit to $100,000 and excludes other income; independent policy review is still required.
   qbiBps: 2000,
   // 2026 single-filer brackets (upper bound of each bracket, in cents).
   brackets: [
@@ -48,9 +51,9 @@ export const TAX_2026 = {
 } as const;
 
 export const ASSUMPTIONS = [
-  "Sole proprietor (you and the business are the same for taxes, reported on Schedule C), single filer, no other income.",
-  "Federal taxes only; state and local income taxes are not included yet.",
-  "Includes the 20% qualified business income (QBI) deduction for sole proprietors. Leaves out the new $400 minimum QBI deduction, so the estimate leans slightly high.",
-  "Dependents with net self-employment income above roughly the standard deduction get the full standard deduction; very small earners may differ.",
-  "Educational estimate, not tax advice. Confirm with a CPA before filing.",
+  "Fictional example: adult U.S. taxpayer, single sole proprietor, cash basis, not a dependent, no other income and profit no greater than $100,000.",
+  "Federal tax on recorded profit only. This is not an annual forecast, an IRS bill, a payment instruction or a safe-to-spend amount.",
+  "Uses the 2026 standard deduction and a simplified 20% QBI deduction. Minimum-QBI rules, credits and other deductions still require independent review.",
+  "Simple sample operating costs only. Equipment, inventory, vehicle costs, mixed use, meals, prepaid costs and refunds need separate tax-treatment review.",
+  "State/local taxes, required installments, penalties, filing and payment execution are outside this model. Personal numeric tax estimates remain disabled pending qualified policy review.",
 ];
