@@ -63,4 +63,3 @@ end $$;
 reset role;
 select 'Workspace security smoke checks passed; test transaction is being rolled back.' as result;
 rollback;
-

@@ -17,7 +17,18 @@ export default function AccountPanel({ cloud, dirty, onClose }: { cloud: CloudWo
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const title = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null; title.current?.focus(); return () => { requestAnimationFrame(() => { if (opener?.isConnected) opener.focus(); else document.querySelector<HTMLElement>(".page-heading h1, .landing-nav .brand")?.focus(); }); }; }, []);
+  const opener = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const target = title.current;
+    if (!opener.current && document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
+    target?.focus();
+    return () => { requestAnimationFrame(() => {
+      // Strict Mode replays effects while the panel is still mounted.
+      if (target?.isConnected) return;
+      if (opener.current?.isConnected) opener.current.focus();
+      else document.querySelector<HTMLElement>(".page-heading h1, .landing-nav .brand")?.focus();
+    }); };
+  }, []);
   useEffect(() => { setPassword(""); setRepeat(""); setError(""); setMessage(""); }, [mode, cloud.session?.user.id]);
 
   async function submit(event: FormEvent) {

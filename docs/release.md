@@ -22,7 +22,7 @@ Record evidence for each gate on the actual deployment; do not mark it complete 
 | Gate | Required evidence |
 | --- | --- |
 | Correct destination | Deployment points to the tested commit in Whataprogram/the-number; original site/repository untouched |
-| Build and configuration | Node24 tests/typecheck/build pass; public Supabase values match the intended project; APP_URL and Auth redirects match the live origin |
+| Build and configuration | Node 24 tests/typecheck/build pass; public Supabase values match the intended project; APP_URL and Auth redirects match the live origin |
 | Authentication | Existing verified pilot account signs in; public signup/recovery entry points remain unavailable; new public signup is disabled at Supabase; provider password policy matches the form |
 | Isolation | Account A cannot read, modify or delete B's known workspace ID; anonymous requests rejected; direct database writes denied |
 | Saving and recovery | Save/open/reload/delete, two-tab version conflict, lost-response retry and account switching verified with fictional records |

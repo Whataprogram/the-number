@@ -75,4 +75,3 @@ grant execute on function public.delete_workspace(uuid,integer) to authenticated
 
 
 commit;
-

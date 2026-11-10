@@ -263,7 +263,18 @@ function RowEditor({ row, workspace, onSave, onCancel, onRemove }: { row?: Ledge
   const [error, setError] = useState("");
   const imported = !!row && row.source !== "Manual";
   const title = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null; title.current?.focus(); return () => { requestAnimationFrame(() => { if (opener?.isConnected) opener.focus(); else document.querySelector<HTMLElement>(".page-heading h1, .landing-nav .brand")?.focus(); }); }; }, []);
+  const opener = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const target = title.current;
+    if (!opener.current && document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
+    target?.focus();
+    return () => { requestAnimationFrame(() => {
+      // Strict Mode replays effects while the panel is still mounted.
+      if (target?.isConnected) return;
+      if (opener.current?.isConnected) opener.current.focus();
+      else document.querySelector<HTMLElement>(".page-heading h1, .landing-nav .brand")?.focus();
+    }); };
+  }, []);
   function save(event: FormEvent) {
     event.preventDefault(); setError("");
     try {
@@ -284,7 +295,17 @@ function Settings({ workspace, onSave, onClose, onRestore, onNew, onSample, onPr
   const [title, setTitle] = useState(workspace.title);
   const [profile, setProfile] = useState(workspace.profile);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null; titleRef.current?.focus(); return () => { requestAnimationFrame(() => { if (opener?.isConnected) opener.focus(); else document.querySelector<HTMLElement>(".page-heading h1, .landing-nav .brand")?.focus(); }); }; }, []);
+  const opener = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const target = titleRef.current;
+    if (!opener.current && document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
+    target?.focus();
+    return () => { requestAnimationFrame(() => {
+      if (target?.isConnected) return;
+      if (opener.current?.isConnected) opener.current.focus();
+      else document.querySelector<HTMLElement>(".page-heading h1, .landing-nav .brand")?.focus();
+    }); };
+  }, []);
   const fields: [keyof WorkspaceProfile, string, string][] = [["adultUS", "Adult US individual", "This sample scope is for an adult US taxpayer."], ["singleSoleProprietor", "Single filer and sole proprietor", "A sole proprietorship using Schedule C; not a corporation or partnership."], ["noOtherIncome", "No other income", "No wages, investment income or other taxable income in this scenario."], ["notDependent", "Not claimed as someone else’s dependent", "Dependent tax situations are not supported."], ["cashBasis", "Cash-basis service business", "Supported simple service income and costs; no inventory or special adjustments."]];
   return <section className="panel settings-panel"><div className="editor-heading"><div><span className="eyebrow">WORKSPACE DETAILS</span><h2 tabIndex={-1} ref={titleRef}>The context matters.</h2></div><button className="icon-button" aria-label="Close workspace settings" onClick={onClose}><X size={20} /></button></div><form onSubmit={e => { e.preventDefault(); onSave(title, profile); }}><div className="form-grid"><label className="field field-wide">Workspace name<input value={title} onChange={e => setTitle(e.target.value)} maxLength={80} required /></label><label className="field">Tax year<select value={profile.taxYear} onChange={e => setProfile(p => ({ ...p, taxYear: Number(e.target.value), coverageComplete: false }))}><option value={2026}>2026</option></select></label><label className="field">Records through<input type="date" value={profile.throughDate} onChange={e => setProfile(p => ({ ...p, throughDate: e.target.value, coverageComplete: false }))} required /></label></div><div className="settings-heading"><h3>Calculation scope</h3><p>Check only what is true. If you’re unsure, leave it unchecked. Your records still work even when the tax scenario isn’t supported.</p></div><div className="scope-grid">{fields.map(([key, label, help]) => <label className="scope-option" key={key}><input type="checkbox" checked={!!profile[key]} onChange={e => setProfile(p => ({ ...p, [key]: e.target.checked }))} /><span><strong>{label}</strong><small>{help}</small></span></label>)}</div><label className="scope-option coverage-option"><input type="checkbox" checked={profile.coverageComplete} onChange={e => setProfile(p => ({ ...p, coverageComplete: e.target.checked }))} /><span><strong>I have included the supported business records through this date.</strong><small>This is your confirmation of coverage, not a verified bank connection. Missing records can change the result.</small></span></label>{workspace.mode === "personal" && <p className="policy-note">These settings organize your workspace. They do not enable personal tax estimates while independent policy review is pending.</p>}<div className="form-actions"><button className="button button-primary" type="submit">Save details <Check size={17} /></button><button className="button button-quiet" type="button" onClick={onClose}>Cancel</button></div></form><div className="workspace-management"><button onClick={onRestore}><FolderOpen size={16} />Restore a workspace</button><button onClick={onSample}><CircleHelp size={16} />Load the sample business</button><button onClick={onPrivacy}><ShieldCheck size={16} />Data & privacy</button><button className="clear-button" onClick={onNew}>Clear & start a personal workspace</button></div></section>;
 }
@@ -297,11 +318,17 @@ function Calculation({ result }: { result: WorkspaceResult }) {
 
 function Privacy({ onClose }: { onClose: () => void }) {
   const panel = useRef<HTMLElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
   useEffect(() => {
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    panel.current?.focus();
-    panel.current?.scrollIntoView({ block: "start", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    return () => { requestAnimationFrame(() => { if (opener?.isConnected) opener.focus(); }); };
+    const target = panel.current;
+    if (!opener.current && document.activeElement instanceof HTMLElement) opener.current = document.activeElement;
+    target?.focus();
+    target?.scrollIntoView({ block: "start", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    return () => { requestAnimationFrame(() => {
+      if (target?.isConnected) return;
+      if (opener.current?.isConnected) opener.current.focus();
+      else document.querySelector<HTMLElement>(".page-heading h1, .landing-nav .brand")?.focus();
+    }); };
   }, []);
   return <section className="panel privacy-panel" ref={panel} tabIndex={-1} aria-label="Data and privacy"><div className="editor-heading"><div><span className="eyebrow">DATA & PRIVACY</span><h2>Your records. Your choice of storage.</h2></div><button className="icon-button" aria-label="Close privacy information" onClick={onClose}><X size={20} /></button></div><div className="privacy-grid"><div><h3>Review locally.</h3><p>CSV records, descriptions and amounts are processed in this browser. They are never sent to an AI service. Choosing Save to account uploads that personal workspace to our Supabase database. Signing in alone does not upload records. The hosting provider receives ordinary page-request information.</p></div><div><h3>Saving is your decision.</h3><p>Unsaved work is held in this tab and can be lost on reload. Save to account for persistence, or download a workspace backup. Account workspaces are restricted to their owner. Your sign-in session can persist in this browser; sign out on a shared device.</p></div><div><h3>Export or delete.</h3><p>Download a workspace or ledger to keep a copy. Use Delete in your account panel to remove a saved workspace. Clearing this tab does not delete cloud copies or downloaded files. Exports are not encrypted by this app; store them privately.</p></div><div><h3>Boundaries are visible.</h3><p>No bank login, money movement, tax filing or automatic notifications. Only the bundled fictional sample can display illustrative tax math while independent policy review is pending.</p></div></div></section>;
 }
@@ -314,5 +341,3 @@ function PrintReport({ workspace, result }: { workspace: Workspace; result: Work
   const blocked = new Set(result.blockers.flatMap(item => item.rowId ? [item.rowId] : []));
   return <div className="print-report"><div className="print-brand">The Number.</div><p className="print-watermark">{workspace.mode === "sample" ? "FICTIONAL SAMPLE" : "PERSONAL BUSINESS RECORDS"} · {illustrative ? "ILLUSTRATIVE CALCULATION" : "RECORDS ONLY · NO TAX ESTIMATE"}</p><h1>{illustrative ? "Reviewed records & federal illustration" : "Business records & review status"}</h1><p>{workspace.title} · {workspace.profile.taxYear} · Records through {workspace.profile.throughDate}</p><p>{result.unresolvedCount} records need review. Coverage {workspace.profile.coverageComplete ? "confirmed by the user" : "not yet confirmed"}. Business totals include only supported, reviewed activity in the selected period.</p><table><tbody>{summary.map(([label, value]) => <tr key={label}><td>{label}</td><td>{money(value)}</td></tr>)}</tbody></table><h2>Basis & limitations</h2><p>{illustrative ? "Fictional adult US sole proprietor, single, not a dependent, no other income and supported cash-basis service records. Federal only. This is not a tax bill, required installment, full-year forecast, approved credit or tax advice." : "This report organizes user-provided records. It is not a tax return or a verification of deductibility. Tax amounts are unavailable and are not included."} Independent policy review is pending. Payments and coverage are user-confirmed, not IRS or bank verification.</p><p>Rule version: {result.ruleVersion} · Revision {workspace.revision} · {workspace.rows.length} records · Generated {new Date().toLocaleDateString("en-US")}</p><h2>Source records</h2><table className="print-ledger"><thead><tr><th>Date</th><th>Description</th><th>Treatment</th><th>Amount</th></tr></thead><tbody>{workspace.rows.map(row => <tr key={row.id}><td>{row.date}</td><td>{row.description}</td><td>{blocked.has(row.id) || !row.reviewed ? "Needs review" : TREATMENTS[row.treatment]}{row.paymentYear ? " / " + row.paymentYear : ""}</td><td>{money(row.amountCents)}</td></tr>)}</tbody></table></div>;
 }
-
-

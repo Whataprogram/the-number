@@ -54,4 +54,3 @@ npx vitest run tests/database.test.ts
 After applying the migration to a disposable local/staging Supabase project, run `supabase/tests/workspace-security.sql` as its migration administrator. It creates synthetic users in a transaction and rolls back. Do not use a production project for these fixtures. Then perform a separate end-to-end test with two real test accounts through the app: create, sign out, sign in as the other account, attempt known cloud IDs, exercise stale tabs, export and delete. A passing local suite is not a substitute for that hosted check.
 
 Primary implementation references: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [Supabase function privileges and definer guidance](https://supabase.com/docs/guides/database/functions), and [PostgreSQL row security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html).
-
